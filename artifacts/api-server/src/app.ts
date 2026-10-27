@@ -1,4 +1,6 @@
 import express, { type Express } from "express";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
@@ -30,5 +32,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
+
+if (process.env.NODE_ENV === "production") {
+  const frontendDirectory = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "../../tasami/dist",
+  );
+  app.use(express.static(frontendDirectory));
+  app.get(/^(?!\/api(?:\/|$)).*/, (_req, res, next) => {
+    res.sendFile(path.join(frontendDirectory, "index.html"), (error) => {
+      if (error) next(error);
+    });
+  });
+}
 
 export default app;

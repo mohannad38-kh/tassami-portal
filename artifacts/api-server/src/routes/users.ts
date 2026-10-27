@@ -5,7 +5,8 @@ import { authMiddleware, requireRole, hashPassword } from "../lib/auth";
 import { Resend } from "resend"; // استيراد المكتبة
 
 const router: IRouter = Router();
-const resend = new Resend(process.env.RESEND_API_KEY); // تفعيل الخدمة
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 function formatUser(
   user: typeof usersTable.$inferSelect,
@@ -125,15 +126,19 @@ router.patch(
 
     // منطق إرسال الإيميل
     if (isActive === true && oldUser.isActive === false) {
-      try {
-        await resend.emails.send({
-          from: "onboarding@resend.dev",
-          to: updated.email,
-          subject: "تم قبولك في منصة تسامي",
-          html: `<p>أهلاً ${updated.name}، نود إبلاغك بأنه تم قبول طلبك في منصة تسامي وتفعيل حسابك بنجاح!</p>`,
-        });
-      } catch (e) {
-        console.error("Email error:", e);
+      if (!resend) {
+        console.warn("Activation email was not sent because RESEND_API_KEY is not configured.");
+      } else {
+        try {
+          await resend.emails.send({
+            from: "onboarding@resend.dev",
+            to: updated.email,
+            subject: "تم قبولك في منصة تسامي",
+            html: `<p>أهلاً ${updated.name}، نود إبلاغك بأنه تم قبول طلبك في منصة تسامي وتفعيل حسابك بنجاح!</p>`,
+          });
+        } catch (e) {
+          console.error("Email error:", e);
+        }
       }
     }
 
