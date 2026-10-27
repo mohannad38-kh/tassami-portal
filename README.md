@@ -27,6 +27,7 @@ pnpm --filter @workspace/db run push-force
 ```
 
 Only use `push-force` on this new, empty test database. It may apply destructive schema changes if used later against a database containing data.
+After initialization, external database traffic is blocked; the Render service connects over the private network. If you need to run these commands from your computer again, temporarily allow only your current public IP as a `/32` rule in the database's **Networking** section, then remove that rule when finished. Do not restore `0.0.0.0/0`.
 
 Then copy the external connection string again and create the first administrator. Use a unique password of at least 12 characters; do not commit it or send it in chat:
 
