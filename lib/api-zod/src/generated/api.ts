@@ -476,12 +476,17 @@ export const ListJoinRequestsResponse = zod.array(ListJoinRequestsResponseItem)
 /**
  * @summary Submit join request
  */
+export const submitJoinRequestBodyPasswordMin = 12;
+
+
+
 export const SubmitJoinRequestBody = zod.object({
   "name": zod.string(),
   "email": zod.string(),
   "phone": zod.string().optional(),
   "message": zod.string().optional(),
-  "departmentId": zod.number()
+  "departmentId": zod.number(),
+  "password": zod.string().min(submitJoinRequestBodyPasswordMin).describe('The applicant\'s password, used only after application approval.')
 })
 
 export const SubmitJoinRequestResponse = zod.object({

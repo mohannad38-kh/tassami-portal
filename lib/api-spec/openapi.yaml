@@ -1772,7 +1772,7 @@ components:
 
     JoinRequestInput:
       type: object
-      required: [name, email, departmentId]
+      required: [name, email, departmentId, password]
       properties:
         name:
           type: string
@@ -1784,6 +1784,10 @@ components:
           type: string
         departmentId:
           type: integer
+        password:
+          type: string
+          minLength: 12
+          description: The applicant's password, used only after application approval.
 
     JoinRequestUpdate:
       type: object

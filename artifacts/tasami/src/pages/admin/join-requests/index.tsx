@@ -32,7 +32,7 @@ export default function AdminJoinRequests() {
               title: t("تم قبول الطلب، لكن لم يُرسل البريد"),
               description:
                 result.emailMessage ||
-                t("تحقق من إعدادات البريد على الخادم، ثم أعد إرسال رابط القبول."),
+                t("تم تفعيل الحساب؛ أخبر المتطوع أن يسجل الدخول بالبريد وكلمة المرور التي اختارها."),
               variant: "destructive",
             });
           } else {
@@ -55,7 +55,7 @@ export default function AdminJoinRequests() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-primary">{t("طلبات الانضمام")}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {t("طلبات نموذج الموقع تظهر هنا للمراجعة؛ وعند القبول يُنشأ حساب للمتقدم ويُرسل رابط إنشاء كلمة المرور ونموذج الانتساب.")}
+          {t("طلبات نموذج الموقع تظهر هنا للمراجعة. يختار المتقدم كلمة المرور عند التسجيل، ويُفعّل حسابه بعد الموافقة.")}
         </p>
       </div>
 
@@ -144,7 +144,7 @@ export default function AdminJoinRequests() {
                             disabled={updateRequest.isPending}
                           >
                             <RefreshCw className="h-4 w-4 mr-1 rtl:ml-1" />
-                            {t("إعادة إرسال الرابط")}
+                            {t("إعادة إرسال رسالة القبول")}
                           </Button>}
                           {req.status === "pending" && <Button
                             size="sm" 

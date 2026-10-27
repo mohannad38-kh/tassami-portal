@@ -101,6 +101,24 @@ const translations: Record<string, string> = {
   "رقم الجوال (اختياري)": "Mobile Number (Optional)",
   "القسم الذي ترغب بالانضمام إليه": "Department you want to join",
   "اختاري القسم": "Choose a department",
+  "كلمة المرور يجب أن تكون 12 حرفاً على الأقل ولا تتجاوز 72 بايت":
+    "Password must be at least 12 characters and no more than 72 bytes",
+  "يجب أن تتكون كلمة المرور من 12 حرفاً على الأقل.":
+    "Password must be at least 12 characters.",
+  "طلبك قيد المراجعة، ستتمكن من الدخول بعد موافقة الإدارة.":
+    "Your application is under review. You can log in after it is approved.",
+  "تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها.":
+    "Your application was received. After approval, sign in with your email and chosen password.",
+  "يوجد حساب أو طلب سابق بهذا البريد": "An account or application already exists for this email",
+  "إذا كان طلبك قيد المراجعة، انتظر قرار الإدارة ولا ترسل طلباً جديداً.":
+    "If your application is under review, wait for the administrator's decision instead of submitting another.",
+  "أنشئ كلمة مرورك الآن؛ سيبقى الحساب بانتظار الموافقة قبل أن تتمكن من الدخول.":
+    "Set your password now. Your account will remain inactive until your application is approved.",
+  "طلبات نموذج الموقع تظهر هنا للمراجعة. يختار المتقدم كلمة المرور عند التسجيل، ويُفعّل حسابه بعد الموافقة.":
+    "Website applications appear here for review. Applicants choose a password when applying, and their account is activated upon approval.",
+  "إعادة إرسال رسالة القبول": "Resend approval email",
+  "تم تفعيل الحساب؛ أخبر المتطوع أن يسجل الدخول بالبريد وكلمة المرور التي اختارها.":
+    "The account is active. Ask the volunteer to sign in with the email and password they chose.",
   "جارٍ تحميل الأقسام...": "Loading departments...",
   "تعذر تحميل الأقسام، حاولي تحديث الصفحة.": "Could not load departments. Try refreshing the page.",
   "القسم المختار:": "Selected department:",
@@ -111,8 +129,6 @@ const translations: Record<string, string> = {
   "أدخلي رقم أردني يبدأ بـ 07 أو +962، مثل 079 123 4567.":
     "Enter a Jordanian number starting with 07 or +962, e.g. 079 123 4567.",
   "تم إرسال طلبك بنجاح": "Your application was submitted",
-  "سنتواصل معك قريباً، شكراً لاهتمامك بالانضمام لتسامي.":
-    "We will contact you soon. Thank you for your interest in joining Tasami.",
   "حدث خطأ": "An Error Occurred",
   "لم نتمكن من إرسال طلبك. يرجى المحاولة لاحقاً.":
     "We could not submit your application. Please try again later.",
@@ -165,8 +181,6 @@ const translations: Record<string, string> = {
   "إعادة إرسال الرابط": "Resend Link",
   "قبول وإرسال": "Approve & Send",
   "رفض": "Reject",
-  "طلبات نموذج الموقع تظهر هنا للمراجعة؛ وعند القبول يُنشأ حساب للمتقدم ويُرسل رابط إنشاء كلمة المرور ونموذج الانتساب.":
-    "Website applications appear here for review. Approving an applicant creates an account and emails a password setup link and the official membership form.",
   "إنشاء كلمة مرور حسابك": "Set Your Account Password",
   "تم إنشاء كلمة المرور": "Password Created",
   "أصبح بإمكانك تسجيل الدخول إلى بوابة المتطوعين.":

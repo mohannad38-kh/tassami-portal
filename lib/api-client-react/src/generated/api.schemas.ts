@@ -138,6 +138,11 @@ export interface JoinRequestInput {
   phone?: string;
   message?: string;
   departmentId: number;
+  /**
+     * The applicant's password, used only after application approval.
+     * @minLength 12
+     */
+  password: string;
 }
 
 export interface JoinRequestUpdate {

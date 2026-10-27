@@ -219,6 +219,16 @@ export function localSqlitePlugin(workspaceRoot: string): Plugin {
       const getDepartment = database.prepare(
         "SELECT id, name FROM departments WHERE id = ?",
       );
+      const getVolunteerUser = database.prepare(
+        "SELECT id, is_active FROM users WHERE lower(email) = ?",
+      );
+      const insertVolunteerUser = database.prepare(
+        `INSERT INTO users (name, email, password_hash, role, phone, department_id, is_active)
+         VALUES (?, ?, ?, 'member', ?, ?, 0)`,
+      );
+      const activateVolunteerUser = database.prepare(
+        "UPDATE users SET is_active = 1, updated_at = CURRENT_TIMESTAMP WHERE lower(email) = ? AND role = 'member'",
+      );
 
       server.middlewares.use(async (request, response, next) => {
         const url = new URL(request.url || "/", "http://localhost");
@@ -319,8 +329,16 @@ export function localSqlitePlugin(workspaceRoot: string): Plugin {
             const data = body as Record<string, unknown>;
             const name = typeof data.name === "string" ? data.name.trim() : "";
             const email = typeof data.email === "string" ? data.email.trim() : "";
-            if (!name || !EMAIL_PATTERN.test(email)) {
-              sendJson(response, 400, { error: "Enter a name and a valid email address" });
+            const password = typeof data.password === "string" ? data.password : "";
+            if (
+              !name ||
+              !EMAIL_PATTERN.test(email) ||
+              password.length < 12 ||
+              Buffer.byteLength(password, "utf8") > 72
+            ) {
+              sendJson(response, 400, {
+                error: "Enter a name, valid email, and password with 12 characters minimum",
+              });
               return;
             }
             let phone: string | null = null;
@@ -346,7 +364,43 @@ export function localSqlitePlugin(workspaceRoot: string): Plugin {
               sendJson(response, 400, { error: "Select a valid department" });
               return;
             }
-            const result = insertRequest.run(name, email, phone, message, departmentId);
+            const normalizedEmail = email.toLowerCase();
+            database.exec("BEGIN IMMEDIATE");
+            let result: ReturnType<typeof insertRequest.run>;
+            try {
+              const existingUser = getVolunteerUser.get(normalizedEmail) as
+                | { id: number; is_active: number }
+                | undefined;
+              if (existingUser && !existingUser.is_active) {
+                database.exec("ROLLBACK");
+                sendJson(response, 409, {
+                  error: "An account or application for this email is already awaiting review",
+                });
+                return;
+              }
+              if (!existingUser) {
+                const salt = randomBytes(16);
+                const hash = scryptSync(password, salt, 64);
+                insertVolunteerUser.run(
+                  name,
+                  normalizedEmail,
+                  `${salt.toString("hex")}:${hash.toString("hex")}`,
+                  phone,
+                  departmentId,
+                );
+              }
+              result = insertRequest.run(
+                name,
+                normalizedEmail,
+                phone,
+                message,
+                departmentId,
+              );
+              database.exec("COMMIT");
+            } catch (error) {
+              database.exec("ROLLBACK");
+              throw error;
+            }
             sendJson(response, 201, {
               id: Number(result.lastInsertRowid),
               name,
@@ -485,6 +539,10 @@ export function localSqlitePlugin(workspaceRoot: string): Plugin {
             if (!existing) {
               sendJson(response, 404, { error: "Join request not found" });
               return;
+            }
+
+            if (status === "approved") {
+              activateVolunteerUser.run(existing.email.toLowerCase());
             }
 
             if (status === "approved" && !existing.approval_email_sent_at) {

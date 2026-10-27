@@ -28,8 +28,12 @@ export default function Login() {
           const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head"].includes(data.user.role || "");
           setLocation(isAdmin ? "/admin" : "/portal");
         },
-        onError: () => {
-          setError(t("بيانات الدخول غير صحيحة"));
+        onError: (error) => {
+          setError(
+            error instanceof Error && error.message.includes("ACCOUNT_PENDING_APPROVAL")
+              ? t("طلبك قيد المراجعة، ستتمكن من الدخول بعد موافقة الإدارة.")
+              : t("بيانات الدخول غير صحيحة"),
+          );
         }
       }
     );

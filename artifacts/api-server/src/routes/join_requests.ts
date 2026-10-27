@@ -6,7 +6,7 @@ import {
   membersTable,
   usersTable,
 } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { nanoid } from "nanoid";
 import { Resend } from "resend";
@@ -126,16 +126,22 @@ router.get("/join-requests", authMiddleware, requireRole("secretary"), async (re
 });
 
 router.post("/join-requests", async (req, res): Promise<void> => {
-  const { name, email, phone, message, departmentId } = req.body;
+  const { name, email, phone, message, departmentId, password } = req.body;
   if (
     typeof name !== "string" ||
     !name.trim() ||
     typeof email !== "string" ||
     !email.trim() ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
     !Number.isSafeInteger(departmentId) ||
-    departmentId < 1
+    departmentId < 1 ||
+    typeof password !== "string" ||
+    password.length < 12 ||
+    Buffer.byteLength(password, "utf8") > 72
   ) {
-    res.status(400).json({ error: "Name, email, and a valid department are required" });
+    res.status(400).json({
+      error: "Enter a valid name, email, department, and password (12 characters minimum, 72 UTF-8 bytes maximum)",
+    });
     return;
   }
   const [department] = await db
@@ -146,16 +152,63 @@ router.post("/join-requests", async (req, res): Promise<void> => {
     res.status(400).json({ error: "Select a valid department" });
     return;
   }
-  const [request] = await db
-    .insert(joinRequestsTable)
-    .values({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      phone,
-      message,
-      departmentId,
-    })
-    .returning();
+  const normalizedEmail = email.trim().toLowerCase();
+  const result = await db.transaction(async (tx) => {
+    const [existingUser] = await tx
+      .select()
+      .from(usersTable)
+      .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`);
+
+    if (existingUser && !existingUser.isActive) {
+      return { request: null, conflict: true };
+    }
+
+    if (!existingUser) {
+      const passwordHash = await hashPassword(password);
+      const [createdUser] = await tx
+        .insert(usersTable)
+        .values({
+          name: name.trim(),
+          email: normalizedEmail,
+          passwordHash,
+          role: "member",
+          phone: typeof phone === "string" ? phone : null,
+          departmentId,
+          isActive: false,
+        })
+        .onConflictDoNothing()
+        .returning({ id: usersTable.id });
+
+      if (!createdUser) {
+        const [concurrentUser] = await tx
+          .select({ isActive: usersTable.isActive })
+          .from(usersTable)
+          .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`);
+        if (!concurrentUser?.isActive) {
+          return { request: null, conflict: true };
+        }
+      }
+    }
+
+    const [request] = await tx
+      .insert(joinRequestsTable)
+      .values({
+        name: name.trim(),
+        email: normalizedEmail,
+        phone,
+        message,
+        departmentId,
+      })
+      .returning();
+    return { request, conflict: false };
+  });
+  if (result.conflict || !result.request) {
+    res.status(409).json({
+      error: "ACCOUNT_EXISTS_OR_PENDING",
+    });
+    return;
+  }
+  const { request } = result;
   res.status(201).json(request);
 });
 
@@ -189,6 +242,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("secretary"), asy
       .where(eq(joinRequestsTable.id, id));
     if (!request) return null;
 
+    const normalizedEmail = request.email.trim().toLowerCase();
     const [updatedRequest] = await tx
       .update(joinRequestsTable)
       .set({ status })
@@ -197,7 +251,6 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("secretary"), asy
 
     if (status !== "approved") return updatedRequest;
 
-    const normalizedEmail = request.email.trim().toLowerCase();
     const [existingUser] = await tx
       .select()
       .from(usersTable)
@@ -231,7 +284,35 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("secretary"), asy
       });
     }
 
-    if (user.role === "member" && !user.isActive) {
+    if (user.role === "member" && !user.isActive && request.status !== "approved") {
+      await tx
+        .update(usersTable)
+        .set({ isActive: true, departmentId: request.departmentId })
+        .where(eq(usersTable.id, user.id));
+      if (request.departmentId !== null) {
+        const [membership] = await tx
+          .select({ id: membersTable.id })
+          .from(membersTable)
+          .where(
+            and(
+              eq(membersTable.userId, user.id),
+              eq(membersTable.departmentId, request.departmentId),
+            ),
+          )
+          .limit(1);
+        if (!membership) {
+          const membershipNumber = `TSM-${String(Date.now()).slice(-6)}-${nanoid(4).toUpperCase()}`;
+          await tx.insert(membersTable).values({
+            userId: user.id,
+            departmentId: request.departmentId,
+            membershipNumber,
+            status: "active",
+            qrCode: `TSM-QR-${nanoid(12)}`,
+          });
+        }
+      }
+      hasExistingAccount = true;
+    } else if (user.role === "member" && !user.isActive) {
       passwordSetupToken = signPasswordSetupToken({
         userId: user.id,
         email: user.email,

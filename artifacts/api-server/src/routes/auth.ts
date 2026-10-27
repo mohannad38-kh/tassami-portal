@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { db, joinRequestsTable, usersTable } from "@workspace/db";
+import { and, desc, eq, sql } from "drizzle-orm";
 import {
   signToken,
   comparePassword,
@@ -66,7 +66,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     .from(usersTable)
     .where(eq(usersTable.email, email));
 
-  if (!user || !user.isActive) {
+  if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
@@ -74,6 +74,20 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   // التحقق من كلمة السر
   const valid = await comparePassword(password, user.passwordHash);
   if (!valid) {
+    res.status(401).json({ error: "Invalid credentials" });
+    return;
+  }
+  if (!user.isActive) {
+    const [latestRequest] = await db
+      .select({ status: joinRequestsTable.status })
+      .from(joinRequestsTable)
+      .where(sql`lower(${joinRequestsTable.email}) = ${user.email.toLowerCase()}`)
+      .orderBy(desc(joinRequestsTable.createdAt))
+      .limit(1);
+    if (latestRequest?.status === "pending") {
+      res.status(403).json({ error: "ACCOUNT_PENDING_APPROVAL" });
+      return;
+    }
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }

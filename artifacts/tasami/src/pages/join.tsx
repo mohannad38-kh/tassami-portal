@@ -22,7 +22,15 @@ function normalizeJordanMobile(value: string): string | null {
 }
 
 export default function Join() {
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "", message: "", departmentId: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+    departmentId: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submitRequest = useSubmitJoinRequest();
   const { toast } = useToast();
@@ -31,6 +39,23 @@ export default function Join() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: t("كلمتا المرور غير متطابقتين"),
+        variant: "destructive",
+      });
+      return;
+    }
+    if (
+      formData.password.length < 12 ||
+      new TextEncoder().encode(formData.password).length > 72
+    ) {
+      toast({
+        title: t("كلمة المرور يجب أن تكون 12 حرفاً على الأقل ولا تتجاوز 72 بايت"),
+        variant: "destructive",
+      });
+      return;
+    }
     let normalizedPhone: string | null = null;
     if (formData.phone.trim()) {
       normalizedPhone = normalizeJordanMobile(formData.phone);
@@ -43,8 +68,9 @@ export default function Join() {
         return;
       }
     }
+    const { confirmPassword: _confirmPassword, ...applicationData } = formData;
     const submission = {
-      ...formData,
+      ...applicationData,
       phone: normalizedPhone ?? "",
       departmentId: Number(formData.departmentId),
     };
@@ -56,14 +82,27 @@ export default function Join() {
           onSuccess: () => {
             toast({
               title: t("تم إرسال طلبك بنجاح"),
-              description: t("سنتواصل معك قريباً، شكراً لاهتمامك بالانضمام لتسامي."),
+              description: t("تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها."),
             });
-            setFormData({ name: "", email: "", phone: "", message: "", departmentId: "" });
+            setFormData({
+              name: "",
+              email: "",
+              phone: "",
+              message: "",
+              departmentId: "",
+              password: "",
+              confirmPassword: "",
+            });
           },
-          onError: () => {
+          onError: (error) => {
+            const alreadyRegistered =
+              error instanceof Error &&
+              error.message.includes("ACCOUNT_EXISTS_OR_PENDING");
             toast({
-              title: t("حدث خطأ"),
-              description: t("لم نتمكن من إرسال طلبك. يرجى المحاولة لاحقاً."),
+              title: alreadyRegistered ? t("يوجد حساب أو طلب سابق بهذا البريد") : t("حدث خطأ"),
+              description: alreadyRegistered
+                ? t("إذا كان طلبك قيد المراجعة، انتظر قرار الإدارة ولا ترسل طلباً جديداً.")
+                : t("لم نتمكن من إرسال طلبك. يرجى المحاولة لاحقاً."),
               variant: "destructive",
             });
           },
@@ -85,9 +124,17 @@ export default function Join() {
 
       toast({
         title: t("تم حفظ طلبك بنجاح"),
-        description: t("تم حفظ الطلب في قاعدة البيانات المحلية على هذا الجهاز."),
+        description: t("تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها."),
       });
-      setFormData({ name: "", email: "", phone: "", message: "", departmentId: "" });
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        message: "",
+        departmentId: "",
+        password: "",
+        confirmPassword: "",
+      });
     } catch (error) {
       console.error("Failed to submit local join request:", error);
       toast({
@@ -108,6 +155,9 @@ export default function Join() {
             <CardTitle className="text-3xl font-bold text-primary mb-2">{t("نموذج الانضمام")}</CardTitle>
             <CardDescription className="text-lg">
               {t("انضم إلى نخبة المتطوعين في مبادرة تسامي وكن جزءاً من التغيير الإيجابي.")}
+              <span className="mt-2 block text-sm">
+                {t("أنشئ كلمة مرورك الآن؛ سيبقى الحساب بانتظار الموافقة قبل أن تتمكن من الدخول.")}
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -121,6 +171,44 @@ export default function Join() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder={t("أدخل اسمك الكامل")}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="password">{t("كلمة المرور")}</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={12}
+                    autoComplete="new-password"
+                    value={formData.password}
+                    onChange={(event) =>
+                      setFormData({ ...formData, password: event.target.value })
+                    }
+                    dir="ltr"
+                    className="text-left"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t("يجب أن تتكون كلمة المرور من 12 حرفاً على الأقل.")}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">{t("تأكيد كلمة المرور")}</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    required
+                    minLength={12}
+                    autoComplete="new-password"
+                    value={formData.confirmPassword}
+                    onChange={(event) =>
+                      setFormData({ ...formData, confirmPassword: event.target.value })
+                    }
+                    dir="ltr"
+                    className="text-left"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
