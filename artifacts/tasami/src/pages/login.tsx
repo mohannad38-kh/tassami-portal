@@ -25,8 +25,14 @@ export default function Login() {
       {
         onSuccess: (data) => {
           authenticate(data.token, data.user);
-          const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head"].includes(data.user.role || "");
-          setLocation(isAdmin ? "/admin" : "/portal");
+          const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head", "join_manager"].includes(data.user.role || "");
+          setLocation(
+            data.user.role === "join_manager"
+              ? "/admin/join-requests"
+              : isAdmin
+                ? "/admin"
+                : "/portal",
+          );
         },
         onError: (error) => {
           setError(

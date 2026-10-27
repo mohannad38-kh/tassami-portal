@@ -118,7 +118,7 @@ async function sendApprovalEmail(
   }
 }
 
-router.get("/join-requests", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
+router.get("/join-requests", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const { status } = req.query;
   let requests = await db.select().from(joinRequestsTable).orderBy(joinRequestsTable.createdAt);
   if (status) requests = requests.filter((r) => r.status === status);
@@ -212,7 +212,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
   res.status(201).json(request);
 });
 
-router.get("/join-requests/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
+router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
   const [request] = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.id, id));
@@ -220,7 +220,7 @@ router.get("/join-requests/:id", authMiddleware, requireRole("secretary"), async
   res.json(request);
 });
 
-router.patch("/join-requests/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
+router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
   const { status } = req.body;

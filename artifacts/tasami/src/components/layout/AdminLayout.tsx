@@ -38,13 +38,23 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   // Check minimum role
-  const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head"].includes(user?.role || "");
+  const isJoinManager = user?.role === "join_manager";
+  const isAdmin = isJoinManager || ["super_admin", "president", "vice_president", "secretary", "dept_head"].includes(user?.role || "");
   if (!isAdmin) {
     setLocation("/portal");
     return null;
   }
 
-  const sections = [
+  const sections = isJoinManager
+    ? [
+        {
+          title: t("إدارة الطلبات"),
+          items: [
+            { href: "/admin/join-requests", label: t("طلبات الانضمام"), icon: UserPlus },
+          ],
+        },
+      ]
+    : [
     {
       title: t("الرئيسية"),
       items: [
@@ -109,7 +119,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
            user?.role === 'president' ? t('رئيس المبادرة') :
            user?.role === 'vice_president' ? t('نائب الرئيس') :
            user?.role === 'secretary' ? t('الأمين العام') :
-           user?.role === 'dept_head' ? t('رئيس قسم') : t('إداري')}
+           user?.role === 'dept_head' ? t('رئيس قسم') :
+           user?.role === 'join_manager' ? t('مسؤول طلبات الانضمام') : t('إداري')}
         </p>
       </div>
       <nav className="flex-1 overflow-y-auto py-4">

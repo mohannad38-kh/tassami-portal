@@ -100,12 +100,32 @@ export function optionalAuthMiddleware(req: Request, _res: Response, next: NextF
 const ROLE_HIERARCHY: Record<string, number> = {
   visitor: 0,
   member: 1,
+  join_manager: 1.5,
   dept_head: 2,
   secretary: 3,
   vice_president: 4,
   president: 5,
   super_admin: 6,
 };
+
+function joinRequestManagerEmails(): Set<string> {
+  return new Set(
+    (process.env.JOIN_REQUEST_MANAGER_EMAILS ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+export function effectiveRole(user: Pick<JwtPayload, "email" | "role">): string {
+  if (
+    (ROLE_HIERARCHY[user.role] ?? -1) < ROLE_HIERARCHY.join_manager &&
+    joinRequestManagerEmails().has(user.email.trim().toLowerCase())
+  ) {
+    return "join_manager";
+  }
+  return user.role;
+}
 
 export function requireRole(minRole: string) {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -114,7 +134,10 @@ export function requireRole(minRole: string) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if ((ROLE_HIERARCHY[user.role] ?? -1) < (ROLE_HIERARCHY[minRole] ?? 0)) {
+    if (
+      (ROLE_HIERARCHY[effectiveRole(user)] ?? -1) <
+      (ROLE_HIERARCHY[minRole] ?? 0)
+    ) {
       res.status(403).json({ error: "Forbidden" });
       return;
     }

@@ -7,6 +7,7 @@ import {
   hashPassword,
   authMiddleware,
   verifyPasswordSetupToken,
+  effectiveRole,
 } from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
 import type { Request } from "express";
@@ -96,7 +97,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   const token = signToken({
     userId: user.id,
     email: user.email,
-    role: user.role,
+    role: effectiveRole(user),
   });
 
   res.json({
@@ -105,7 +106,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role,
+      role: effectiveRole(user),
       phone: user.phone ?? null,
       avatarUrl: user.avatarUrl ?? null,
       departmentId: user.departmentId ?? null,
@@ -134,7 +135,7 @@ router.get("/auth/me", authMiddleware, async (req, res): Promise<void> => {
     id: dbUser.id,
     name: dbUser.name,
     email: dbUser.email,
-    role: dbUser.role,
+    role: effectiveRole(dbUser),
     phone: dbUser.phone ?? null,
     avatarUrl: dbUser.avatarUrl ?? null,
     departmentId: dbUser.departmentId ?? null,

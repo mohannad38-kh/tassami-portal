@@ -22,6 +22,8 @@ const translations: Record<string, string> = {
   "مجلس الإدارة": "Leadership",
   "تواصل معنا": "Contact Us",
   "إدارة الموقع": "Site Admin",
+  "إدارة الطلبات": "Request Management",
+  "مسؤول طلبات الانضمام": "Join Request Manager",
   "القائمة": "Menu",
   "فتح القائمة": "Open menu",
   "تسجيل الدخول": "Log In",

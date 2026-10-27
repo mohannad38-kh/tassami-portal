@@ -52,6 +52,8 @@ Applicants choose a password when submitting a join request. The site stores onl
 
 Configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in the Render service's environment settings to send approval emails. The sender must be verified with Resend. The HTTP API works on Render's free web-service plan. Gmail SMTP is retained as a fallback for compatible paid hosts, but Render's free web services block outbound SMTP.
 
+To grant a specific existing account access only to review and approve join requests, add its email to the comma-separated `JOIN_REQUEST_MANAGER_EMAILS` environment variable. This does not grant access to other administration features.
+
 ### Environment variables
 
 The Blueprint generates `SESSION_SECRET` and connects `DATABASE_URL` to the Render database. Set mail-provider secrets only in the Render dashboard; do not place credentials in the repository. Rotate any app password that was previously shared.
