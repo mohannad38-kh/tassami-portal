@@ -178,8 +178,20 @@ function superAdminEmails(): Set<string> {
   );
 }
 
+function adminRoleRevokedEmails(): Set<string> {
+  return new Set(
+    (process.env.ADMIN_ROLE_REVOKED_EMAILS ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
 export function effectiveRole(user: Pick<JwtPayload, "email" | "role">): string {
   const email = user.email.trim().toLowerCase();
+  if (adminRoleRevokedEmails().has(email)) {
+    return "member";
+  }
   if (superAdminEmails().has(email)) {
     return "super_admin";
   }

@@ -56,6 +56,8 @@ To grant a specific existing account access only to review and approve join requ
 
 To grant a trusted existing account full site administration access, add its email to the comma-separated `SUPER_ADMIN_EMAILS` environment variable. This grants the highest application role; only use it for accounts that require full administrative access.
 
+To temporarily remove administrative access from specific accounts without deleting them, add their emails to the comma-separated `ADMIN_ROLE_REVOKED_EMAILS` environment variable. This overrides their stored role and other role grants with the regular member role until the email is removed from this list.
+
 ### Environment variables
 
 The Blueprint generates `SESSION_SECRET` and connects `DATABASE_URL` to the Render database. Set mail-provider secrets only in the Render dashboard; do not place credentials in the repository. Rotate any app password that was previously shared.
