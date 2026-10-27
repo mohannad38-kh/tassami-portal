@@ -11,12 +11,18 @@ services:
         value: production
       - key: BASE_PATH
         value: /
+      - key: APP_BASE_URL
+        value: https://tassami-portal.onrender.com
       - key: DATABASE_URL
         fromDatabase:
           name: tassami-db
           property: connectionString
       - key: SESSION_SECRET
         generateValue: true
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
       - key: GMAIL_USER
         sync: false
       - key: GMAIL_APP_PASSWORD

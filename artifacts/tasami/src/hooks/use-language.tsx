@@ -165,8 +165,21 @@ const translations: Record<string, string> = {
   "إعادة إرسال الرابط": "Resend Link",
   "قبول وإرسال": "Approve & Send",
   "رفض": "Reject",
-  "طلبات نموذج الموقع تظهر هنا للمراجعة؛ وعند القبول يُرسل للمتقدم رابط نموذج الانتساب الرسمي.":
-    "Website applications appear here for review. Approved applicants receive the official membership form.",
+  "طلبات نموذج الموقع تظهر هنا للمراجعة؛ وعند القبول يُنشأ حساب للمتقدم ويُرسل رابط إنشاء كلمة المرور ونموذج الانتساب.":
+    "Website applications appear here for review. Approving an applicant creates an account and emails a password setup link and the official membership form.",
+  "إنشاء كلمة مرور حسابك": "Set Your Account Password",
+  "تم إنشاء كلمة المرور": "Password Created",
+  "أصبح بإمكانك تسجيل الدخول إلى بوابة المتطوعين.":
+    "You can now sign in to the volunteer portal.",
+  "اختر كلمة مرور لا تقل عن 12 حرفاً للدخول إلى بوابة المتطوعين.":
+    "Choose a password with at least 12 characters to sign in to the volunteer portal.",
+  "رابط إنشاء كلمة المرور غير صالح. اطلب رابطاً جديداً من إدارة المبادرة.":
+    "This password setup link is invalid. Ask the initiative administrators for a new link.",
+  "تعذر إنشاء كلمة المرور. اطلب رابطاً جديداً من إدارة المبادرة.":
+    "Couldn't set your password. Ask the initiative administrators for a new link.",
+  "كلمتا المرور غير متطابقتين": "The passwords do not match.",
+  "جاري حفظ كلمة المرور...": "Saving password...",
+  "حفظ كلمة المرور": "Save Password",
   "تم قبول الطلب، لكن لم يُرسل البريد": "Application approved, but email was not sent",
   "تم قبول الطلب وإرسال رسالة الانتساب": "Application approved and membership email sent",
   "تم رفض الطلب": "Application rejected",

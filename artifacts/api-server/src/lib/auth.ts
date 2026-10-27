@@ -16,8 +16,43 @@ export interface JwtPayload {
   role: string;
 }
 
+export interface PasswordSetupPayload {
+  userId: number;
+  email: string;
+  purpose: "password_setup";
+}
+
 export function signToken(payload: JwtPayload): string {
   return jwt.sign(payload, signingSecret, { expiresIn: "7d" });
+}
+
+export function signPasswordSetupToken(
+  payload: PasswordSetupPayload,
+): string {
+  return jwt.sign(payload, signingSecret, { expiresIn: "24h" });
+}
+
+export function verifyPasswordSetupToken(
+  token: string,
+): PasswordSetupPayload | null {
+  try {
+    const payload = jwt.verify(token, signingSecret);
+    if (
+      typeof payload === "string" ||
+      typeof payload.userId !== "number" ||
+      typeof payload.email !== "string" ||
+      payload.purpose !== "password_setup"
+    ) {
+      return null;
+    }
+    return {
+      userId: payload.userId,
+      email: payload.email,
+      purpose: "password_setup",
+    };
+  } catch {
+    return null;
+  }
 }
 
 export function verifyToken(token: string): JwtPayload {

@@ -1,7 +1,21 @@
 import { Router, type IRouter } from "express";
-import { db, departmentsTable, joinRequestsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { authMiddleware, requireRole } from "../lib/auth";
+import {
+  db,
+  departmentsTable,
+  joinRequestsTable,
+  membersTable,
+  usersTable,
+} from "@workspace/db";
+import { eq, sql } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+import { nanoid } from "nanoid";
+import { Resend } from "resend";
+import {
+  authMiddleware,
+  hashPassword,
+  requireRole,
+  signPasswordSetupToken,
+} from "../lib/auth";
 import * as nodemailer from "nodemailer";
 
 const router: IRouter = Router();
@@ -24,7 +38,41 @@ function escapeHtml(value: string): string {
 async function sendApprovalEmail(
   name: string,
   email: string,
+  passwordSetupUrl?: string,
 ): Promise<{ emailSent: boolean; emailMessage?: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.RESEND_FROM_EMAIL?.trim() || "onboarding@resend.dev";
+  const passwordSetupSection = passwordSetupUrl
+    ? `<p style="font-size:16px;line-height:1.8">لإنشاء كلمة مرور حسابك والدخول إلى بوابة المتطوعين، اضغط على الرابط التالي خلال 24 ساعة:</p><p style="margin:28px 0"><a href="${escapeHtml(passwordSetupUrl)}" style="display:inline-block;background:#702632;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold">إنشاء كلمة المرور</a></p><p style="font-size:14px;line-height:1.8;color:#666">إذا لم يظهر الزر، انسخ هذا الرابط وافتحه في المتصفح:<br><a href="${escapeHtml(passwordSetupUrl)}" dir="ltr">${escapeHtml(passwordSetupUrl)}</a></p>`
+    : `<p style="font-size:16px;line-height:1.8">يمكنك استخدام حسابك الحالي للدخول إلى بوابة المتطوعين.</p>`;
+  const html = `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#382a20"><h2 style="color:#702632">مرحباً ${escapeHtml(name)} 🎉</h2><p style="font-size:16px;line-height:1.8">يسعدنا إبلاغك بأنه تمت الموافقة على طلب انضمامك إلى <strong style="color:#a27a37">مبادرة تسامي التطوعية</strong>.</p>${passwordSetupSection}<p style="font-size:16px;line-height:1.8">لإكمال إجراءات الانتساب، يرجى تعبئة نموذج الانتساب الرسمي:</p><p style="margin:28px 0"><a href="${enrollmentFormUrl}" style="display:inline-block;background:#702632;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold">تعبئة نموذج الانتساب</a></p><p style="font-size:14px;line-height:1.8;color:#666">رابط النموذج:<br><a href="${enrollmentFormUrl}" dir="ltr">${enrollmentFormUrl}</a></p><p style="font-size:14px;color:#888;margin-top:30px">فريق مبادرة تسامي</p></div>`;
+
+  if (apiKey) {
+    try {
+      const resend = new Resend(apiKey);
+      const { error } = await resend.emails.send({
+        from,
+        to: email,
+        subject: "تم قبول طلب انضمامك إلى مبادرة تسامي",
+        html,
+      });
+      if (error) {
+        console.error("Failed to send approval email with Resend:", error.message);
+        return {
+          emailSent: false,
+          emailMessage: "تعذر إرسال البريد عبر Resend. تحقق من إعدادات المرسل على الخادم.",
+        };
+      }
+      return { emailSent: true };
+    } catch (error) {
+      console.error("Failed to send approval email with Resend:", error);
+      return {
+        emailSent: false,
+        emailMessage: "تعذر إرسال البريد عبر Resend. تحقق من إعدادات البريد ثم أعد المحاولة.",
+      };
+    }
+  }
+
   const gmailUser = process.env.GMAIL_USER?.trim();
   const gmailAppPassword = (
     process.env.GMAIL_APP_PASSWORD ||
@@ -34,7 +82,7 @@ async function sendApprovalEmail(
   if (!gmailUser || !gmailAppPassword) {
     return {
       emailSent: false,
-      emailMessage: "إعدادات بريد Gmail غير مكتملة على الخادم.",
+      emailMessage: "البريد لم يُرسل. أضف RESEND_API_KEY وRESEND_FROM_EMAIL إلى إعدادات الخادم.",
     };
   }
   if (gmailAppPassword.length !== 16) {
@@ -56,7 +104,7 @@ async function sendApprovalEmail(
       from: gmailUser,
       to: email,
       subject: "تم قبول طلب انضمامك إلى مبادرة تسامي",
-      html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#382a20"><h2 style="color:#702632">مرحباً ${escapeHtml(name)} 🎉</h2><p style="font-size:16px;line-height:1.8">يسعدنا إبلاغك بأنه تمت الموافقة على طلب انضمامك إلى <strong style="color:#a27a37">مبادرة تسامي التطوعية</strong>.</p><p style="font-size:16px;line-height:1.8">لإكمال إجراءات الانتساب، يرجى تعبئة نموذج الانتساب الرسمي من الرابط التالي:</p><p style="margin:28px 0"><a href="${enrollmentFormUrl}" style="display:inline-block;background:#702632;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold">تعبئة نموذج الانتساب</a></p><p style="font-size:14px;line-height:1.8;color:#666">إذا لم يظهر الزر، انسخ هذا الرابط وافتحه في المتصفح:<br><a href="${enrollmentFormUrl}" dir="ltr">${enrollmentFormUrl}</a></p><p style="font-size:14px;color:#888;margin-top:30px">فريق مبادرة تسامي</p></div>`,
+      html,
     });
     console.log("Approval email sent to:", email);
     return { emailSent: true };
@@ -79,7 +127,14 @@ router.get("/join-requests", authMiddleware, requireRole("secretary"), async (re
 
 router.post("/join-requests", async (req, res): Promise<void> => {
   const { name, email, phone, message, departmentId } = req.body;
-  if (!name || !email || !Number.isSafeInteger(departmentId) || departmentId < 1) {
+  if (
+    typeof name !== "string" ||
+    !name.trim() ||
+    typeof email !== "string" ||
+    !email.trim() ||
+    !Number.isSafeInteger(departmentId) ||
+    departmentId < 1
+  ) {
     res.status(400).json({ error: "Name, email, and a valid department are required" });
     return;
   }
@@ -93,7 +148,13 @@ router.post("/join-requests", async (req, res): Promise<void> => {
   }
   const [request] = await db
     .insert(joinRequestsTable)
-    .values({ name, email, phone, message, departmentId })
+    .values({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      phone,
+      message,
+      departmentId,
+    })
     .returning();
   res.status(201).json(request);
 });
@@ -114,13 +175,95 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("secretary"), asy
     res.status(400).json({ error: "Status must be approved or rejected" });
     return;
   }
-  const [updated] = await db.update(joinRequestsTable).set({ status }).where(eq(joinRequestsTable.id, id)).returning();
+  if (!Number.isSafeInteger(id) || id < 1) {
+    res.status(400).json({ error: "Invalid join request ID" });
+    return;
+  }
+
+  let passwordSetupToken: string | undefined;
+  let hasExistingAccount = false;
+  const updated = await db.transaction(async (tx) => {
+    const [request] = await tx
+      .select()
+      .from(joinRequestsTable)
+      .where(eq(joinRequestsTable.id, id));
+    if (!request) return null;
+
+    const [updatedRequest] = await tx
+      .update(joinRequestsTable)
+      .set({ status })
+      .where(eq(joinRequestsTable.id, id))
+      .returning();
+
+    if (status !== "approved") return updatedRequest;
+
+    const normalizedEmail = request.email.trim().toLowerCase();
+    const [existingUser] = await tx
+      .select()
+      .from(usersTable)
+      .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`);
+
+    let user = existingUser;
+    if (!user) {
+      const temporaryPassword = randomBytes(32).toString("hex");
+      const passwordHash = await hashPassword(temporaryPassword);
+      const [createdUser] = await tx
+        .insert(usersTable)
+        .values({
+          name: request.name,
+          email: normalizedEmail,
+          passwordHash,
+          role: "member",
+          phone: request.phone,
+          departmentId: request.departmentId,
+          isActive: false,
+        })
+        .returning();
+      user = createdUser;
+
+      const membershipNumber = `TSM-${String(Date.now()).slice(-6)}-${nanoid(4).toUpperCase()}`;
+      await tx.insert(membersTable).values({
+        userId: user.id,
+        departmentId: request.departmentId,
+        membershipNumber,
+        status: "active",
+        qrCode: `TSM-QR-${nanoid(12)}`,
+      });
+    }
+
+    if (user.role === "member" && !user.isActive) {
+      passwordSetupToken = signPasswordSetupToken({
+        userId: user.id,
+        email: user.email,
+        purpose: "password_setup",
+      });
+    } else {
+      hasExistingAccount = true;
+    }
+
+    return updatedRequest;
+  });
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   let emailResult: { emailSent: boolean; emailMessage?: string } = { emailSent: false };
   if (status === "approved") {
-    emailResult = await sendApprovalEmail(updated.name, updated.email);
+    const appBaseUrl =
+      process.env.APP_BASE_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "https://tassami-portal.onrender.com"
+        : "http://localhost:4173");
+    const passwordSetupUrl = passwordSetupToken
+      ? new URL(
+          `/set-password?token=${encodeURIComponent(passwordSetupToken)}`,
+          appBaseUrl,
+        ).toString()
+      : undefined;
+    emailResult = await sendApprovalEmail(
+      updated.name,
+      updated.email,
+      passwordSetupUrl,
+    );
   }
-  res.json({ ...updated, ...emailResult });
+  res.json({ ...updated, ...emailResult, hasExistingAccount });
 });
 
 export default router;

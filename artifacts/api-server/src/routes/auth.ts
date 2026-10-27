@@ -1,11 +1,56 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { signToken, comparePassword, authMiddleware } from "../lib/auth";
+import { and, eq } from "drizzle-orm";
+import {
+  signToken,
+  comparePassword,
+  hashPassword,
+  authMiddleware,
+  verifyPasswordSetupToken,
+} from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
 import type { Request } from "express";
 
 const router: IRouter = Router();
+
+router.post("/auth/set-password", async (req, res): Promise<void> => {
+  const { token, password } = req.body;
+  if (typeof token !== "string" || typeof password !== "string") {
+    res.status(400).json({ error: "A setup token and password are required" });
+    return;
+  }
+  if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+    res.status(400).json({
+      error: "Password must be at least 12 characters and no more than 72 UTF-8 bytes",
+    });
+    return;
+  }
+
+  const setupPayload = verifyPasswordSetupToken(token);
+  if (!setupPayload) {
+    res.status(400).json({ error: "This password setup link is invalid or expired" });
+    return;
+  }
+
+  const passwordHash = await hashPassword(password);
+  const [user] = await db
+    .update(usersTable)
+    .set({ passwordHash, isActive: true })
+    .where(
+      and(
+        eq(usersTable.id, setupPayload.userId),
+        eq(usersTable.email, setupPayload.email),
+        eq(usersTable.isActive, false),
+      ),
+    )
+    .returning({ id: usersTable.id });
+  if (!user) {
+    res.status(400).json({ error: "This password setup link has already been used" });
+    return;
+  }
+
+  res.json({ ok: true });
+});
 
 router.post("/auth/login", async (req, res): Promise<void> => {
   const { email, password } = req.body;
@@ -21,7 +66,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     .from(usersTable)
     .where(eq(usersTable.email, email));
 
-  if (!user) {
+  if (!user || !user.isActive) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }

@@ -46,6 +46,12 @@ Remove-Item Env:DATABASE_URL, Env:BOOTSTRAP_ADMIN_EMAIL, Env:BOOTSTRAP_ADMIN_PAS
 
 The bootstrap script only creates an administrator if the users table is empty. Sign in at `/login`, then add other administrators from the site administration tools.
 
+### Approval email and password setup
+
+When an administrator approves a website join request, the site creates a volunteer account and active department membership. The applicant receives the official membership form and a single-use password setup link that expires after 24 hours. They choose their own password; the site never emails a password. If delivery fails, the account remains inactive and an administrator can use **Resend Link** on the approved request.
+
+Configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in the Render service's environment settings. The sender must be verified with Resend. The HTTP API works on Render's free web-service plan. `APP_BASE_URL` should match the public site URL. Gmail SMTP is retained as a fallback for compatible paid hosts, but Render's free web services block outbound SMTP.
+
 ### Environment variables
 
-The Blueprint generates `SESSION_SECRET` and connects `DATABASE_URL` to the Render database. Set `GMAIL_USER` and `GMAIL_APP_PASSWORD` in the Render dashboard if email notifications are needed. Do not place credentials in the repository. Rotate any app password that was previously shared.
+The Blueprint generates `SESSION_SECRET` and connects `DATABASE_URL` to the Render database. Set mail-provider secrets only in the Render dashboard; do not place credentials in the repository. Rotate any app password that was previously shared.

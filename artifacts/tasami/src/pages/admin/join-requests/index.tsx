@@ -32,7 +32,7 @@ export default function AdminJoinRequests() {
               title: t("تم قبول الطلب، لكن لم يُرسل البريد"),
               description:
                 result.emailMessage ||
-                t("تحقق من إعدادات Gmail على الخادم، ثم أعد إرسال رسالة القبول."),
+                t("تحقق من إعدادات البريد على الخادم، ثم أعد إرسال رابط القبول."),
               variant: "destructive",
             });
           } else {
@@ -55,7 +55,7 @@ export default function AdminJoinRequests() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-primary">{t("طلبات الانضمام")}</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          {t("طلبات نموذج الموقع تظهر هنا للمراجعة؛ وعند القبول يُرسل للمتقدم رابط نموذج الانتساب الرسمي.")}
+          {t("طلبات نموذج الموقع تظهر هنا للمراجعة؛ وعند القبول يُنشأ حساب للمتقدم ويُرسل رابط إنشاء كلمة المرور ونموذج الانتساب.")}
         </p>
       </div>
 

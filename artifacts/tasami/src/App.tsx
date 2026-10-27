@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 
 import Home from "@/pages/home";
 import Login from "@/pages/login";
+import SetPassword from "@/pages/set-password";
 import LocalAdmin from "@/pages/local-admin";
 import About from "@/pages/about";
 import Initiative from "@/pages/initiative";
@@ -52,6 +53,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/login" component={Login} />
+      <Route path="/set-password" component={SetPassword} />
       {import.meta.env.DEV && <Route path="/local-admin" component={LocalAdmin} />}
       <Route path="/about" component={About} />
       <Route path="/initiative" component={Initiative} />
