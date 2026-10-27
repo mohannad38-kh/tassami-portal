@@ -97,6 +97,11 @@ export default function Login() {
             <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
               {loginMutation.isPending ? t("جاري الدخول...") : t("دخول")}
             </Button>
+            <div className="text-center">
+              <Link href="/forgot-password" className="text-sm text-muted-foreground underline">
+                {t("نسيت كلمة المرور؟")}
+              </Link>
+            </div>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center border-t p-4">

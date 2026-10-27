@@ -50,7 +50,7 @@ The bootstrap script only creates an administrator if the users table is empty. 
 
 Applicants choose a password when submitting a join request. The site stores only its password hash and keeps the account inactive until an administrator approves the request. After approval, the applicant can sign in with the same email and password; while the request is pending, login explains that approval is still required. A membership confirmation email is optional and requires a configured mail provider.
 
-Configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in the Render service's environment settings to send approval emails. The sender must be verified with Resend. The HTTP API works on Render's free web-service plan. Gmail SMTP is retained as a fallback for compatible paid hosts, but Render's free web services block outbound SMTP.
+Configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in the Render service's environment settings to send approval and password-recovery emails. The sender must be verified with Resend. The HTTP API works on Render's free web-service plan. Gmail SMTP is retained as a fallback for compatible paid hosts, but Render's free web services block outbound SMTP.
 
 To grant a specific existing account access only to review and approve join requests, add its email to the comma-separated `JOIN_REQUEST_MANAGER_EMAILS` environment variable. This does not grant access to other administration features.
 

@@ -1,18 +1,137 @@
 import { Router, type IRouter } from "express";
 import { db, joinRequestsTable, usersTable } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
+import { Resend } from "resend";
 import {
   signToken,
   comparePassword,
   hashPassword,
   authMiddleware,
   verifyPasswordSetupToken,
+  signPasswordResetToken,
+  verifyPasswordResetToken,
+  passwordVersion,
   effectiveRole,
 } from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
 import type { Request } from "express";
 
 const router: IRouter = Router();
+
+router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
+  const email = typeof req.body?.email === "string"
+    ? req.body.email.trim().toLowerCase()
+    : "";
+  if (!email) {
+    res.status(400).json({ error: "Email is required" });
+    return;
+  }
+
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    res.status(503).json({ error: "Password reset email is not configured" });
+    return;
+  }
+
+  const [user] = await db
+    .select({
+      id: usersTable.id,
+      email: usersTable.email,
+      isActive: usersTable.isActive,
+      passwordHash: usersTable.passwordHash,
+    })
+    .from(usersTable)
+    .where(sql`lower(${usersTable.email}) = ${email}`);
+  if (!user?.isActive) {
+    res.json({ ok: true });
+    return;
+  }
+
+  const appBaseUrl = process.env.APP_BASE_URL || "https://tassami-portal.onrender.com";
+  const token = signPasswordResetToken({
+    userId: user.id,
+    email: user.email,
+    purpose: "password_reset",
+    passwordHash: user.passwordHash,
+  });
+  const resetUrl = new URL(
+    `/reset-password?token=${encodeURIComponent(token)}`,
+    appBaseUrl,
+  ).toString();
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from: process.env.RESEND_FROM_EMAIL?.trim() || "onboarding@resend.dev",
+    to: user.email,
+    subject: "رابط إعادة تعيين كلمة مرور حساب تسامي",
+    html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#382a20"><h2 style="color:#702632">إعادة تعيين كلمة المرور</h2><p style="font-size:16px;line-height:1.8">وصلنا طلب لإعادة تعيين كلمة مرور حسابك. استخدم الرابط التالي خلال ساعة واحدة:</p><p style="margin:28px 0"><a href="${resetUrl}" style="display:inline-block;background:#702632;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold">تعيين كلمة مرور جديدة</a></p><p style="font-size:14px;color:#666">إذا لم تطلب إعادة التعيين، تجاهل هذه الرسالة.</p></div>`,
+  });
+  if (error) {
+    console.error("Failed to send password reset email:", error.message);
+  }
+
+  res.json({ ok: true });
+});
+
+router.post("/auth/password-reset/confirm", async (req, res): Promise<void> => {
+  const { token, password } = req.body;
+  if (typeof token !== "string" || typeof password !== "string") {
+    res.status(400).json({ error: "A reset token and password are required" });
+    return;
+  }
+  if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+    res.status(400).json({
+      error: "Password must be at least 12 characters and no more than 72 UTF-8 bytes",
+    });
+    return;
+  }
+
+  const resetPayload = verifyPasswordResetToken(token);
+  if (!resetPayload) {
+    res.status(400).json({ error: "This password reset link is invalid or expired" });
+    return;
+  }
+
+  const [currentUser] = await db
+    .select({
+      id: usersTable.id,
+      passwordHash: usersTable.passwordHash,
+    })
+    .from(usersTable)
+    .where(
+      and(
+        eq(usersTable.id, resetPayload.userId),
+        eq(usersTable.email, resetPayload.email),
+        eq(usersTable.isActive, true),
+      ),
+    );
+  if (
+    !currentUser ||
+    passwordVersion(currentUser.passwordHash) !== resetPayload.passwordVersion
+  ) {
+    res.status(400).json({ error: "This password reset link is invalid or expired" });
+    return;
+  }
+
+  const passwordHash = await hashPassword(password);
+  const [updatedUser] = await db
+    .update(usersTable)
+    .set({ passwordHash })
+    .where(
+      and(
+        eq(usersTable.id, resetPayload.userId),
+        eq(usersTable.email, resetPayload.email),
+        eq(usersTable.isActive, true),
+        eq(usersTable.passwordHash, currentUser.passwordHash),
+      ),
+    )
+    .returning({ id: usersTable.id });
+  if (!updatedUser) {
+    res.status(400).json({ error: "This password reset link is invalid or expired" });
+    return;
+  }
+
+  res.json({ ok: true });
+});
 
 router.post("/auth/set-password", async (req, res): Promise<void> => {
   const { token, password } = req.body;

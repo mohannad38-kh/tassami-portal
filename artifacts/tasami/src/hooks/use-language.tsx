@@ -205,6 +205,31 @@ const translations: Record<string, string> = {
   "الإجراء": "Action",
   "أدخل البريد الإلكتروني وكلمة المرور للوصول لحسابك":
     "Enter your email and password to access your account",
+  "نسيت كلمة المرور؟": "Forgot password?",
+  "استعادة كلمة المرور": "Password recovery",
+  "أدخل بريد حسابك لإرسال رابط آمن لإعادة تعيين كلمة المرور.":
+    "Enter your account email to receive a secure password reset link.",
+  "إذا كان البريد مرتبطاً بحساب نشط، فستصلك رسالة برابط صالح لمدة ساعة.":
+    "If this email belongs to an active account, you will receive a link valid for one hour.",
+  "جارٍ إرسال الرابط...": "Sending link...",
+  "إرسال رابط الاستعادة": "Send recovery link",
+  "العودة لتسجيل الدخول": "Back to sign in",
+  "استعادة كلمة المرور غير مفعّلة حالياً. تواصل مع إدارة الموقع.":
+    "Password recovery is not enabled yet. Contact the site administrator.",
+  "تعذر إرسال رابط الاستعادة. حاول مرة أخرى لاحقاً.":
+    "Could not send the recovery link. Please try again later.",
+  "تعيين كلمة مرور جديدة": "Set a new password",
+  "تم تغيير كلمة المرور": "Password changed",
+  "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.":
+    "You can now sign in with your new password.",
+  "اختر كلمة مرور لا تقل عن 12 حرفاً. رابط الاستعادة صالح لمدة ساعة.":
+    "Choose a password with at least 12 characters. The recovery link is valid for one hour.",
+  "رابط الاستعادة غير صالح أو انتهت صلاحيته. اطلب رابطاً جديداً.":
+    "This recovery link is invalid or expired. Request a new link.",
+  "تعذر تغيير كلمة المرور. اطلب رابطاً جديداً.":
+    "Could not change your password. Request a new link.",
+  "جارٍ تغيير كلمة المرور...": "Changing password...",
+  "حفظ كلمة المرور الجديدة": "Save new password",
   "كلمة المرور": "Password",
   "بيانات الدخول غير صحيحة": "Incorrect email or password",
   "جاري الدخول...": "Signing in...",

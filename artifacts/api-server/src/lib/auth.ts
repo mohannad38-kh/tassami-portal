@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import type { Request, Response, NextFunction } from "express";
@@ -22,6 +23,13 @@ export interface PasswordSetupPayload {
   purpose: "password_setup";
 }
 
+export interface PasswordResetPayload {
+  userId: number;
+  email: string;
+  purpose: "password_reset";
+  passwordVersion: string;
+}
+
 export function signToken(payload: JwtPayload): string {
   return jwt.sign(payload, signingSecret, { expiresIn: "7d" });
 }
@@ -32,27 +40,71 @@ export function signPasswordSetupToken(
   return jwt.sign(payload, signingSecret, { expiresIn: "24h" });
 }
 
+export function signPasswordResetToken(
+  payload: Omit<PasswordResetPayload, "passwordVersion"> & { passwordHash: string },
+): string {
+  return jwt.sign(
+    {
+      userId: payload.userId,
+      email: payload.email,
+      purpose: payload.purpose,
+      passwordVersion: passwordVersion(payload.passwordHash),
+    },
+    signingSecret,
+    { expiresIn: "1h" },
+  );
+}
+
 export function verifyPasswordSetupToken(
   token: string,
 ): PasswordSetupPayload | null {
+  const payload = verifyPasswordToken(token, "password_setup");
+  return payload ? { ...payload, purpose: "password_setup" } : null;
+}
+
+export function verifyPasswordResetToken(
+  token: string,
+): PasswordResetPayload | null {
+  const payload = verifyPasswordToken(token, "password_reset");
+  if (!payload || typeof payload.passwordVersion !== "string") {
+    return null;
+  }
+  return {
+    userId: payload.userId,
+    email: payload.email,
+    purpose: "password_reset",
+    passwordVersion: payload.passwordVersion,
+  };
+}
+
+function verifyPasswordToken(
+  token: string,
+  purpose: PasswordSetupPayload["purpose"] | PasswordResetPayload["purpose"],
+): { userId: number; email: string; passwordVersion?: string } | null {
   try {
     const payload = jwt.verify(token, signingSecret);
     if (
       typeof payload === "string" ||
       typeof payload.userId !== "number" ||
       typeof payload.email !== "string" ||
-      payload.purpose !== "password_setup"
+      payload.purpose !== purpose
     ) {
       return null;
     }
     return {
       userId: payload.userId,
       email: payload.email,
-      purpose: "password_setup",
+      ...(typeof payload.passwordVersion === "string"
+        ? { passwordVersion: payload.passwordVersion }
+        : {}),
     };
   } catch {
     return null;
   }
+}
+
+export function passwordVersion(passwordHash: string): string {
+  return createHmac("sha256", signingSecret).update(passwordHash).digest("hex");
 }
 
 export function verifyToken(token: string): JwtPayload {
