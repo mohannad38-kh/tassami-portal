@@ -14,18 +14,29 @@ The free web service sleeps after inactivity. The free PostgreSQL database expir
 
 ### Initialize the database and first administrator
 
-After Render creates the database, copy its **external** connection string from the database dashboard. In a local PowerShell window at the repository root, set the connection string as an environment variable and apply the schema to the new, empty database:
+After Render creates the database, copy its **external** connection string from the database dashboard. In a local PowerShell window at the repository root, load it from the clipboard and add the TLS requirement Render expects:
 
 ```powershell
-$env:DATABASE_URL = "paste-the-external-connection-string-here"
+$databaseUrl = Get-Clipboard -Raw
+if ($databaseUrl -notmatch '[?&]sslmode=') {
+  $databaseUrl += $(if ($databaseUrl.Contains('?')) { '&' } else { '?' }) + 'sslmode=require'
+}
+$env:DATABASE_URL = $databaseUrl
+Remove-Variable databaseUrl
 pnpm --filter @workspace/db run push-force
 ```
 
 Only use `push-force` on this new, empty test database. It may apply destructive schema changes if used later against a database containing data.
 
-Then create the first administrator. Use a unique password of at least 12 characters; do not commit it or send it in chat:
+Then copy the external connection string again and create the first administrator. Use a unique password of at least 12 characters; do not commit it or send it in chat:
 
 ```powershell
+$databaseUrl = Get-Clipboard -Raw
+if ($databaseUrl -notmatch '[?&]sslmode=') {
+  $databaseUrl += $(if ($databaseUrl.Contains('?')) { '&' } else { '?' }) + 'sslmode=require'
+}
+$env:DATABASE_URL = $databaseUrl
+Remove-Variable databaseUrl
 $env:BOOTSTRAP_ADMIN_EMAIL = "your-admin-email@example.com"
 $env:BOOTSTRAP_ADMIN_PASSWORD = "choose-a-unique-password"
 node artifacts/api-server/scripts/bootstrap-admin.mjs
