@@ -1,0 +1,2524 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Tasami Initiative Management Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management
+  - name: departments
+    description: Department management
+  - name: members
+    description: Member management
+  - name: events
+    description: Event management
+  - name: workshops
+    description: Workshop management
+  - name: certificates
+    description: Certificate management
+  - name: volunteer
+    description: Volunteer hours
+  - name: meetings
+    description: Meeting management
+  - name: tasks
+    description: Task management
+  - name: news
+    description: News management
+  - name: announcements
+    description: Announcement management
+  - name: partners
+    description: Partner management
+  - name: gallery
+    description: Gallery management
+  - name: join
+    description: Join requests
+  - name: dashboard
+    description: Dashboard statistics
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ─── AUTH ──────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: OK
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChangePasswordInput"
+      responses:
+        "200":
+          description: OK
+
+  # ─── USERS ─────────────────────────────────────────────────────────────────
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List users
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+        - in: query
+          name: departmentId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+    post:
+      operationId: createUser
+      tags: [users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete user
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── DEPARTMENTS ───────────────────────────────────────────────────────────
+  /departments:
+    get:
+      operationId: listDepartments
+      tags: [departments]
+      summary: List departments
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+    post:
+      operationId: createDepartment
+      tags: [departments]
+      summary: Create department
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+
+  /departments/{id}:
+    get:
+      operationId: getDepartment
+      tags: [departments]
+      summary: Get department
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+    patch:
+      operationId: updateDepartment
+      tags: [departments]
+      summary: Update department
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DepartmentUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Department"
+    delete:
+      operationId: deleteDepartment
+      tags: [departments]
+      summary: Delete department
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /departments/{id}/members:
+    get:
+      operationId: getDepartmentMembers
+      tags: [departments]
+      summary: Get department members
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+
+  # ─── MEMBERS ───────────────────────────────────────────────────────────────
+  /members:
+    get:
+      operationId: listMembers
+      tags: [members]
+      summary: List members
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: departmentId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+    post:
+      operationId: createMember
+      tags: [members]
+      summary: Create member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+
+  /members/{id}:
+    get:
+      operationId: getMember
+      tags: [members]
+      summary: Get member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+    patch:
+      operationId: updateMember
+      tags: [members]
+      summary: Update member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemberUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+    delete:
+      operationId: deleteMember
+      tags: [members]
+      summary: Delete member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /members/{id}/approve:
+    post:
+      operationId: approveMember
+      tags: [members]
+      summary: Approve member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+
+  /members/{id}/reject:
+    post:
+      operationId: rejectMember
+      tags: [members]
+      summary: Reject member
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+
+  # ─── JOIN REQUESTS ─────────────────────────────────────────────────────────
+  /join-requests:
+    get:
+      operationId: listJoinRequests
+      tags: [join]
+      summary: List join requests
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/JoinRequest"
+    post:
+      operationId: submitJoinRequest
+      tags: [join]
+      summary: Submit join request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRequestInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+
+  /join-requests/{id}:
+    get:
+      operationId: getJoinRequest
+      tags: [join]
+      summary: Get join request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequest"
+    patch:
+      operationId: updateJoinRequest
+      tags: [join]
+      summary: Update join request status
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinRequestUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinRequestUpdateResponse"
+
+  # ─── EVENTS ────────────────────────────────────────────────────────────────
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List events
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Create event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{id}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+    delete:
+      operationId: deleteEvent
+      tags: [events]
+      summary: Delete event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /events/{id}/register:
+    post:
+      operationId: registerForEvent
+      tags: [events]
+      summary: Register for event
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventRegistrationInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRegistration"
+
+  /events/{id}/registrations:
+    get:
+      operationId: listEventRegistrations
+      tags: [events]
+      summary: List event registrations
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventRegistration"
+
+  /events/{id}/attendance:
+    post:
+      operationId: recordEventAttendance
+      tags: [events]
+      summary: Record attendance via QR
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceInput"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRegistration"
+
+  # ─── WORKSHOPS ─────────────────────────────────────────────────────────────
+  /workshops:
+    get:
+      operationId: listWorkshops
+      tags: [workshops]
+      summary: List workshops
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workshop"
+    post:
+      operationId: createWorkshop
+      tags: [workshops]
+      summary: Create workshop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkshopInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workshop"
+
+  /workshops/{id}:
+    get:
+      operationId: getWorkshop
+      tags: [workshops]
+      summary: Get workshop
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workshop"
+    patch:
+      operationId: updateWorkshop
+      tags: [workshops]
+      summary: Update workshop
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkshopUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workshop"
+    delete:
+      operationId: deleteWorkshop
+      tags: [workshops]
+      summary: Delete workshop
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /workshops/{id}/register:
+    post:
+      operationId: registerForWorkshop
+      tags: [workshops]
+      summary: Register for workshop
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkshopRegistrationInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkshopRegistration"
+
+  /workshops/{id}/registrations:
+    get:
+      operationId: listWorkshopRegistrations
+      tags: [workshops]
+      summary: List workshop registrations
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WorkshopRegistration"
+
+  /workshops/{id}/evaluate:
+    post:
+      operationId: evaluateWorkshop
+      tags: [workshops]
+      summary: Evaluate workshop
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WorkshopEvaluationInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkshopEvaluation"
+
+  # ─── TRAINERS ──────────────────────────────────────────────────────────────
+  /trainers:
+    get:
+      operationId: listTrainers
+      tags: [workshops]
+      summary: List trainers
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trainer"
+    post:
+      operationId: createTrainer
+      tags: [workshops]
+      summary: Create trainer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrainerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trainer"
+
+  /trainers/{id}:
+    patch:
+      operationId: updateTrainer
+      tags: [workshops]
+      summary: Update trainer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrainerUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trainer"
+    delete:
+      operationId: deleteTrainer
+      tags: [workshops]
+      summary: Delete trainer
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── CERTIFICATES ──────────────────────────────────────────────────────────
+  /certificates:
+    get:
+      operationId: listCertificates
+      tags: [certificates]
+      summary: List certificates
+      parameters:
+        - in: query
+          name: memberId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Certificate"
+
+  /certificates/{id}:
+    get:
+      operationId: getCertificate
+      tags: [certificates]
+      summary: Get certificate
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+
+  /certificates/verify/{code}:
+    get:
+      operationId: verifyCertificate
+      tags: [certificates]
+      summary: Verify certificate by QR code
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+        "404":
+          description: Not found
+
+  # ─── VOLUNTEER HOURS ───────────────────────────────────────────────────────
+  /volunteer-hours:
+    get:
+      operationId: listVolunteerHours
+      tags: [volunteer]
+      summary: List volunteer hours
+      parameters:
+        - in: query
+          name: memberId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VolunteerHour"
+    post:
+      operationId: logVolunteerHours
+      tags: [volunteer]
+      summary: Log volunteer hours
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VolunteerHourInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VolunteerHour"
+
+  /volunteer-hours/summary:
+    get:
+      operationId: getVolunteerSummary
+      tags: [volunteer]
+      summary: Get volunteer hours summary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VolunteerSummary"
+
+  # ─── MEETINGS ──────────────────────────────────────────────────────────────
+  /meetings:
+    get:
+      operationId: listMeetings
+      tags: [meetings]
+      summary: List meetings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Meeting"
+    post:
+      operationId: createMeeting
+      tags: [meetings]
+      summary: Create meeting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+
+  /meetings/{id}:
+    get:
+      operationId: getMeeting
+      tags: [meetings]
+      summary: Get meeting
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+    patch:
+      operationId: updateMeeting
+      tags: [meetings]
+      summary: Update meeting
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MeetingUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Meeting"
+    delete:
+      operationId: deleteMeeting
+      tags: [meetings]
+      summary: Delete meeting
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── TASKS ─────────────────────────────────────────────────────────────────
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List tasks
+      parameters:
+        - in: query
+          name: assignedTo
+          schema:
+            type: integer
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Create task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
+  /tasks/{id}:
+    get:
+      operationId: getTask
+      tags: [tasks]
+      summary: Get task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    patch:
+      operationId: updateTask
+      tags: [tasks]
+      summary: Update task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    delete:
+      operationId: deleteTask
+      tags: [tasks]
+      summary: Delete task
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── NEWS ──────────────────────────────────────────────────────────────────
+  /news:
+    get:
+      operationId: listNews
+      tags: [news]
+      summary: List news
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+    post:
+      operationId: createNews
+      tags: [news]
+      summary: Create news
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsItem"
+
+  /news/{id}:
+    get:
+      operationId: getNewsItem
+      tags: [news]
+      summary: Get news item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsItem"
+    patch:
+      operationId: updateNews
+      tags: [news]
+      summary: Update news
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsItem"
+    delete:
+      operationId: deleteNews
+      tags: [news]
+      summary: Delete news
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [announcements]
+      summary: List announcements
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Create announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /announcements/{id}:
+    patch:
+      operationId: updateAnnouncement
+      tags: [announcements]
+      summary: Update announcement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      summary: Delete announcement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── PARTNERS ──────────────────────────────────────────────────────────────
+  /partners:
+    get:
+      operationId: listPartners
+      tags: [partners]
+      summary: List partners
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Partner"
+    post:
+      operationId: createPartner
+      tags: [partners]
+      summary: Create partner
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+
+  /partners/{id}:
+    patch:
+      operationId: updatePartner
+      tags: [partners]
+      summary: Update partner
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartnerUpdate"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Partner"
+    delete:
+      operationId: deletePartner
+      tags: [partners]
+      summary: Delete partner
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── GALLERY ───────────────────────────────────────────────────────────────
+  /gallery:
+    get:
+      operationId: listGallery
+      tags: [gallery]
+      summary: List gallery items
+      parameters:
+        - in: query
+          name: eventId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GalleryItem"
+    post:
+      operationId: createGalleryItem
+      tags: [gallery]
+      summary: Create gallery item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GalleryInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GalleryItem"
+
+  /gallery/{id}:
+    delete:
+      operationId: deleteGalleryItem
+      tags: [gallery]
+      summary: Delete gallery item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ─── DASHBOARD ─────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/activity:
+    get:
+      operationId: getRecentActivity
+      tags: [dashboard]
+      summary: Get recent activity feed
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+
+  /dashboard/reports:
+    get:
+      operationId: getReports
+      tags: [dashboard]
+      summary: Get reports summary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportsSummary"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    # ─── AUTH ────────────────────────────────────────────────────────────────
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    ChangePasswordInput:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+
+    # ─── USERS ───────────────────────────────────────────────────────────────
+    User:
+      type: object
+      required: [id, name, email, role, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        phone:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        departmentId:
+          type: ["integer", "null"]
+        departmentName:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    UserInput:
+      type: object
+      required: [name, email, password, role]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        departmentId:
+          type: integer
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        phone:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+        isActive:
+          type: boolean
+
+    # ─── DEPARTMENTS ─────────────────────────────────────────────────────────
+    Department:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        headId:
+          type: ["integer", "null"]
+        headName:
+          type: ["string", "null"]
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    DepartmentInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        headId:
+          type: integer
+
+    DepartmentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        headId:
+          type: ["integer", "null"]
+
+    # ─── MEMBERS ─────────────────────────────────────────────────────────────
+    Member:
+      type: object
+      required: [id, userId, membershipNumber, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        userEmail:
+          type: string
+        userPhone:
+          type: ["string", "null"]
+        membershipNumber:
+          type: string
+        status:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+        departmentName:
+          type: ["string", "null"]
+        totalVolunteerHours:
+          type: number
+        qrCode:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    MemberInput:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: integer
+        departmentId:
+          type: integer
+
+    MemberUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+
+    # ─── JOIN REQUESTS ───────────────────────────────────────────────────────
+    JoinRequest:
+      type: object
+      required: [id, name, email, status, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: ["string", "null"]
+        message:
+          type: ["string", "null"]
+        departmentId:
+          type: ["integer", "null"]
+        departmentName:
+          type: ["string", "null"]
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    JoinRequestInput:
+      type: object
+      required: [name, email, departmentId]
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        message:
+          type: string
+        departmentId:
+          type: integer
+
+    JoinRequestUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    JoinRequestUpdateResponse:
+      allOf:
+        - $ref: "#/components/schemas/JoinRequest"
+        - type: object
+          required: [emailSent]
+          properties:
+            emailSent:
+              type: boolean
+            emailMessage:
+              type: string
+
+    # ─── EVENTS ──────────────────────────────────────────────────────────────
+    Event:
+      type: object
+      required: [id, title, eventDate, status, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        eventDate:
+          type: string
+          format: date-time
+        location:
+          type: ["string", "null"]
+        capacity:
+          type: ["integer", "null"]
+        registeredCount:
+          type: integer
+        status:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    EventInput:
+      type: object
+      required: [title, eventDate]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+        capacity:
+          type: integer
+        imageUrl:
+          type: string
+
+    EventUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+        capacity:
+          type: integer
+        status:
+          type: string
+        imageUrl:
+          type: string
+
+    EventRegistration:
+      type: object
+      required: [id, eventId, memberId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        eventId:
+          type: integer
+        memberId:
+          type: integer
+        memberName:
+          type: ["string", "null"]
+        status:
+          type: string
+        attended:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    EventRegistrationInput:
+      type: object
+      required: [memberId]
+      properties:
+        memberId:
+          type: integer
+
+    AttendanceInput:
+      type: object
+      required: [qrCode]
+      properties:
+        qrCode:
+          type: string
+
+    # ─── WORKSHOPS ───────────────────────────────────────────────────────────
+    Workshop:
+      type: object
+      required: [id, title, workshopDate, status, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        trainerId:
+          type: ["integer", "null"]
+        trainerName:
+          type: ["string", "null"]
+        workshopDate:
+          type: string
+          format: date-time
+        location:
+          type: ["string", "null"]
+        capacity:
+          type: ["integer", "null"]
+        registeredCount:
+          type: integer
+        status:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        averageRating:
+          type: ["number", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    WorkshopInput:
+      type: object
+      required: [title, workshopDate]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        trainerId:
+          type: integer
+        workshopDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+        capacity:
+          type: integer
+        imageUrl:
+          type: string
+
+    WorkshopUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        trainerId:
+          type: ["integer", "null"]
+        workshopDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+        capacity:
+          type: integer
+        status:
+          type: string
+        imageUrl:
+          type: string
+
+    WorkshopRegistration:
+      type: object
+      required: [id, workshopId, memberId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        workshopId:
+          type: integer
+        memberId:
+          type: integer
+        memberName:
+          type: ["string", "null"]
+        status:
+          type: string
+        attended:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    WorkshopRegistrationInput:
+      type: object
+      required: [memberId]
+      properties:
+        memberId:
+          type: integer
+
+    WorkshopEvaluation:
+      type: object
+      required: [id, workshopId, memberId, rating, createdAt]
+      properties:
+        id:
+          type: integer
+        workshopId:
+          type: integer
+        memberId:
+          type: integer
+        rating:
+          type: integer
+        comment:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    WorkshopEvaluationInput:
+      type: object
+      required: [memberId, rating]
+      properties:
+        memberId:
+          type: integer
+        rating:
+          type: integer
+        comment:
+          type: string
+
+    # ─── TRAINERS ────────────────────────────────────────────────────────────
+    Trainer:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        bio:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    TrainerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        bio:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+
+    TrainerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        bio:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        avatarUrl:
+          type: string
+
+    # ─── CERTIFICATES ────────────────────────────────────────────────────────
+    Certificate:
+      type: object
+      required: [id, type, recipientName, verifyCode, issuedAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        recipientId:
+          type: integer
+        recipientName:
+          type: string
+        eventId:
+          type: ["integer", "null"]
+        eventTitle:
+          type: ["string", "null"]
+        workshopId:
+          type: ["integer", "null"]
+        workshopTitle:
+          type: ["string", "null"]
+        verifyCode:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+
+    # ─── VOLUNTEER HOURS ─────────────────────────────────────────────────────
+    VolunteerHour:
+      type: object
+      required: [id, memberId, hours, activityDate, createdAt]
+      properties:
+        id:
+          type: integer
+        memberId:
+          type: integer
+        memberName:
+          type: ["string", "null"]
+        eventId:
+          type: ["integer", "null"]
+        eventTitle:
+          type: ["string", "null"]
+        hours:
+          type: number
+        description:
+          type: ["string", "null"]
+        activityDate:
+          type: string
+          format: date
+        createdAt:
+          type: string
+          format: date-time
+
+    VolunteerHourInput:
+      type: object
+      required: [memberId, hours, activityDate]
+      properties:
+        memberId:
+          type: integer
+        eventId:
+          type: integer
+        hours:
+          type: number
+        description:
+          type: string
+        activityDate:
+          type: string
+          format: date
+
+    VolunteerSummary:
+      type: object
+      required: [memberId, memberName, totalHours]
+      properties:
+        memberId:
+          type: integer
+        memberName:
+          type: string
+        totalHours:
+          type: number
+        eventCount:
+          type: integer
+
+    # ─── MEETINGS ────────────────────────────────────────────────────────────
+    Meeting:
+      type: object
+      required: [id, title, meetingDate, status, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        meetingDate:
+          type: string
+          format: date-time
+        location:
+          type: ["string", "null"]
+        agenda:
+          type: ["string", "null"]
+        minutes:
+          type: ["string", "null"]
+        decisions:
+          type: ["string", "null"]
+        status:
+          type: string
+        attendeeCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    MeetingInput:
+      type: object
+      required: [title, meetingDate]
+      properties:
+        title:
+          type: string
+        meetingDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+        agenda:
+          type: string
+
+    MeetingUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        meetingDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+        agenda:
+          type: string
+        minutes:
+          type: string
+        decisions:
+          type: string
+        status:
+          type: string
+
+    # ─── TASKS ───────────────────────────────────────────────────────────────
+    Task:
+      type: object
+      required: [id, title, status, progress, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        assignedTo:
+          type: ["integer", "null"]
+        assigneeName:
+          type: ["string", "null"]
+        createdBy:
+          type: ["integer", "null"]
+        dueDate:
+          type: ["string", "null"]
+        status:
+          type: string
+        progress:
+          type: integer
+        priority:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    TaskInput:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        assignedTo:
+          type: integer
+        dueDate:
+          type: string
+        priority:
+          type: string
+
+    TaskUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        assignedTo:
+          type: ["integer", "null"]
+        dueDate:
+          type: ["string", "null"]
+        status:
+          type: string
+        progress:
+          type: integer
+        priority:
+          type: string
+
+    # ─── NEWS ─────────────────────────────────────────────────────────────────
+    NewsItem:
+      type: object
+      required: [id, title, body, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        authorId:
+          type: ["integer", "null"]
+        authorName:
+          type: ["string", "null"]
+        publishedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    NewsInput:
+      type: object
+      required: [title, body]
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        imageUrl:
+          type: string
+
+    NewsUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        imageUrl:
+          type: string
+
+    # ─── ANNOUNCEMENTS ───────────────────────────────────────────────────────
+    Announcement:
+      type: object
+      required: [id, title, body, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        targetRole:
+          type: ["string", "null"]
+        authorId:
+          type: ["integer", "null"]
+        authorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    AnnouncementInput:
+      type: object
+      required: [title, body]
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        targetRole:
+          type: string
+
+    AnnouncementUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        targetRole:
+          type: string
+
+    # ─── PARTNERS ────────────────────────────────────────────────────────────
+    Partner:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        logoUrl:
+          type: ["string", "null"]
+        website:
+          type: ["string", "null"]
+        partnerType:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    PartnerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        logoUrl:
+          type: string
+        website:
+          type: string
+        partnerType:
+          type: string
+
+    PartnerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        logoUrl:
+          type: string
+        website:
+          type: string
+        partnerType:
+          type: string
+
+    # ─── GALLERY ─────────────────────────────────────────────────────────────
+    GalleryItem:
+      type: object
+      required: [id, imageUrl, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: ["string", "null"]
+        imageUrl:
+          type: string
+        eventId:
+          type: ["integer", "null"]
+        eventTitle:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    GalleryInput:
+      type: object
+      required: [imageUrl]
+      properties:
+        title:
+          type: string
+        imageUrl:
+          type: string
+        eventId:
+          type: integer
+
+    # ─── DASHBOARD ───────────────────────────────────────────────────────────
+    DashboardStats:
+      type: object
+      required: [totalMembers, totalEvents, totalWorkshops, totalDepartments, pendingRequests, totalVolunteerHours, upcomingEvents]
+      properties:
+        totalMembers:
+          type: integer
+        totalEvents:
+          type: integer
+        totalWorkshops:
+          type: integer
+        totalDepartments:
+          type: integer
+        pendingRequests:
+          type: integer
+        totalVolunteerHours:
+          type: number
+        upcomingEvents:
+          type: integer
+        activeTasks:
+          type: integer
+
+    ActivityItem:
+      type: object
+      required: [id, type, description, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        actorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    ReportsSummary:
+      type: object
+      required: [membersByDepartment, eventsByMonth, volunteerHoursByMember, attendanceRate]
+      properties:
+        membersByDepartment:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeptCount"
+        eventsByMonth:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthCount"
+        volunteerHoursByMember:
+          type: array
+          items:
+            $ref: "#/components/schemas/VolunteerSummary"
+        attendanceRate:
+          type: number
+
+    DeptCount:
+      type: object
+      required: [departmentName, count]
+      properties:
+        departmentName:
+          type: string
+        count:
+          type: integer
+
+    MonthCount:
+      type: object
+      required: [month, count]
+      properties:
+        month:
+          type: string
+        count:
+          type: integer
