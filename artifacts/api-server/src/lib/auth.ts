@@ -117,10 +117,23 @@ function joinRequestManagerEmails(): Set<string> {
   );
 }
 
+function superAdminEmails(): Set<string> {
+  return new Set(
+    (process.env.SUPER_ADMIN_EMAILS ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
 export function effectiveRole(user: Pick<JwtPayload, "email" | "role">): string {
+  const email = user.email.trim().toLowerCase();
+  if (superAdminEmails().has(email)) {
+    return "super_admin";
+  }
   if (
     (ROLE_HIERARCHY[user.role] ?? -1) < ROLE_HIERARCHY.join_manager &&
-    joinRequestManagerEmails().has(user.email.trim().toLowerCase())
+    joinRequestManagerEmails().has(email)
   ) {
     return "join_manager";
   }
