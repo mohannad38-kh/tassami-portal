@@ -11,6 +11,7 @@ import Login from "@/pages/login";
 import SetPassword from "@/pages/set-password";
 import ForgotPassword from "@/pages/forgot-password";
 import PasswordReset from "@/pages/password-reset";
+import AdminSetup from "@/pages/admin-setup";
 import LocalAdmin from "@/pages/local-admin";
 import About from "@/pages/about";
 import Initiative from "@/pages/initiative";
@@ -58,6 +59,7 @@ function Router() {
       <Route path="/set-password" component={SetPassword} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={PasswordReset} />
+      <Route path="/admin-setup" component={AdminSetup} />
       {import.meta.env.DEV && <Route path="/local-admin" component={LocalAdmin} />}
       <Route path="/about" component={About} />
       <Route path="/initiative" component={Initiative} />

@@ -220,6 +220,19 @@ const translations: Record<string, string> = {
     "Could not send the recovery link. Please try again later.",
   "تعذر إرسال الرسالة. تحقق من مفتاح Resend وعنوان المرسل الموثق.":
     "Could not send the email. Check the Resend API key and verified sender address.",
+  "تهيئة حساب المدير": "Set Up Administrator Account",
+  "هذه الخطوة تحتاج رمزاً سرياً مضبوطاً في Render، وتعمل فقط للبريد المحدد كمدير أعلى.":
+    "This step requires a secret token set in Render and only works for an email configured as a super administrator.",
+  "رمز الإعداد السري": "Private setup token",
+  "كلمة مرور جديدة": "New password",
+  "كلمتا المرور غير متطابقتين.": "The passwords do not match.",
+  "تعذر إنشاء الحساب. تحقق من البريد ورمز الإعداد أو من إعدادات Render.":
+    "Could not create the account. Check the email, setup token, or Render settings.",
+  "تم إنشاء الحساب. احذف ADMIN_BOOTSTRAP_TOKEN من Render ثم سجّل الدخول.":
+    "The account was created. Remove ADMIN_BOOTSTRAP_TOKEN from Render, then sign in.",
+  "الذهاب لتسجيل الدخول": "Go to log in",
+  "جارٍ إنشاء الحساب...": "Creating account...",
+  "إنشاء حساب المدير": "Create administrator account",
   "تعيين كلمة مرور جديدة": "Set a new password",
   "تم تغيير كلمة المرور": "Password changed",
   "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.":

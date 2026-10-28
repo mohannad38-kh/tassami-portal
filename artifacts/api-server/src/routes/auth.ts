@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, joinRequestsTable, usersTable } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
+import { timingSafeEqual } from "node:crypto";
 import { logger } from "../lib/logger";
 import {
   signToken,
@@ -18,6 +19,70 @@ import type { JwtPayload } from "../lib/auth";
 import type { Request } from "express";
 
 const router: IRouter = Router();
+
+router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
+  const { name, email, password, bootstrapToken } = req.body ?? {};
+  if (
+    typeof name !== "string" ||
+    !name.trim() ||
+    name.trim().length > 100 ||
+    typeof email !== "string" ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+    typeof password !== "string" ||
+    password.length < 12 ||
+    Buffer.byteLength(password, "utf8") > 72 ||
+    typeof bootstrapToken !== "string"
+  ) {
+    res.status(400).json({ error: "Enter valid setup details" });
+    return;
+  }
+
+  const configuredToken = process.env.ADMIN_BOOTSTRAP_TOKEN?.trim();
+  const providedToken = Buffer.from(bootstrapToken);
+  const expectedToken = Buffer.from(configuredToken ?? "");
+  if (
+    expectedToken.length < 32 ||
+    providedToken.length !== expectedToken.length ||
+    !timingSafeEqual(providedToken, expectedToken)
+  ) {
+    res.status(401).json({ error: "Administrator setup is unavailable" });
+    return;
+  }
+
+  const normalizedEmail = email.trim().toLowerCase();
+  if (effectiveRole({ email: normalizedEmail, role: "member" }) !== "super_admin") {
+    res.status(403).json({ error: "Administrator setup is unavailable" });
+    return;
+  }
+
+  const [existingUser] = await db
+    .select({ id: usersTable.id })
+    .from(usersTable)
+    .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`);
+  if (existingUser) {
+    res.status(409).json({ error: "An account already exists for this email" });
+    return;
+  }
+
+  const passwordHash = await hashPassword(password);
+  const [createdUser] = await db
+    .insert(usersTable)
+    .values({
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash,
+      role: "super_admin",
+      isActive: true,
+    })
+    .onConflictDoNothing({ target: usersTable.email })
+    .returning({ id: usersTable.id });
+  if (!createdUser) {
+    res.status(409).json({ error: "An account already exists for this email" });
+    return;
+  }
+  logger.info({ userId: createdUser.id }, "Initial administrator account created");
+  res.status(201).json({ ok: true });
+});
 
 router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
   const email = typeof req.body?.email === "string"

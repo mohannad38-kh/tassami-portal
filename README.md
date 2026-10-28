@@ -58,6 +58,8 @@ To grant a trusted existing account full site administration access, add its ema
 
 To temporarily remove administrative access from specific accounts without deleting them, add their emails to the comma-separated `ADMIN_ROLE_REVOKED_EMAILS` environment variable. This overrides their stored role and other role grants with the regular member role until the email is removed from this list.
 
+If the configured administrator does not yet have an account in the production database, set `ADMIN_BOOTSTRAP_TOKEN` in Render to a newly generated random value of at least 32 characters. Open `/admin-setup`, enter the same email listed in `SUPER_ADMIN_EMAILS`, the token, and a unique password of at least 12 characters. The endpoint only creates a new account for an email whose effective role is `super_admin`, and refuses to overwrite an existing account. After successful setup, remove `ADMIN_BOOTSTRAP_TOKEN` from Render and sign in at `/login`.
+
 ### Environment variables
 
 The Blueprint generates `SESSION_SECRET` and connects `DATABASE_URL` to the Render database. Set mail-provider secrets only in the Render dashboard; do not place credentials in the repository. Rotate any app password that was previously shared.
