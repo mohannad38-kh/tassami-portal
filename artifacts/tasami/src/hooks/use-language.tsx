@@ -218,6 +218,8 @@ const translations: Record<string, string> = {
     "Password recovery is not enabled yet. Contact the site administrator.",
   "تعذر إرسال رابط الاستعادة. حاول مرة أخرى لاحقاً.":
     "Could not send the recovery link. Please try again later.",
+  "تعذر إرسال الرسالة. تحقق من مفتاح Resend وعنوان المرسل الموثق.":
+    "Could not send the email. Check the Resend API key and verified sender address.",
   "تعيين كلمة مرور جديدة": "Set a new password",
   "تم تغيير كلمة المرور": "Password changed",
   "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.":

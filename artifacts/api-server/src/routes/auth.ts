@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { db, joinRequestsTable, usersTable } from "@workspace/db";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { Resend } from "resend";
+import { logger } from "../lib/logger";
 import {
   signToken,
   comparePassword,
@@ -43,6 +44,10 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
     .from(usersTable)
     .where(sql`lower(${usersTable.email}) = ${email}`);
   if (!user?.isActive) {
+    logger.info(
+      { hasMatchingUser: Boolean(user), isActive: user?.isActive ?? false },
+      "Password reset email not sent because no active account matched",
+    );
     res.json({ ok: true });
     return;
   }
@@ -58,15 +63,30 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
     `/reset-password?token=${encodeURIComponent(token)}`,
     appBaseUrl,
   ).toString();
-  const resend = new Resend(apiKey);
-  const { error } = await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL?.trim() || "onboarding@resend.dev",
-    to: user.email,
-    subject: "رابط إعادة تعيين كلمة مرور حساب تسامي",
-    html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#382a20"><h2 style="color:#702632">إعادة تعيين كلمة المرور</h2><p style="font-size:16px;line-height:1.8">وصلنا طلب لإعادة تعيين كلمة مرور حسابك. استخدم الرابط التالي خلال ساعة واحدة:</p><p style="margin:28px 0"><a href="${resetUrl}" style="display:inline-block;background:#702632;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold">تعيين كلمة مرور جديدة</a></p><p style="font-size:14px;color:#666">إذا لم تطلب إعادة التعيين، تجاهل هذه الرسالة.</p></div>`,
-  });
-  if (error) {
-    console.error("Failed to send password reset email:", error.message);
+  try {
+    const resend = new Resend(apiKey);
+    const { data, error } = await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL?.trim() || "onboarding@resend.dev",
+      to: user.email,
+      subject: "رابط إعادة تعيين كلمة مرور حساب تسامي",
+      html: `<div dir="rtl" style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#382a20"><h2 style="color:#702632">إعادة تعيين كلمة المرور</h2><p style="font-size:16px;line-height:1.8">وصلنا طلب لإعادة تعيين كلمة مرور حسابك. استخدم الرابط التالي خلال ساعة واحدة:</p><p style="margin:28px 0"><a href="${resetUrl}" style="display:inline-block;background:#702632;color:#fff;text-decoration:none;padding:14px 24px;border-radius:8px;font-weight:bold">تعيين كلمة مرور جديدة</a></p><p style="font-size:14px;color:#666">إذا لم تطلب إعادة التعيين، تجاهل هذه الرسالة.</p></div>`,
+    });
+    if (error) {
+      logger.error(
+        { providerError: error.message },
+        "Resend rejected password reset email",
+      );
+      res.status(502).json({ error: "Password reset email could not be sent" });
+      return;
+    }
+    logger.info(
+      { emailId: data?.id },
+      "Password reset email accepted by Resend",
+    );
+  } catch (error) {
+    logger.error({ err: error }, "Password reset email request failed");
+    res.status(502).json({ error: "Password reset email could not be sent" });
+    return;
   }
 
   res.json({ ok: true });

@@ -26,11 +26,13 @@ export default function ForgotPassword() {
       });
       if (!response.ok) {
         const result = await response.json().catch(() => null);
-        throw new Error(
-          result?.error === "Password reset email is not configured"
-            ? t("استعادة كلمة المرور غير مفعّلة حالياً. تواصل مع إدارة الموقع.")
-            : t("تعذر إرسال رابط الاستعادة. حاول مرة أخرى لاحقاً."),
-        );
+        if (result?.error === "Password reset email is not configured") {
+          throw new Error(t("استعادة كلمة المرور غير مفعّلة حالياً. تواصل مع إدارة الموقع."));
+        }
+        if (result?.error === "Password reset email could not be sent") {
+          throw new Error(t("تعذر إرسال الرسالة. تحقق من مفتاح Resend وعنوان المرسل الموثق."));
+        }
+        throw new Error(t("تعذر إرسال رابط الاستعادة. حاول مرة أخرى لاحقاً."));
       }
       setSubmitted(true);
     } catch (requestError) {
