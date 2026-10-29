@@ -174,7 +174,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <div>
               <h3 className="font-semibold mb-4 text-lg">{t("تواصل معنا")}</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>{isEnglish ? "Email" : "البريد"}: info@tasami.org</li>
+                <li>{isEnglish ? "Email" : "البريد"}: tasamiteamx@gmail.com</li>
                 <li>
                   <a href="https://wa.me/962781386264" dir="ltr" className="inline-flex items-center gap-2 hover:text-primary">
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />
