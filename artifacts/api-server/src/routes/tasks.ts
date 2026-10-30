@@ -30,7 +30,7 @@ async function formatTask(t: typeof tasksTable.$inferSelect) {
 
 router.get("/tasks", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const user = (req as Request & { user: JwtPayload }).user;
-  const isSecretary = effectiveRole(user) !== "member";
+  const isSecretary = ["secretary", "vice_president", "president", "super_admin"].includes(effectiveRole(user));
   const { assignedTo, status } = req.query;
   let tasks = await db.select().from(tasksTable).orderBy(tasksTable.createdAt);
   if (!isSecretary) tasks = tasks.filter((task) => task.assignedTo === user.userId);
@@ -71,7 +71,7 @@ router.patch("/tasks/:id", authMiddleware, requireRole("member"), async (req, re
   const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
   if (!task) { res.status(404).json({ error: "Not found" }); return; }
   const body = req.body ?? {};
-  const isSecretary = effectiveRole(user) !== "member";
+  const isSecretary = ["secretary", "vice_president", "president", "super_admin"].includes(effectiveRole(user));
   const updateData: Record<string, unknown> = {};
   if (isSecretary) {
     const allowed = ["title", "description", "assignedTo", "dueDate", "status", "progress", "priority"];
