@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db, membersTable, usersTable, departmentsTable, volunteerHoursTable } from "@workspace/db";
 import { eq, sum } from "drizzle-orm";
-import { authMiddleware, requireRole } from "../lib/auth";
+import { authMiddleware, requireRole, effectiveRole } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
 import { nanoid } from "nanoid";
 
 const router: IRouter = Router();
@@ -34,7 +35,7 @@ async function formatMember(m: typeof membersTable.$inferSelect) {
   };
 }
 
-router.get("/members", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
+router.get("/members", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const { status, departmentId } = req.query;
   let members = await db.select().from(membersTable).orderBy(membersTable.createdAt);
   if (status) members = members.filter((m) => m.status === status);
@@ -58,8 +59,12 @@ router.post("/members", authMiddleware, requireRole("secretary"), async (req, re
 router.get("/members/:id", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
+  const user = (req as typeof req & { user: JwtPayload }).user;
   const [member] = await db.select().from(membersTable).where(eq(membersTable.id, id));
   if (!member) { res.status(404).json({ error: "Not found" }); return; }
+  if (effectiveRole(user) !== "secretary" && member.userId !== user.userId) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
   res.json(await formatMember(member));
 });
 
