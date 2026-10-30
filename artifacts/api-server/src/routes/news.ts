@@ -4,6 +4,8 @@ import { eq } from "drizzle-orm";
 import { authMiddleware, requireRole, optionalAuthMiddleware } from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
 import type { Request } from "express";
+import type { JwtPayload as SessionPayload } from "../lib/auth";
+import { effectiveRole } from "../lib/auth";
 
 const router: IRouter = Router();
 
@@ -77,16 +79,20 @@ async function formatAnnouncement(a: typeof announcementsTable.$inferSelect) {
   return { id: a.id, title: a.title, body: a.body, targetRole: a.targetRole ?? null, authorId: a.authorId ?? null, authorName, createdAt: a.createdAt };
 }
 
-router.get("/announcements", optionalAuthMiddleware, async (_req, res): Promise<void> => {
+router.get("/announcements", optionalAuthMiddleware, async (req, res): Promise<void> => {
+  const user = (req as Request & { user?: SessionPayload }).user;
+  const role = user ? effectiveRole(user) : "visitor";
   const items = await db.select().from(announcementsTable).orderBy(announcementsTable.createdAt);
-  const result = await Promise.all(items.map(formatAnnouncement));
+  const visibleItems = items.filter((item) => !item.targetRole || item.targetRole === role);
+  const result = await Promise.all(visibleItems.map(formatAnnouncement));
   res.json(result.reverse());
 });
 
 router.post("/announcements", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const user = (req as Request & { user: JwtPayload }).user;
   const { title, body, targetRole } = req.body;
-  if (!title || !body) { res.status(400).json({ error: "Title and body required" }); return; }
+  if (typeof title !== "string" || !title.trim() || title.length > 200 || typeof body !== "string" || !body.trim() || body.length > 20000) { res.status(400).json({ error: "Valid title and body are required" }); return; }
+  if (targetRole !== undefined && targetRole !== null && !["visitor", "member", "join_manager", "dept_head", "secretary", "vice_president", "president", "super_admin"].includes(targetRole)) { res.status(400).json({ error: "Invalid targetRole" }); return; }
   const [announcement] = await db.insert(announcementsTable).values({ title, body, targetRole, authorId: user.userId }).returning();
   res.status(201).json(await formatAnnouncement(announcement));
 });
@@ -96,9 +102,19 @@ router.patch("/announcements/:id", authMiddleware, requireRole("secretary"), asy
   const id = parseInt(raw, 10);
   const { title, body, targetRole } = req.body;
   const updateData: Record<string, unknown> = {};
-  if (title != null) updateData.title = title;
-  if (body != null) updateData.body = body;
-  if (targetRole != null) updateData.targetRole = targetRole;
+  if (title !== undefined) {
+    if (typeof title !== "string" || !title.trim() || title.length > 200) { res.status(400).json({ error: "Invalid title" }); return; }
+    updateData.title = title.trim();
+  }
+  if (body !== undefined) {
+    if (typeof body !== "string" || !body.trim() || body.length > 20000) { res.status(400).json({ error: "Invalid body" }); return; }
+    updateData.body = body;
+  }
+  if (targetRole !== undefined) {
+    if (targetRole !== null && !["visitor", "member", "join_manager", "dept_head", "secretary", "vice_president", "president", "super_admin"].includes(targetRole)) { res.status(400).json({ error: "Invalid targetRole" }); return; }
+    updateData.targetRole = targetRole;
+  }
+  if (Object.keys(updateData).length === 0) { res.status(400).json({ error: "No valid fields to update" }); return; }
   const [updated] = await db.update(announcementsTable).set(updateData).where(eq(announcementsTable.id, id)).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatAnnouncement(updated));
