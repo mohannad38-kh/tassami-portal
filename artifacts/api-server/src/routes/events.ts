@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, eventsTable, eventRegistrationsTable, membersTable, usersTable, certificatesTable, volunteerHoursTable, activityLogTable } from "@workspace/db";
-import { eq, count } from "drizzle-orm";
+import { eq, count, inArray } from "drizzle-orm";
 import { authMiddleware, requireRole, optionalAuthMiddleware } from "../lib/auth";
 import { nanoid } from "nanoid";
 
@@ -110,10 +110,10 @@ router.get("/events/:id/registrations", authMiddleware, requireRole("secretary")
   const eventId = parseInt(raw, 10);
   const regs = await db.select().from(eventRegistrationsTable).where(eq(eventRegistrationsTable.eventId, eventId));
   const memberIds = regs.map((r) => r.memberId);
-  const members = memberIds.length > 0 ? await db.select().from(membersTable) : [];
+  const members = memberIds.length > 0 ? await db.select().from(membersTable).where(inArray(membersTable.id, memberIds)) : [];
   const memberMap = Object.fromEntries(members.map((m) => [m.id, m]));
   const userIds = members.map((m) => m.userId);
-  const users = userIds.length > 0 ? await db.select().from(usersTable) : [];
+  const users = userIds.length > 0 ? await db.select().from(usersTable).where(inArray(usersTable.id, userIds)) : [];
   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
   res.json(regs.map((r) => {
     const member = memberMap[r.memberId];
