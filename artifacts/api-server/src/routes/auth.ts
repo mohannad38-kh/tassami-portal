@@ -263,14 +263,19 @@ router.post("/auth/set-password", async (req, res): Promise<void> => {
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {
-  const { email, password } = req.body;
+  const { email, password } = req.body ?? {};
 
-  if (!email || !password) {
+  if (
+    typeof email !== "string" ||
+    !email.trim() ||
+    typeof password !== "string" ||
+    !password
+  ) {
     res.status(400).json({ error: "Email and password required" });
     return;
   }
 
-  const normalizedLoginEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const normalizedLoginEmail = email.trim().toLowerCase();
   const [user] = await db
     .select()
     .from(usersTable)
@@ -281,8 +286,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // تجاوز كلمة المرور مؤقتاً لتسهيل الدخول
-  const valid = password === "121Aqra6$" || (await comparePassword(password, user.passwordHash));
+  const valid = await comparePassword(password, user.passwordHash);
   if (!valid) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
