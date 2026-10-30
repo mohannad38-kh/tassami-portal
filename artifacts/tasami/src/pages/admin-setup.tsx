@@ -33,7 +33,8 @@ export default function AdminSetup() {
         body: JSON.stringify({ name, email, bootstrapToken, password }),
       });
       if (!response.ok) {
-        throw new Error(t("تعذر إنشاء الحساب. تحقق من البريد ورمز الإعداد أو من إعدادات Render."));
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || t("تعذر إنشاء الحساب. تحقق من البريد ورمز الإعداد أو من إعدادات Render."));
       }
       setBootstrapToken("");
       setPassword("");

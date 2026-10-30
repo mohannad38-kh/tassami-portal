@@ -170,9 +170,9 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { title: 'ورشة لتعلم اساسيات البرمجة والروبوتات', date: '', time: '', place: 'سيتم الإعلان عنها لاحقاً' },
-              { title: 'يوم التطوع البيئي', date: '', time: ' ', place: ' سيتم الإعلان عنها لاحقاً' },
-              { title: 'ملتقى الشباب المبدع', date: '', time: '', place: ' سيتم الإعلان عنها لاحقاً' },
+              { title: 'ورشة لتعلم اساسيات البرمجة والروبوتات', date: '15 شعبان', time: '10:00 صباحاً', place: 'سيتم الإعلان عنها لاحقاً' },
+              { title: 'يوم التطوع البيئي', date: '22 شعبان', time: '04:00 مساءً', place: 'سيتم الإعلان عنها لاحقاً' },
+              { title: 'ملتقى الشباب المبدع', date: '05 رمضان', time: '09:00 مساءً', place: 'سيتم الإعلان عنها لاحقاً' },
             ].map((event, i) => (
               <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-center gap-3 bg-primary p-4">

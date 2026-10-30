@@ -33,25 +33,30 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
     Buffer.byteLength(password, "utf8") > 72 ||
     typeof bootstrapToken !== "string"
   ) {
-    res.status(400).json({ error: "Enter valid setup details" });
+    res.status(400).json({ error: "الرجاء إدخال تفاصيل إعداد صالحة (كلمة المرور 12 حرفاً على الأقل)" });
     return;
   }
 
   const configuredToken = process.env.ADMIN_BOOTSTRAP_TOKEN?.trim();
+  if (!configuredToken || configuredToken.length < 32) {
+    res.status(401).json({ error: "رمز الإعداد السري (ADMIN_BOOTSTRAP_TOKEN) غير مضبوط في Render أو طوله أقل من 32 حرفاً" });
+    return;
+  }
+
   const providedToken = Buffer.from(bootstrapToken);
-  const expectedToken = Buffer.from(configuredToken ?? "");
+  const expectedToken = Buffer.from(configuredToken);
   if (
-    expectedToken.length < 32 ||
     providedToken.length !== expectedToken.length ||
     !timingSafeEqual(providedToken, expectedToken)
   ) {
-    res.status(401).json({ error: "Administrator setup is unavailable" });
+    res.status(401).json({ error: "رمز الإعداد السري غير صحيح" });
     return;
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  if (effectiveRole({ email: normalizedEmail, role: "member" }) !== "super_admin") {
-    res.status(403).json({ error: "Administrator setup is unavailable" });
+  const configuredSuperAdminEmails = process.env.SUPER_ADMIN_EMAILS?.trim();
+  if (configuredSuperAdminEmails && effectiveRole({ email: normalizedEmail, role: "member" }) !== "super_admin") {
+    res.status(403).json({ error: "البريد الإلكتروني غير مدرج في قائمة SUPER_ADMIN_EMAILS المعرفة في Render" });
     return;
   }
 
@@ -60,7 +65,7 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
     .from(usersTable)
     .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`);
   if (existingUser) {
-    res.status(409).json({ error: "An account already exists for this email" });
+    res.status(409).json({ error: "يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل" });
     return;
   }
 
@@ -77,7 +82,7 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
     .onConflictDoNothing({ target: usersTable.email })
     .returning({ id: usersTable.id });
   if (!createdUser) {
-    res.status(409).json({ error: "An account already exists for this email" });
+    res.status(409).json({ error: "يوجد حساب مسجل بهذا البريد الإلكتروني بالفعل" });
     return;
   }
   logger.info({ userId: createdUser.id }, "Initial administrator account created");

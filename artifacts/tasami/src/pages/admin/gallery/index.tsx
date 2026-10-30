@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { AdminLayout } from "@/components/layout/DashboardLayout";
 import { useListGallery } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";

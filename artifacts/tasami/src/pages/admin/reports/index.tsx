@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { AdminLayout } from "@/components/layout/DashboardLayout";
 import { useGetReports } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

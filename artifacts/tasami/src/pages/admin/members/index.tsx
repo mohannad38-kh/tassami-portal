@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/layout/AdminLayout";
+import { AdminLayout } from "@/components/layout/DashboardLayout";
 import { useListMembers, useUpdateMember } from "@workspace/api-client-react";
 import { useState } from "react";
 import { Link } from "wouter";

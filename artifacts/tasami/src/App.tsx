@@ -35,7 +35,7 @@ import PortalVolunteerHours from "@/pages/portal/volunteer-hours";
 import AdminIndex from "@/pages/admin/index";
 import AdminMembers from "@/pages/admin/members/index";
 import AdminMemberDetail from "@/pages/admin/members/id";
-import AdminJoinRequests from "@/pages/admin/join-requests/index";
+import AdminJoinRequests from "@/pages/admin/join-requests/JoinRequestsPage";
 import AdminDepartments from "@/pages/admin/departments/index";
 import AdminEvents from "@/pages/admin/events/index";
 import AdminWorkshops from "@/pages/admin/workshops/index";

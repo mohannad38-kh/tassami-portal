@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import logoUrl from "@assets/image_1782739252068.png";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Instagram, MessageCircle, Menu } from "lucide-react";
+import { MessageCircle, Menu, Instagram } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
@@ -11,6 +11,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   const { isAuthenticated, user, logout } = useAuth();
   const { direction, isEnglish, t, toggleLanguage } = useLanguage();
   const [, setLocation] = useLocation();
+
   const navItems = [
     { href: "/", label: t("الرئيسية") },
     { href: "/about", label: t("من نحن") },
@@ -24,25 +25,31 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { href: "/contact", label: t("تواصل معنا") },
   ];
 
+  const handleDashboardRedirect = () => {
+    const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head", "join_manager"].includes(
+      user?.role || ""
+    );
+    setLocation(isAdmin ? "/admin" : "/portal");
+  };
+
   const accountAction = isAuthenticated ? (
-    <>
-      <Button variant="ghost" onClick={() => {
-        const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head"].includes(user?.role || "");
-        setLocation(isAdmin ? "/admin" : "/portal");
-      }}>
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" onClick={handleDashboardRedirect}>
         {t("لوحة التحكم")}
       </Button>
-      <Button variant="outline" onClick={logout}>{t("تسجيل خروج")}</Button>
-    </>
+      <Button variant="outline" onClick={logout}>
+        {t("تسجيل خروج")}
+      </Button>
+    </div>
   ) : (
-    <>
+    <div className="flex items-center gap-2">
       <Button variant="ghost" asChild>
         <Link href="/login">{t("تسجيل الدخول")}</Link>
       </Button>
       <Button asChild>
         <Link href="/join">{t("انضم إلينا")}</Link>
       </Button>
-    </>
+    </div>
   );
 
   const mobileMenu = (
@@ -88,16 +95,17 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   className="rounded-md px-3 py-2.5 text-start text-sm font-medium hover:bg-muted hover:text-primary"
-                  onClick={() => {
-                    const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head"].includes(user?.role || "");
-                    setLocation(isAdmin ? "/admin" : "/portal");
-                  }}
+                  onClick={handleDashboardRedirect}
                 >
                   {t("لوحة التحكم")}
                 </button>
               </SheetClose>
               <SheetClose asChild>
-                <button type="button" className="rounded-md px-3 py-2.5 text-start text-sm font-medium hover:bg-muted hover:text-primary" onClick={logout}>
+                <button
+                  type="button"
+                  className="rounded-md px-3 py-2.5 text-start text-sm font-medium hover:bg-muted hover:text-primary"
+                  onClick={logout}
+                >
                   {t("تسجيل خروج")}
                 </button>
               </SheetClose>
@@ -120,6 +128,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </Link>
               {direction === "ltr" && <div className="xl:hidden">{mobileMenu}</div>}
             </div>
+
             <div className="hidden items-center gap-2 xl:flex">
               <Button variant="outline" size="sm" onClick={toggleLanguage} aria-label={isEnglish ? "Switch to Arabic" : "Switch to English"}>
                 {isEnglish ? "العربية" : "English"}
@@ -131,12 +140,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               )}
               {accountAction}
             </div>
+
             <div className="flex items-center gap-2 xl:hidden">
               <Button variant="outline" size="sm" onClick={toggleLanguage} aria-label={isEnglish ? "Switch to Arabic" : "Switch to English"}>
                 {isEnglish ? "العربية" : "English"}
               </Button>
             </div>
           </div>
+
           <nav className="hidden w-full flex-wrap items-center justify-center gap-x-5 gap-y-1 border-t border-border/60 py-2.5 text-sm font-medium xl:flex">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} className="whitespace-nowrap py-1 text-foreground transition-colors hover:text-primary">
@@ -147,9 +158,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
 
       <footer className="border-t bg-muted/40 py-12">
         <div className="container px-4 md:px-8 mx-auto max-w-screen-2xl">
