@@ -141,6 +141,7 @@ router.post("/events/:id/attendance", authMiddleware, requireRole("secretary"), 
       .set({ attended: "true" })
       .where(eq(eventRegistrationsTable.id, reg.id))
       .returning();
+    if (!updated) throw new Error("Could not update event attendance");
     await tx.insert(certificatesTable).values({ type: "event", recipientId: member[0].userId, eventId, verifyCode: nanoid(16) });
     await tx.insert(volunteerHoursTable).values({
       memberId: member[0].id, eventId, hours: "2",
