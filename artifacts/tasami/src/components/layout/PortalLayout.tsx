@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import logoUrl from "@assets/image_1782739252068.png";
@@ -19,10 +19,11 @@ export function PortalLayout({ children }: { children: ReactNode }) {
   const { direction, isEnglish, t, toggleLanguage } = useLanguage();
   const [location, setLocation] = useLocation();
 
-  if (!isAuthenticated) {
-    setLocation("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated) setLocation("/login");
+  }, [isAuthenticated, setLocation]);
+
+  if (!isAuthenticated) return null;
 
   const navItems = [
     { href: "/portal", label: t("لوحة التحكم"), icon: LayoutDashboard },
