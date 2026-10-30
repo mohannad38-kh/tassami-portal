@@ -55,7 +55,7 @@ router.get("/certificates/:id", optionalAuthMiddleware, async (req, res): Promis
   const [cert] = await db.select().from(certificatesTable).where(eq(certificatesTable.id, id));
   if (!cert) { res.status(404).json({ error: "Not found" }); return; }
   const user = (req as Request & { user?: JwtPayload }).user;
-  if (!user || (effectiveRole(user) === "member" && cert.recipientId !== user.userId)) {
+  if (!user || (!["secretary", "vice_president", "president", "super_admin"].includes(effectiveRole(user)) && cert.recipientId !== user.userId)) {
     res.status(403).json({ error: "Forbidden" }); return;
   }
   res.json(await formatCertificate(cert));
