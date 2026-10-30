@@ -121,7 +121,7 @@ async function sendApprovalEmail(
 router.get("/join-requests", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const { status } = req.query;
   let requests = await db.select().from(joinRequestsTable).orderBy(joinRequestsTable.createdAt);
-  if (status) requests = requests.filter((r) => r.status === status);
+  if (typeof status === "string") requests = requests.filter((r) => r.status === status);
   res.json(requests);
 });
 
@@ -144,14 +144,17 @@ router.post("/join-requests", async (req, res): Promise<void> => {
     });
     return;
   }
+
   const [department] = await db
     .select({ id: departmentsTable.id })
     .from(departmentsTable)
     .where(eq(departmentsTable.id, departmentId));
+
   if (!department) {
     res.status(400).json({ error: "Select a valid department" });
     return;
   }
+
   const normalizedEmail = email.trim().toLowerCase();
   const result = await db.transaction(async (tx) => {
     const [existingUser] = await tx
@@ -159,7 +162,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
       .from(usersTable)
       .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`);
 
-    if (existingUser && !existingUser.isActive) {
+    if (existingUser && existingUser.isActive) {
       return { request: null, conflict: true };
     }
 
@@ -184,7 +187,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
           .select({ isActive: usersTable.isActive })
           .from(usersTable)
           .where(sql`lower(${usersTable.email}) = ${normalizedEmail}`);
-        if (!concurrentUser?.isActive) {
+        if (concurrentUser?.isActive) {
           return { request: null, conflict: true };
         }
       }
@@ -200,14 +203,17 @@ router.post("/join-requests", async (req, res): Promise<void> => {
         departmentId,
       })
       .returning();
+
     return { request, conflict: false };
   });
+
   if (result.conflict || !result.request) {
     res.status(409).json({
       error: "ACCOUNT_EXISTS_OR_PENDING",
     });
     return;
   }
+
   const { request } = result;
   res.status(201).json(request);
 });
@@ -215,6 +221,10 @@ router.post("/join-requests", async (req, res): Promise<void> => {
 router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
+  if (!Number.isSafeInteger(id) || id < 1) {
+    res.status(400).json({ error: "Invalid join request ID" });
+    return;
+  }
   const [request] = await db.select().from(joinRequestsTable).where(eq(joinRequestsTable.id, id));
   if (!request) { res.status(404).json({ error: "Not found" }); return; }
   res.json(request);
@@ -223,7 +233,6 @@ router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), as
 router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
-  const { status } = req.body;
   if (status !== "approved" && status !== "rejected") {
     res.status(400).json({ error: "Status must be approved or rejected" });
     return;
@@ -235,6 +244,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
 
   let passwordSetupToken: string | undefined;
   let hasExistingAccount = false;
+
   const updated = await db.transaction(async (tx) => {
     const [request] = await tx
       .select()
@@ -269,7 +279,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
           role: "member",
           phone: request.phone,
           departmentId: request.departmentId,
-          isActive: false,
+          isActive: true,
         })
         .returning();
       user = createdUser;
@@ -282,49 +292,54 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
         status: "active",
         qrCode: `TSM-QR-${nanoid(12)}`,
       });
+    } else {
+      if (user.role === "member" && !user.isActive) {
+        await tx
+          .update(usersTable)
+          .set({ isActive: true, departmentId: request.departmentId })
+          .where(eq(usersTable.id, user.id));
+
+        if (request.departmentId !== null) {
+          const [membership] = await tx
+            .select({ id: membersTable.id })
+            .from(membersTable)
+            .where(
+              and(
+                eq(membersTable.userId, user.id),
+                eq(membersTable.departmentId, request.departmentId),
+              ),
+            )
+            .limit(1);
+
+          if (!membership) {
+            const membershipNumber = `TSM-${String(Date.now()).slice(-6)}-${nanoid(4).toUpperCase()}`;
+            await tx.insert(membersTable).values({
+              userId: user.id,
+              departmentId: request.departmentId,
+              membershipNumber,
+              status: "active",
+              qrCode: `TSM-QR-${nanoid(12)}`,
+            });
+          }
+        }
+      } else {
+        hasExistingAccount = true;
+      }
     }
 
-    if (user.role === "member" && !user.isActive && request.status !== "approved") {
-      await tx
-        .update(usersTable)
-        .set({ isActive: true, departmentId: request.departmentId })
-        .where(eq(usersTable.id, user.id));
-      if (request.departmentId !== null) {
-        const [membership] = await tx
-          .select({ id: membersTable.id })
-          .from(membersTable)
-          .where(
-            and(
-              eq(membersTable.userId, user.id),
-              eq(membersTable.departmentId, request.departmentId),
-            ),
-          )
-          .limit(1);
-        if (!membership) {
-          const membershipNumber = `TSM-${String(Date.now()).slice(-6)}-${nanoid(4).toUpperCase()}`;
-          await tx.insert(membersTable).values({
-            userId: user.id,
-            departmentId: request.departmentId,
-            membershipNumber,
-            status: "active",
-            qrCode: `TSM-QR-${nanoid(12)}`,
-          });
-        }
-      }
-      hasExistingAccount = true;
-    } else if (user.role === "member" && !user.isActive) {
+    if (!user.isActive) {
       passwordSetupToken = signPasswordSetupToken({
         userId: user.id,
         email: user.email,
         purpose: "password_setup",
       });
-    } else {
-      hasExistingAccount = true;
     }
 
     return updatedRequest;
   });
+
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+
   let emailResult: { emailSent: boolean; emailMessage?: string } = { emailSent: false };
   if (status === "approved") {
     const appBaseUrl =
@@ -338,12 +353,14 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
           appBaseUrl,
         ).toString()
       : undefined;
+
     emailResult = await sendApprovalEmail(
       updated.name,
       updated.email,
       passwordSetupUrl,
     );
   }
+
   res.json({ ...updated, ...emailResult, hasExistingAccount });
 });
 

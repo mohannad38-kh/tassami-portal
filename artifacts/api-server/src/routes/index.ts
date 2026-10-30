@@ -4,7 +4,7 @@ import authRouter from "./auth";
 import usersRouter from "./users";
 import departmentsRouter from "./departments";
 import membersRouter from "./members";
-import joinRequestsRouter from "./join_requests";
+import joinRequestsRouter from "./join_requests_new.ts";
 import eventsRouter from "./events";
 import workshopsRouter from "./workshops";
 import certificatesRouter from "./certificates";

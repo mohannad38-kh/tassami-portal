@@ -1,0 +1,126 @@
+
+        partnerType:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+    PartnerInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        logoUrl:
+          type: string
+        website:
+          type: string
+        partnerType:
+          type: [string, 'null']
+    PartnerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        logoUrl:
+          type: string
+        website:
+          type: string
+        partnerType:
+          type: [string, 'null']
+    GalleryItem:
+      type: object
+      required: [id, imageUrl, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: [string, 'null']
+        imageUrl:
+          type: string
+        eventId:
+          type: [integer, 'null']
+        eventTitle:
+          type: [string, 'null']
+        createdAt:
+          type: string
+          format: date-time
+    GalleryInput:
+      type: object
+      required: [imageUrl]
+      properties:
+        title:
+          type: string
+        imageUrl:
+          type: string
+        eventId:
+          type: integer
+    DashboardStats:
+      type: object
+      required: [totalMembers, totalEvents, totalWorkshops, totalDepartments, pendingRequests, totalVolunteerHours, upcomingEvents, activeTasks]
+      properties:
+        totalMembers:
+          type: integer
+        totalEvents:
+          type: integer
+        totalWorkshops:
+          type: integer
+        totalDepartments:
+          type: integer
+        pendingRequests:
+          type: integer
+        totalVolunteerHours:
+          type: number
+        upcomingEvents:
+          type: integer
+        activeTasks:
+          type: integer
+    ActivityItem:
+      type: object
+      required: [id, type, description, createdAt]
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+        description:
+          type: string
+        actorName:
+          type: [string, "null"]
+        createdAt:
+          type: string
+          format: date-time
+    ReportsSummary:
+      type: object
+      required: [membersByDepartment, eventsByMonth, volunteerHoursByMember, attendanceRate]
+      properties:
+        membersByDepartment:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeptCount"
+        eventsByMonth:
+          type: array
+          items:
+            $ref: "#/components/schemas/MonthCount"
+        volunteerHoursByMember:
+          type: array
+          items:
+            $ref: "#/components/schemas/VolunteerSummary"
+        attendanceRate:
+          type: number
+    DeptCount:
+      type: object
+      required: [departmentName, count]
+      properties:
+        departmentName:
+          type: string
+        count:
+          type: integer
+    MonthCount:
+      type: object
+      required: [month, count]
+      properties:
+        month:
+          type: string
+        count:
+          type: integer
+

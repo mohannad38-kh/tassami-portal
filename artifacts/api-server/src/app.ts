@@ -5,6 +5,49 @@ import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { db } from "./lib/db";
+import { users } from "@workspace/shared/schema";
+import { eq } from "drizzle-orm";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const asyncScrypt = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await asyncScrypt(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+// دالة تهيئة المشرف العام تلقائياً عند تشغيل السيرفر
+async function seedSuperAdmin() {
+  try {
+    const email = "mohannadkhaloof38@gmail.com";
+    const existing = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const hashedPassword = await hashPassword("121Aqra6$");
+
+    if (existing.length === 0) {
+      await db.insert(users).values({
+        name: "مهند الخلوف",
+        email,
+        password: hashedPassword,
+        role: "super_admin",
+        isActive: true,
+      });
+      logger.info("Super admin created successfully on startup.");
+    } else {
+      await db.update(users)
+        .set({ role: "super_admin", password: hashedPassword, isActive: true })
+        .where(eq(users.email, email));
+      logger.info("Super admin updated successfully on startup.");
+    }
+  } catch (err) {
+    logger.error({ err }, "Failed to seed super admin");
+  }
+}
+
+// تنفيذ التهيئة عند تشغيل التطبيق
+seedSuperAdmin();
 
 const app: Express = express();
 
