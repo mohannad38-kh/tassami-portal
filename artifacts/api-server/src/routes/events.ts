@@ -82,19 +82,26 @@ router.post("/events/:id/register", authMiddleware, requireRole("member"), async
   // Resolve the member from the verified session; never trust a client-supplied memberId.
   const [member] = await db.select().from(membersTable).where(eq(membersTable.userId, user.userId));
   if (!member || member.status !== "active") { res.status(403).json({ error: "An active membership is required" }); return; }
-  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId));
-  if (!event) { res.status(404).json({ error: "Event not found" }); return; }
-  if (event.status !== "upcoming" || event.eventDate <= new Date()) { res.status(409).json({ error: "Registration is closed" }); return; }
+  const registration = await db.transaction(async (tx) => {
+    // Lock the parent event so simultaneous requests for this event are serialized.
+    const [event] = await tx.select().from(eventsTable).where(eq(eventsTable.id, eventId)).for("update");
+    if (!event) return { error: "not_found" as const };
+    if (event.status !== "upcoming" || event.eventDate <= new Date()) return { error: "closed" as const };
 
-  const registrations = await db.select().from(eventRegistrationsTable).where(eq(eventRegistrationsTable.eventId, eventId));
-  if (registrations.some((registration) => registration.memberId === member.id)) {
-    res.status(409).json({ error: "Already registered" }); return;
-  }
-  if (event.capacity != null && registrations.filter((registration) => registration.status === "registered").length >= event.capacity) {
+    const registrations = await tx.select().from(eventRegistrationsTable).where(eq(eventRegistrationsTable.eventId, eventId));
+    if (registrations.some((registration) => registration.memberId === member.id)) return { error: "duplicate" as const };
+    if (event.capacity != null && registrations.filter((registration) => registration.status === "registered").length >= event.capacity) return { error: "full" as const };
+
+    const [reg] = await tx.insert(eventRegistrationsTable).values({ eventId, memberId: member.id }).returning();
+    return { reg };
+  });
+  if ("error" in registration) {
+    if (registration.error === "not_found") { res.status(404).json({ error: "Event not found" }); return; }
+    if (registration.error === "closed") { res.status(409).json({ error: "Registration is closed" }); return; }
+    if (registration.error === "duplicate") { res.status(409).json({ error: "Already registered" }); return; }
     res.status(409).json({ error: "Event is full" }); return;
   }
-
-  const [reg] = await db.insert(eventRegistrationsTable).values({ eventId, memberId: member.id }).returning();
+  const reg = registration.reg;
   res.status(201).json({ id: reg.id, eventId: reg.eventId, memberId: reg.memberId, status: reg.status, attended: reg.attended === "true", createdAt: reg.createdAt, memberName: null });
 });
 
@@ -121,20 +128,32 @@ router.post("/events/:id/attendance", authMiddleware, requireRole("secretary"), 
   const { qrCode } = req.body;
   const member = await db.select().from(membersTable).where(eq(membersTable.qrCode, qrCode));
   if (!member[0]) { res.status(404).json({ error: "Member not found" }); return; }
-  const regs = await db.select().from(eventRegistrationsTable)
-    .where(eq(eventRegistrationsTable.eventId, eventId));
-  const reg = regs.find((r) => r.memberId === member[0].id);
-  if (!reg) { res.status(404).json({ error: "Registration not found" }); return; }
-  const [updated] = await db.update(eventRegistrationsTable)
-    .set({ attended: "true" })
-    .where(eq(eventRegistrationsTable.id, reg.id))
-    .returning();
-  // Issue certificate
-  const verifyCode = nanoid(16);
-  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId));
-  await db.insert(certificatesTable).values({ type: "event", recipientId: member[0].userId, eventId, verifyCode });
-  // Log volunteer hours (2 hours default)
-  await db.insert(volunteerHoursTable).values({ memberId: member[0].id, eventId, hours: "2", activityDate: new Date().toISOString().slice(0, 10), description: `حضور فعالية: ${event?.title}` });
+  const attendance = await db.transaction(async (tx) => {
+    // Serialize attendance scans for this event and issue records only once.
+    const [event] = await tx.select().from(eventsTable).where(eq(eventsTable.id, eventId)).for("update");
+    if (!event) return { error: "event_not_found" as const };
+    const regs = await tx.select().from(eventRegistrationsTable).where(eq(eventRegistrationsTable.eventId, eventId));
+    const reg = regs.find((r) => r.memberId === member[0].id);
+    if (!reg) return { error: "registration_not_found" as const };
+    if (reg.attended === "true") return { reg, alreadyAttended: true as const };
+
+    const [updated] = await tx.update(eventRegistrationsTable)
+      .set({ attended: "true" })
+      .where(eq(eventRegistrationsTable.id, reg.id))
+      .returning();
+    await tx.insert(certificatesTable).values({ type: "event", recipientId: member[0].userId, eventId, verifyCode: nanoid(16) });
+    await tx.insert(volunteerHoursTable).values({
+      memberId: member[0].id, eventId, hours: "2",
+      activityDate: new Date().toISOString().slice(0, 10),
+      description: `حضور فعالية: ${event.title}`,
+    });
+    return { reg: updated, alreadyAttended: false as const };
+  });
+  if ("error" in attendance) {
+    if (attendance.error === "event_not_found") { res.status(404).json({ error: "Event not found" }); return; }
+    res.status(404).json({ error: "Registration not found" }); return;
+  }
+  const updated = attendance.reg;
   res.json({ id: updated.id, eventId: updated.eventId, memberId: updated.memberId, status: updated.status, attended: true, createdAt: updated.createdAt, memberName: null });
 });
 
