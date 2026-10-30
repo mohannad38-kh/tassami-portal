@@ -244,6 +244,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
   }
 
   let passwordSetupToken: string | undefined;
+  let needsPasswordSetup = false;
   let hasExistingAccount = false;
 
   const updated = await db.transaction(async (tx) => {
@@ -280,10 +281,11 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
           role: "member",
           phone: request.phone,
           departmentId: request.departmentId,
-          isActive: true,
+          isActive: false,
         })
         .returning();
       user = createdUser;
+      needsPasswordSetup = true;
 
       const membershipNumber = `TSM-${String(Date.now()).slice(-6)}-${nanoid(4).toUpperCase()}`;
       await tx.insert(membersTable).values({
@@ -328,7 +330,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
       }
     }
 
-    if (!user.isActive) {
+    if (needsPasswordSetup) {
       passwordSetupToken = signPasswordSetupToken({
         userId: user.id,
         email: user.email,
