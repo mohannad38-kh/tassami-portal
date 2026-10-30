@@ -75,10 +75,26 @@ router.delete("/events/:id", authMiddleware, requireRole("secretary"), async (re
 
 router.post("/events/:id/register", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const eventId = parseInt(raw, 10);
-  const { memberId } = req.body;
-  if (!memberId) { res.status(400).json({ error: "memberId required" }); return; }
-  const [reg] = await db.insert(eventRegistrationsTable).values({ eventId, memberId }).returning();
+  const eventId = Number(raw);
+  const user = (req as typeof req & { user: { userId: number } }).user;
+  if (!Number.isSafeInteger(eventId) || eventId <= 0) { res.status(400).json({ error: "Invalid event id" }); return; }
+
+  // Resolve the member from the verified session; never trust a client-supplied memberId.
+  const [member] = await db.select().from(membersTable).where(eq(membersTable.userId, user.userId));
+  if (!member || member.status !== "active") { res.status(403).json({ error: "An active membership is required" }); return; }
+  const [event] = await db.select().from(eventsTable).where(eq(eventsTable.id, eventId));
+  if (!event) { res.status(404).json({ error: "Event not found" }); return; }
+  if (event.status !== "upcoming" || event.eventDate <= new Date()) { res.status(409).json({ error: "Registration is closed" }); return; }
+
+  const registrations = await db.select().from(eventRegistrationsTable).where(eq(eventRegistrationsTable.eventId, eventId));
+  if (registrations.some((registration) => registration.memberId === member.id)) {
+    res.status(409).json({ error: "Already registered" }); return;
+  }
+  if (event.capacity != null && registrations.filter((registration) => registration.status === "registered").length >= event.capacity) {
+    res.status(409).json({ error: "Event is full" }); return;
+  }
+
+  const [reg] = await db.insert(eventRegistrationsTable).values({ eventId, memberId: member.id }).returning();
   res.status(201).json({ id: reg.id, eventId: reg.eventId, memberId: reg.memberId, status: reg.status, attended: reg.attended === "true", createdAt: reg.createdAt, memberName: null });
 });
 
