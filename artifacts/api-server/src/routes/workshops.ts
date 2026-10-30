@@ -132,17 +132,72 @@ router.get("/workshops/:id/registrations", authMiddleware, requireRole("secretar
 
 router.post("/workshops/:id/evaluate", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const workshopId = parseInt(raw, 10);
-  const { memberId, rating, comment } = req.body;
-  if (!memberId || !rating) { res.status(400).json({ error: "memberId and rating required" }); return; }
-  const [evaluation] = await db.insert(workshopEvaluationsTable).values({ workshopId, memberId, rating, comment }).returning();
-  // Issue certificate
-  const verifyCode = nanoid(16);
-  const [member] = await db.select().from(membersTable).where(eq(membersTable.id, memberId));
-  if (member) {
-    await db.insert(certificatesTable).values({ type: "workshop", recipientId: member.userId, workshopId, verifyCode });
+  const workshopId = Number(raw);
+  const user = (req as typeof req & { user: { userId: number } }).user;
+  const { rating, comment } = req.body;
+
+  if (!Number.isSafeInteger(workshopId) || workshopId <= 0) {
+    res.status(400).json({ error: "Invalid workshop id" });
+    return;
   }
-  res.status(201).json(evaluation);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    res.status(400).json({ error: "Rating must be an integer from 1 to 5" });
+    return;
+  }
+  if (comment != null && (typeof comment !== "string" || comment.length > 2000)) {
+    res.status(400).json({ error: "Comment must be a string of at most 2000 characters" });
+    return;
+  }
+
+  // Resolve the member from the authenticated session, not from client input.
+  const [member] = await db.select().from(membersTable).where(eq(membersTable.userId, user.userId));
+  if (!member || member.status !== "active") {
+    res.status(403).json({ error: "An active membership is required" });
+    return;
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [workshop] = await tx.select().from(workshopsTable)
+      .where(eq(workshopsTable.id, workshopId)).for("update");
+    if (!workshop) return { error: "not_found" as const };
+
+    const registrations = await tx.select().from(workshopRegistrationsTable)
+      .where(eq(workshopRegistrationsTable.workshopId, workshopId));
+    const registration = registrations.find((item) => item.memberId === member.id);
+    if (!registration || registration.attended !== "true") {
+      return { error: "attendance_required" as const };
+    }
+
+    const [existingEvaluation] = await tx.select().from(workshopEvaluationsTable)
+      .where(eq(workshopEvaluationsTable.memberId, member.id))
+      .then(async (rows) => [rows.find((item) => item.workshopId === workshopId)]);
+    if (existingEvaluation) return { error: "already_evaluated" as const };
+
+    const [evaluation] = await tx.insert(workshopEvaluationsTable)
+      .values({ workshopId, memberId: member.id, rating, comment: comment ?? null })
+      .returning();
+
+    const [existingCertificate] = await tx.select().from(certificatesTable)
+      .where(eq(certificatesTable.recipientId, member.userId))
+      .then(async (rows) => [rows.find((item) => item.type === "workshop" && item.workshopId === workshopId)]);
+    if (!existingCertificate) {
+      await tx.insert(certificatesTable).values({
+        type: "workshop",
+        recipientId: member.userId,
+        workshopId,
+        verifyCode: nanoid(16),
+      });
+    }
+    return { evaluation };
+  });
+
+  if ("error" in result) {
+    if (result.error === "not_found") { res.status(404).json({ error: "Workshop not found" }); return; }
+    if (result.error === "attendance_required") { res.status(403).json({ error: "Workshop attendance is required before evaluation" }); return; }
+    res.status(409).json({ error: "Workshop already evaluated" });
+    return;
+  }
+  res.status(201).json(result.evaluation);
 });
 
 // Trainers
