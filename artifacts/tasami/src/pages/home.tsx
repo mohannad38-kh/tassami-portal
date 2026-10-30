@@ -12,7 +12,7 @@ export default function Home() {
   const { t, isEnglish } = useLanguage();
   const [registeredVolunteers, setRegisteredVolunteers] = useState<number | null>(null);
   const [volunteerCountError, setVolunteerCountError] = useState(false);
-  const { data: events = [], isLoading: eventsLoading } = useListEvents();
+  const { data: events = [], isLoading: eventsLoading, isError: eventsError } = useListEvents();
   const upcomingEvents = events
     .filter((event) => event.status === "upcoming" && new Date(event.eventDate).getTime() >= Date.now())
     .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
@@ -103,7 +103,7 @@ export default function Home() {
 
       <section className="bg-muted/40 py-12">
         <div className="container px-4 md:px-8 mx-auto">
-          <div className="grid grid-cols-1 gap-5 text-center sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-5 text-center sm:grid-cols-2">
             {[
               {
                 number: volunteerCountError
@@ -175,6 +175,10 @@ export default function Home() {
           {eventsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {[1, 2, 3].map((item) => <div key={item} className="h-56 rounded-2xl bg-background animate-pulse border" />)}
+            </div>
+          ) : eventsError ? (
+            <div className="rounded-2xl border border-dashed bg-background px-6 py-10 text-center text-muted-foreground">
+              {t("تعذر تحميل الفعاليات حالياً. يرجى المحاولة لاحقاً.")}
             </div>
           ) : upcomingEvents.length === 0 ? (
             <div className="rounded-2xl border border-dashed bg-background px-6 py-12 text-center">
