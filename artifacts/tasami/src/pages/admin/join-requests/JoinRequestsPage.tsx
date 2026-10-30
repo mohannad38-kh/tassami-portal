@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/layout/DashboardLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useState } from "react";
 import { useListDepartments, useListJoinRequests, useUpdateJoinRequest } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";

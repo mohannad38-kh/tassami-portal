@@ -1,4 +1,4 @@
-import { AdminLayout } from "@/components/layout/DashboardLayout";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useParams, Link } from "wouter";
 import { useGetMember } from "@workspace/api-client-react";
 import { getGetMemberQueryKey } from "@workspace/api-client-react";
