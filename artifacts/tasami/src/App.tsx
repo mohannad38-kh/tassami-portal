@@ -14,6 +14,15 @@ import PartnersPage from "@/pages/partners";
 import BoardPage from "@/pages/board";
 import ContactPage from "@/pages/contact";
 import NewsPage from "@/pages/news";
+import NewsDetailPage from "@/pages/news/id";
+import WorkshopsPublicPage from "@/pages/workshops";
+import ForgotPasswordPage from "@/pages/forgot-password";
+import PasswordResetPage from "@/pages/password-reset";
+import SetPasswordPage from "@/pages/set-password";
+import CertificateVerifyPage from "@/pages/certificate/verify";
+import PortalProfilePage from "@/pages/portal/profile";
+import PortalCertificatesPage from "@/pages/portal/certificates";
+import PortalVolunteerHoursPage from "@/pages/portal/volunteer-hours";
 import LoginPage from "@/pages/login";
 import JoinPage from "@/pages/join";
 import PortalPage from "@/pages/portal";
@@ -46,14 +55,24 @@ function Router() {
       <Route path="/initiative" component={InitiativePage} />
       <Route path="/departments" component={DepartmentsPage} />
       <Route path="/events" component={EventsPage} />
+      <Route path="/news/:id" component={NewsDetailPage} />
       <Route path="/news" component={NewsPage} />
+      <Route path="/workshops" component={WorkshopsPublicPage} />
       <Route path="/gallery" component={GalleryPage} />
       <Route path="/partners" component={PartnersPage} />
       <Route path="/board" component={BoardPage} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/forgot-password" component={ForgotPasswordPage} />
+      <Route path="/password-reset" component={PasswordResetPage} />
+      <Route path="/set-password" component={SetPasswordPage} />
+      <Route path="/certificate/verify/:code" component={CertificateVerifyPage} />
+      <Route path="/certificate/verify" component={CertificateVerifyPage} />
       <Route path="/join" component={JoinPage} />
       <Route path="/portal" component={PortalPage} />
+      <Route path="/portal/profile" component={PortalProfilePage} />
+      <Route path="/portal/certificates" component={PortalCertificatesPage} />
+      <Route path="/portal/volunteer-hours" component={PortalVolunteerHoursPage} />
 
       {/* Admin Routes */}
       <Route path="/admin" component={AdminDashboard} />
