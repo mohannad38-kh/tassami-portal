@@ -1,7 +1,17 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, departmentsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { authMiddleware, requireRole, hashPassword } from "../lib/auth";
+import { authMiddleware, requireRole, hashPassword, effectiveRole } from "../lib/auth";
+
+const VALID_ROLES = new Set([
+  "member",
+  "join_manager",
+  "dept_head",
+  "secretary",
+  "vice_president",
+  "president",
+  "super_admin",
+]);
 import { Resend } from "resend"; // استيراد المكتبة
 
 const router: IRouter = Router();
@@ -52,8 +62,18 @@ router.post(
   requireRole("super_admin"),
   async (req, res): Promise<void> => {
     const { name, email, password, role, phone, departmentId } = req.body;
-    if (!name || !email || !password || !role) {
-      res.status(400).json({ error: "Missing required fields" });
+    if (
+      typeof name !== "string" ||
+      !name.trim() ||
+      typeof email !== "string" ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+      typeof password !== "string" ||
+      password.length < 12 ||
+      Buffer.byteLength(password, "utf8") > 72 ||
+      typeof role !== "string" ||
+      !VALID_ROLES.has(role)
+    ) {
+      res.status(400).json({ error: "Enter valid user details and a valid role; password must be 12–72 UTF-8 bytes" });
       return;
     }
     const passwordHash = await hashPassword(password);
@@ -108,6 +128,20 @@ router.patch(
     if (!oldUser) {
       res.status(404).json({ error: "Not found" });
       return;
+    }
+
+    const currentUser = (req as typeof req & {
+      user?: { email: string; role: string };
+    }).user;
+    if (role != null) {
+      if (!currentUser || effectiveRole(currentUser) !== "super_admin") {
+        res.status(403).json({ error: "Only a super administrator can change user roles" });
+        return;
+      }
+      if (typeof role !== "string" || !VALID_ROLES.has(role)) {
+        res.status(400).json({ error: "Invalid user role" });
+        return;
+      }
     }
 
     const updateData: Record<string, unknown> = {};
