@@ -133,6 +133,26 @@ router.patch(
     const currentUser = (req as typeof req & {
       user?: { email: string; role: string };
     }).user;
+    if (isActive !== undefined && (!currentUser || effectiveRole(currentUser) !== "super_admin")) {
+      res.status(403).json({ error: "Only a super administrator can activate or deactivate accounts" });
+      return;
+    }
+    if (name !== undefined && (typeof name !== "string" || !name.trim() || name.length > 120)) {
+      res.status(400).json({ error: "Invalid name" });
+      return;
+    }
+    if (email !== undefined && (typeof email !== "string" || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.trim()))) {
+      res.status(400).json({ error: "Invalid email" });
+      return;
+    }
+    if (phone !== undefined && phone !== null && (typeof phone !== "string" || phone.length > 40)) {
+      res.status(400).json({ error: "Invalid phone" });
+      return;
+    }
+    if (isActive !== undefined && typeof isActive !== "boolean") {
+      res.status(400).json({ error: "isActive must be a boolean" });
+      return;
+    }
     if (role != null) {
       if (!currentUser || effectiveRole(currentUser) !== "super_admin") {
         res.status(403).json({ error: "Only a super administrator can change user roles" });
