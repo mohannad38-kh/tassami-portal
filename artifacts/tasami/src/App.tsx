@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 // Public Pages
 import HomePage from "@/pages/home";
 import LoginPage from "@/pages/login";
+import JoinPage from "@/pages/join";
 import PortalPage from "@/pages/portal";
 import NotFound from "@/pages/not-found";
 
@@ -31,10 +32,13 @@ import VolunteerHoursPage from "@/pages/admin/volunteer-hours";
 function Router() {
   return (
     <Switch>
+      {/* Public Routes */}
       <Route path="/" component={HomePage} />
       <Route path="/login" component={LoginPage} />
+      <Route path="/join" component={JoinPage} />
       <Route path="/portal" component={PortalPage} />
 
+      {/* Admin Routes */}
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/members" component={MembersPage} />
       <Route path="/admin/members/:id" component={MemberDetailPage} />
@@ -52,6 +56,7 @@ function Router() {
       <Route path="/admin/reports" component={ReportsPage} />
       <Route path="/admin/volunteer-hours" component={VolunteerHoursPage} />
 
+      {/* 404 */}
       <Route component={NotFound} />
     </Switch>
   );
