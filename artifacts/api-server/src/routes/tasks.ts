@@ -59,7 +59,7 @@ router.get("/tasks/:id", authMiddleware, requireRole("member"), async (req, res)
   const [task] = await db.select().from(tasksTable).where(eq(tasksTable.id, id));
   if (!task) { res.status(404).json({ error: "Not found" }); return; }
   const user = (req as Request & { user: JwtPayload }).user;
-  if (effectiveRole(user) === "member" && task.assignedTo !== user.userId) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (!["secretary", "vice_president", "president", "super_admin"].includes(effectiveRole(user)) && task.assignedTo !== user.userId) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(await formatTask(task));
 });
 
