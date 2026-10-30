@@ -1,49 +1,66 @@
-import express, { type Express } from "express";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import cors from "cors";
-import pinoHttp from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import { Switch, Route } from "wouter";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
+import { Toaster } from "@/components/ui/toaster";
 
-const app: Express = express();
+// Public Pages
+import HomePage from "@/pages/home";
+import LoginPage from "@/pages/login";
+import PortalPage from "@/pages/portal";
+import NotFound from "@/pages/not-found";
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
-      },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
-      },
-    },
-  }),
-);
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Admin Pages
+import AdminDashboard from "@/pages/admin";
+import MembersPage from "@/pages/admin/members";
+import MemberDetailPage from "@/pages/admin/members/id";
+import JoinRequestsPage from "@/pages/admin/join-requests";
+import EventsPage from "@/pages/admin/events";
+import WorkshopsPage from "@/pages/admin/workshops";
+import CertificatesPage from "@/pages/admin/certificates";
+import DepartmentsPage from "@/pages/admin/departments";
+import MeetingsPage from "@/pages/admin/meetings";
+import TasksPage from "@/pages/admin/tasks";
+import NewsPage from "@/pages/admin/news";
+import PartnersPage from "@/pages/admin/partners";
+import GalleryPage from "@/pages/admin/gallery";
+import UsersPage from "@/pages/admin/users";
+import ReportsPage from "@/pages/admin/reports";
+import VolunteerHoursPage from "@/pages/admin/volunteer-hours";
 
-app.use("/api", router);
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={HomePage} />
+      <Route path="/login" component={LoginPage} />
+      <Route path="/portal" component={PortalPage} />
 
-if (process.env.NODE_ENV === "production") {
-  const frontendDirectory = path.resolve(
-    path.dirname(fileURLToPath(import.meta.url)),
-    "../../tasami/dist",
+      <Route path="/admin" component={AdminDashboard} />
+      <Route path="/admin/members" component={MembersPage} />
+      <Route path="/admin/members/:id" component={MemberDetailPage} />
+      <Route path="/admin/join-requests" component={JoinRequestsPage} />
+      <Route path="/admin/events" component={EventsPage} />
+      <Route path="/admin/workshops" component={WorkshopsPage} />
+      <Route path="/admin/certificates" component={CertificatesPage} />
+      <Route path="/admin/departments" component={DepartmentsPage} />
+      <Route path="/admin/meetings" component={MeetingsPage} />
+      <Route path="/admin/tasks" component={TasksPage} />
+      <Route path="/admin/news" component={NewsPage} />
+      <Route path="/admin/partners" component={PartnersPage} />
+      <Route path="/admin/gallery" component={GalleryPage} />
+      <Route path="/admin/users" component={UsersPage} />
+      <Route path="/admin/reports" component={ReportsPage} />
+      <Route path="/admin/volunteer-hours" component={VolunteerHoursPage} />
+
+      <Route component={NotFound} />
+    </Switch>
   );
-  app.use(express.static(frontendDirectory));
-  app.get(/^(?!\/api(?:\/|$)).*/, (_req, res, next) => {
-    res.sendFile(path.join(frontendDirectory, "index.html"), (error) => {
-      if (error) next(error);
-    });
-  });
 }
 
-export default app;
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router />
+      <Toaster />
+    </QueryClientProvider>
+  );
+}
