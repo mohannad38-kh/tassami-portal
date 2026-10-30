@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import logoUrl from "@assets/image_1782739252068.png";
@@ -15,14 +15,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/hooks/use-language";
 
 export function PortalLayout({ children }: { children: ReactNode }) {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const { direction, isEnglish, t, toggleLanguage } = useLanguage();
   const [location, setLocation] = useLocation();
 
-  if (!isAuthenticated) {
-    setLocation("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) setLocation("/login");
+  }, [isAuthenticated, isLoading, setLocation]);
+
+  if (isLoading || !isAuthenticated) return null;
 
   const navItems = [
     { href: "/portal", label: t("لوحة التحكم"), icon: LayoutDashboard },

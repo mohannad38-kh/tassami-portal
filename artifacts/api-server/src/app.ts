@@ -1,4 +1,3 @@
-
 import express, {
   type Express,
   type Request,
@@ -10,15 +9,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { randomBytes, scrypt as cryptoScrypt } from "node:crypto";
-import { promisify } from "node:util";
 import { eq } from "drizzle-orm";
 
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { hashPassword } from "./lib/auth";
 import { db, usersTable as users } from "../libs/db/src/index";
-
-const asyncScrypt = promisify(cryptoScrypt);
 
 const app: Express = express();
 
@@ -27,25 +23,12 @@ const dirname = path.dirname(filename);
 
 const isProduction = process.env.NODE_ENV === "production";
 
-// تشفير كلمات المرور
-async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString("hex");
-
-  const hash = (await asyncScrypt(
-    password,
-    salt,
-    64,
-  )) as Buffer;
-
-  return `${hash.toString("hex")}.${salt}`;
-}
-
 // إنشاء المشرف العام إذا لم يكن موجوداً
 async function seedSuperAdmin(): Promise<void> {
   try {
-    const email = process.env.SUPER_ADMIN_EMAIL;
+    const email = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
     const password = process.env.SUPER_ADMIN_PASSWORD;
-    const name = process.env.SUPER_ADMIN_NAME || "Super Admin";
+    const name = process.env.SUPER_ADMIN_NAME?.trim() || "Super Admin";
 
     if (!email || !password) {
       logger.warn("Super admin configuration is missing.");
@@ -53,7 +36,7 @@ async function seedSuperAdmin(): Promise<void> {
     }
 
     const existing = await db
-      .select()
+      .select({ id: users.id })
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
@@ -63,12 +46,12 @@ async function seedSuperAdmin(): Promise<void> {
       return;
     }
 
-    const hashedPassword = await hashPassword(password);
+    const passwordHash = await hashPassword(password);
 
     await db.insert(users).values({
       name,
       email,
-      password: hashedPassword,
+      passwordHash,
       role: "super_admin",
       isActive: true,
     });
