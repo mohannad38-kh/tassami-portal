@@ -314,9 +314,6 @@ importers:
       resend:
         specifier: ^6.16.0
         version: 6.16.0
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
     devDependencies:
       prettier:
         specifier: ^3.8.4
