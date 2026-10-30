@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, departmentsTable, joinRequestsTable, membersTable, usersTable } from "@workspace/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { authMiddleware, requireRole, optionalAuthMiddleware } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -88,13 +88,13 @@ router.delete("/departments/:id", authMiddleware, requireRole("secretary"), asyn
   res.sendStatus(204);
 });
 
-router.get("/departments/:id/members", optionalAuthMiddleware, async (req, res): Promise<void> => {
+router.get("/departments/:id/members", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
   const members = await db.select().from(membersTable).where(eq(membersTable.departmentId, id));
   const userIds = members.map((m) => m.userId);
   const users = userIds.length > 0
-    ? await db.select().from(usersTable).where(eq(usersTable.id, userIds[0])) // simplified
+    ? await db.select().from(usersTable).where(inArray(usersTable.id, userIds))
     : [];
   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
   res.json(
