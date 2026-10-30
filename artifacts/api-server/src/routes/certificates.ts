@@ -35,7 +35,7 @@ async function formatCertificate(cert: typeof certificatesTable.$inferSelect) {
 
 router.get("/certificates", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const user = (req as Request & { user: JwtPayload }).user;
-  const isSecretary = effectiveRole(user) !== "member";
+  const isSecretary = ["secretary", "vice_president", "president", "super_admin"].includes(effectiveRole(user));
   const { memberId } = req.query;
   let certs = await db.select().from(certificatesTable).orderBy(certificatesTable.issuedAt);
   if (!isSecretary) {
