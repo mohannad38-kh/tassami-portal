@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, workshopsTable, workshopRegistrationsTable, workshopEvaluationsTable, trainersTable, membersTable, usersTable, certificatesTable } from "@workspace/db";
-import { eq, count, avg } from "drizzle-orm";
+import { eq, count, avg, inArray } from "drizzle-orm";
 import { authMiddleware, requireRole, optionalAuthMiddleware } from "../lib/auth";
 import { nanoid } from "nanoid";
 
@@ -119,9 +119,11 @@ router.get("/workshops/:id/registrations", authMiddleware, requireRole("secretar
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const workshopId = parseInt(raw, 10);
   const regs = await db.select().from(workshopRegistrationsTable).where(eq(workshopRegistrationsTable.workshopId, workshopId));
-  const members = await db.select().from(membersTable);
+  const memberIds = regs.map((r) => r.memberId);
+  const members = memberIds.length ? await db.select().from(membersTable).where(inArray(membersTable.id, memberIds)) : [];
   const memberMap = Object.fromEntries(members.map((m) => [m.id, m]));
-  const users = await db.select().from(usersTable);
+  const userIds = members.map((m) => m.userId);
+  const users = userIds.length ? await db.select().from(usersTable).where(inArray(usersTable.id, userIds)) : [];
   const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
   res.json(regs.map((r) => {
     const member = memberMap[r.memberId];
