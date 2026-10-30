@@ -58,12 +58,21 @@ router.post("/volunteer-hours", authMiddleware, requireRole("secretary"), async 
   const { memberId, eventId, hours, description, activityDate } = req.body;
   const parsedMemberId = Number(memberId);
   const parsedHours = Number(hours);
-  if (!Number.isInteger(parsedMemberId) || parsedMemberId <= 0 || !Number.isFinite(parsedHours) || parsedHours <= 0 || parsedHours > 24 || typeof activityDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(activityDate)) {
-    res.status(400).json({ error: "Valid memberId, hours (0-24), and activityDate (YYYY-MM-DD) are required" }); return;
+  const date = typeof activityDate === "string" && /^\\d{4}-\\d{2}-\\d{2}$/.test(activityDate) ? new Date(activityDate + "T00:00:00.000Z") : null;
+  const validDate = !!date && !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === activityDate;
+  const parsedEventId = eventId === undefined || eventId === null || eventId === "" ? null : Number(eventId);
+  if (!Number.isInteger(parsedMemberId) || parsedMemberId <= 0 || !Number.isFinite(parsedHours) || parsedHours <= 0 || parsedHours > 24 ||
+      !validDate || (parsedEventId !== null && (!Number.isSafeInteger(parsedEventId) || parsedEventId <= 0)) ||
+      (description !== undefined && description !== null && (typeof description !== "string" || description.length > 2000))) {
+    res.status(400).json({ error: "Valid memberId, hours, calendar date, eventId, and description are required" }); return;
   }
   const [member] = await db.select({ id: membersTable.id }).from(membersTable).where(eq(membersTable.id, parsedMemberId));
   if (!member) { res.status(404).json({ error: "Member not found" }); return; }
-  const [hour] = await db.insert(volunteerHoursTable).values({ memberId: parsedMemberId, eventId: eventId ? Number(eventId) : null, hours: String(parsedHours), description: typeof description === "string" ? description : null, activityDate }).returning();
+  if (parsedEventId !== null) {
+    const [event] = await db.select({ id: eventsTable.id }).from(eventsTable).where(eq(eventsTable.id, parsedEventId));
+    if (!event) { res.status(404).json({ error: "Event not found" }); return; }
+  }
+  const [hour] = await db.insert(volunteerHoursTable).values({ memberId: parsedMemberId, eventId: parsedEventId, hours: String(parsedHours), description: description ?? null, activityDate }).returning();
   res.status(201).json(await formatHour(hour));
 });
 
