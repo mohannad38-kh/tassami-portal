@@ -13,6 +13,7 @@ import GalleryPage from "@/pages/gallery";
 import PartnersPage from "@/pages/partners";
 import BoardPage from "@/pages/board";
 import ContactPage from "@/pages/contact";
+import NewsPage from "@/pages/news";
 import LoginPage from "@/pages/login";
 import JoinPage from "@/pages/join";
 import PortalPage from "@/pages/portal";
@@ -45,6 +46,7 @@ function Router() {
       <Route path="/initiative" component={InitiativePage} />
       <Route path="/departments" component={DepartmentsPage} />
       <Route path="/events" component={EventsPage} />
+      <Route path="/news" component={NewsPage} />
       <Route path="/gallery" component={GalleryPage} />
       <Route path="/partners" component={PartnersPage} />
       <Route path="/board" component={BoardPage} />
