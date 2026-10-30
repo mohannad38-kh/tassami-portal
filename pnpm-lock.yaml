@@ -372,6 +372,9 @@ importers:
       resend:
         specifier: ^6.16.0
         version: 6.16.0
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       '@types/bcrypt':
         specifier: ^6.0.0
