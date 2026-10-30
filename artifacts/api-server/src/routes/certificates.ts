@@ -1,7 +1,9 @@
 import { Router, type IRouter } from "express";
 import { db, certificatesTable, usersTable, eventsTable, workshopsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { authMiddleware, requireRole, optionalAuthMiddleware } from "../lib/auth";
+import { authMiddleware, requireRole, optionalAuthMiddleware, effectiveRole } from "../lib/auth";
+import type { JwtPayload } from "../lib/auth";
+import type { Request } from "express";
 
 const router: IRouter = Router();
 
@@ -32,18 +34,30 @@ async function formatCertificate(cert: typeof certificatesTable.$inferSelect) {
 }
 
 router.get("/certificates", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
+  const user = (req as Request & { user: JwtPayload }).user;
+  const isSecretary = effectiveRole(user) !== "member";
   const { memberId } = req.query;
   let certs = await db.select().from(certificatesTable).orderBy(certificatesTable.issuedAt);
-  if (memberId) certs = certs.filter((c) => c.recipientId === Number(memberId));
-  const result = await Promise.all(certs.map(formatCertificate));
-  res.json(result);
+  if (!isSecretary) {
+    certs = certs.filter((cert) => cert.recipientId === user.userId);
+  } else if (memberId !== undefined) {
+    const parsedUserId = Number(memberId);
+    if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) { res.status(400).json({ error: "Invalid memberId" }); return; }
+    certs = certs.filter((cert) => cert.recipientId === parsedUserId);
+  }
+  res.json(await Promise.all(certs.map(formatCertificate)));
 });
 
 router.get("/certificates/:id", optionalAuthMiddleware, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = Number(raw);
+  if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid certificate id" }); return; }
   const [cert] = await db.select().from(certificatesTable).where(eq(certificatesTable.id, id));
   if (!cert) { res.status(404).json({ error: "Not found" }); return; }
+  const user = (req as Request & { user?: JwtPayload }).user;
+  if (!user || (effectiveRole(user) === "member" && cert.recipientId !== user.userId)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
   res.json(await formatCertificate(cert));
 });
 
