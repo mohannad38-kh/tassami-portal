@@ -26,13 +26,13 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/hooks/use-language";
 
 export function AdminLayout({ children }: { children: ReactNode }) {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const { direction, isEnglish, t, toggleLanguage } = useLanguage();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isAuthenticated) setLocation("/login");
-  }, [isAuthenticated, setLocation]);
+    if (!isLoading && !isAuthenticated) setLocation("/login");
+  }, [isAuthenticated, isLoading, setLocation]);
 
   // التحقق من الصلاحيات الأدنى للمستخدم
   const isJoinManager = user?.role === "join_manager";
@@ -45,10 +45,10 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   ].includes(user?.role || "");
 
   useEffect(() => {
-    if (isAuthenticated && !isAdmin) setLocation("/portal");
-  }, [isAuthenticated, isAdmin, setLocation]);
+    if (!isLoading && isAuthenticated && !isAdmin) setLocation("/portal");
+  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
 
-  if (!isAuthenticated || !isAdmin) return null;
+  if (isLoading || !isAuthenticated || !isAdmin) return null;
 
   const sections = isJoinManager
     ? [
