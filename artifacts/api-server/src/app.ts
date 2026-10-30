@@ -110,7 +110,7 @@ app.use(
         return callback(null, true);
       }
 
-      if (!isProduction && allowedOrigins.length === 0) {
+      if (!isProduction && allowedOrigins.size === 0) {
         return callback(null, true);
       }
 
