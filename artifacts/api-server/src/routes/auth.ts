@@ -122,7 +122,7 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
     return;
   }
 
-  const appBaseUrl = process.env.APP_BASE_URL || "https://tassami-portal.onrender.com";
+  const appBaseUrl = process.env.APP_BASE_URL || "https://tassami-portal-1-8prm.onrender.com";
   const token = signPasswordResetToken({
     userId: user.id,
     email: user.email,
