@@ -39,7 +39,7 @@ async function currentMemberId(userId: number): Promise<number | null> {
 
 router.get("/volunteer-hours", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const user = (req as Request & { user: JwtPayload }).user;
-  const isSecretary = effectiveRole(user) !== "member";
+  const isSecretary = ["secretary", "vice_president", "president", "super_admin"].includes(effectiveRole(user));
   const { memberId } = req.query;
   let hours = await db.select().from(volunteerHoursTable).orderBy(volunteerHoursTable.activityDate);
   if (!isSecretary) {
@@ -69,7 +69,7 @@ router.post("/volunteer-hours", authMiddleware, requireRole("secretary"), async 
 
 router.get("/volunteer-hours/summary", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const user = (req as Request & { user: JwtPayload }).user;
-  const isSecretary = effectiveRole(user) !== "member";
+  const isSecretary = ["secretary", "vice_president", "president", "super_admin"].includes(effectiveRole(user));
   const members = isSecretary
     ? await db.select().from(membersTable)
     : (await currentMemberId(user.userId)) === null
