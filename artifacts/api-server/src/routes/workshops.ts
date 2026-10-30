@@ -85,10 +85,26 @@ router.delete("/workshops/:id", authMiddleware, requireRole("secretary"), async 
 
 router.post("/workshops/:id/register", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const workshopId = parseInt(raw, 10);
-  const { memberId } = req.body;
-  if (!memberId) { res.status(400).json({ error: "memberId required" }); return; }
-  const [reg] = await db.insert(workshopRegistrationsTable).values({ workshopId, memberId }).returning();
+  const workshopId = Number(raw);
+  const user = (req as typeof req & { user: { userId: number } }).user;
+  if (!Number.isSafeInteger(workshopId) || workshopId <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
+
+  // Resolve the member from the verified session; never trust a client-supplied memberId.
+  const [member] = await db.select().from(membersTable).where(eq(membersTable.userId, user.userId));
+  if (!member || member.status !== "active") { res.status(403).json({ error: "An active membership is required" }); return; }
+  const [workshop] = await db.select().from(workshopsTable).where(eq(workshopsTable.id, workshopId));
+  if (!workshop) { res.status(404).json({ error: "Workshop not found" }); return; }
+  if (workshop.status !== "upcoming" || workshop.workshopDate <= new Date()) { res.status(409).json({ error: "Registration is closed" }); return; }
+
+  const registrations = await db.select().from(workshopRegistrationsTable).where(eq(workshopRegistrationsTable.workshopId, workshopId));
+  if (registrations.some((registration) => registration.memberId === member.id)) {
+    res.status(409).json({ error: "Already registered" }); return;
+  }
+  if (workshop.capacity != null && registrations.filter((registration) => registration.status === "registered").length >= workshop.capacity) {
+    res.status(409).json({ error: "Workshop is full" }); return;
+  }
+
+  const [reg] = await db.insert(workshopRegistrationsTable).values({ workshopId, memberId: member.id }).returning();
   res.status(201).json({ id: reg.id, workshopId: reg.workshopId, memberId: reg.memberId, status: reg.status, attended: reg.attended === "true", createdAt: reg.createdAt, memberName: null });
 });
 
