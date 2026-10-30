@@ -2,6 +2,8 @@ import { createHmac } from "node:crypto";
 import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import type { Request, Response, NextFunction } from "express";
+import { db, usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const JWT_SECRET = process.env.SESSION_SECRET;
 
@@ -119,31 +121,55 @@ export async function comparePassword(password: string, hash: string): Promise<b
   return bcryptjs.compare(password, hash);
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
-  const token = authHeader.slice(7);
   try {
-    const payload = verifyToken(token);
-    (req as Request & { user: JwtPayload }).user = payload;
+    const payload = verifyToken(authHeader.slice(7));
+    const [user] = await db.select({
+      id: usersTable.id,
+      email: usersTable.email,
+      role: usersTable.role,
+      isActive: usersTable.isActive,
+    }).from(usersTable).where(eq(usersTable.id, payload.userId));
+    if (!user || !user.isActive) {
+      res.status(401).json({ error: "Account is inactive or unavailable" });
+      return;
+    }
+    (req as Request & { user: JwtPayload }).user = {
+      userId: user.id,
+      email: user.email,
+      role: effectiveRole(user),
+    };
     next();
   } catch {
     res.status(401).json({ error: "Invalid token" });
   }
 }
 
-export function optionalAuthMiddleware(req: Request, _res: Response, next: NextFunction): void {
+export async function optionalAuthMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.slice(7);
     try {
-      const payload = verifyToken(token);
-      (req as Request & { user: JwtPayload }).user = payload;
+      const payload = verifyToken(authHeader.slice(7));
+      const [user] = await db.select({
+        id: usersTable.id,
+        email: usersTable.email,
+        role: usersTable.role,
+        isActive: usersTable.isActive,
+      }).from(usersTable).where(eq(usersTable.id, payload.userId));
+      if (user?.isActive) {
+        (req as Request & { user: JwtPayload }).user = {
+          userId: user.id,
+          email: user.email,
+          role: effectiveRole(user),
+        };
+      }
     } catch {
-      // ignore
+      // Invalid or unavailable optional sessions remain anonymous.
     }
   }
   next();
