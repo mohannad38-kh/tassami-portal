@@ -348,7 +348,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
     const appBaseUrl =
       process.env.APP_BASE_URL ||
       (process.env.NODE_ENV === "production"
-        ? "https://tassami-portal.onrender.com"
+        ? "https://tassami-portal-1-8prm.onrender.com"
         : "http://localhost:4173");
     const passwordSetupUrl = passwordSetupToken
       ? new URL(
