@@ -17,6 +17,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "drizzle-orm": "latest",
+    "drizzle-zod": "^0.8.3",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "nanoid": "^5.1.16",

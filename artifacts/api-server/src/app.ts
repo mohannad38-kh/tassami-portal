@@ -1,3 +1,4 @@
+
 import express, {
   type Express,
   type Request,
@@ -15,7 +16,7 @@ import { eq } from "drizzle-orm";
 
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { db, users } from "./lib/db";
+import { db, usersTable as users } from "../libs/db/src/index";
 
 const asyncScrypt = promisify(cryptoScrypt);
 
@@ -39,12 +40,12 @@ async function hashPassword(password: string): Promise<string> {
   return `${hash.toString("hex")}.${salt}`;
 }
 
-// إنشاء المشرف العام عند أول تشغيل فقط
+// إنشاء المشرف العام إذا لم يكن موجوداً
 async function seedSuperAdmin(): Promise<void> {
   try {
-    const email = process.env.SUPER_ADMIN_EMAIL || "mohannadkhaloof38@gmail.com";
-    const password = process.env.SUPER_ADMIN_PASSWORD || "121Aqra6$";
-    const name = process.env.SUPER_ADMIN_NAME || "مهند الخلوف";
+    const email = process.env.SUPER_ADMIN_EMAIL;
+    const password = process.env.SUPER_ADMIN_PASSWORD;
+    const name = process.env.SUPER_ADMIN_NAME || "Super Admin";
 
     if (!email || !password) {
       logger.warn("Super admin configuration is missing.");
@@ -57,29 +58,28 @@ async function seedSuperAdmin(): Promise<void> {
       .where(eq(users.email, email))
       .limit(1);
 
+    if (existing.length > 0) {
+      logger.info("Super admin already exists.");
+      return;
+    }
+
     const hashedPassword = await hashPassword(password);
 
-    if (existing.length === 0) {
-      await db.insert(users).values({
-        name,
-        email,
-        password: hashedPassword,
-        role: "super_admin",
-        isActive: true,
-      });
-      logger.info("Super admin created successfully.");
-    } else {
-      await db.update(users)
-        .set({ role: "super_admin", password: hashedPassword, isActive: true })
-        .where(eq(users.email, email));
-      logger.info("Super admin updated successfully.");
-    }
+    await db.insert(users).values({
+      name,
+      email,
+      password: hashedPassword,
+      role: "super_admin",
+      isActive: true,
+    });
+
+    logger.info("Super admin created successfully.");
   } catch (err) {
     logger.error({ err }, "Failed to seed super admin");
   }
 }
 
-// إعدادات تسجيل الطلبات
+// تسجيل الطلبات
 app.use(
   pinoHttp({
     logger,
@@ -136,7 +136,7 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 // مسارات API
 app.use("/api", router);
 
-// التعامل مع مسارات API غير الموجودة
+// API غير موجود
 app.use("/api", (_req: Request, res: Response) => {
   res.status(404).json({
     success: false,
@@ -144,7 +144,7 @@ app.use("/api", (_req: Request, res: Response) => {
   });
 });
 
-// تشغيل الواجهة الأمامية في وضع الإنتاج
+// تشغيل الواجهة الأمامية في الإنتاج
 if (isProduction) {
   const frontendDirectory = path.resolve(
     dirname,
@@ -179,7 +179,8 @@ app.use(
   ) => {
     logger.error({ err: error }, "Application error");
 
-    const isCorsError = error.message === "Origin not allowed by CORS";
+    const isCorsError =
+      error.message === "Origin not allowed by CORS";
 
     res.status(isCorsError ? 403 : 500).json({
       success: false,
@@ -190,7 +191,8 @@ app.use(
   },
 );
 
-// تشغيل دالة التهيئة عند بدء التشغيل
-seedSuperAdmin();
-
+// تصدير التطبيق
 export default app;
+
+// إنشاء المشرف عند تحميل التطبيق
+void seedSuperAdmin();

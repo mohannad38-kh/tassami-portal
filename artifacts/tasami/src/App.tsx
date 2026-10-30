@@ -1,3 +1,4 @@
+
 import { Switch, Route } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -13,7 +14,7 @@ import NotFound from "@/pages/not-found";
 import AdminDashboard from "@/pages/admin";
 import MembersPage from "@/pages/admin/members";
 import MemberDetailPage from "@/pages/admin/members/id";
-import JoinRequestsPage from "@/pages/admin/join-requests";
+import JoinRequestsPage from "@/pages/admin/join-requests/JoinRequestsPage";
 import EventsPage from "@/pages/admin/events";
 import WorkshopsPage from "@/pages/admin/workshops";
 import CertificatesPage from "@/pages/admin/certificates";
