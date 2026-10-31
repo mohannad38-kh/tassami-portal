@@ -10,7 +10,10 @@ import { useLanguage } from "@/hooks/use-language";
 
 export default function Workshops() {
   const { t, isEnglish } = useLanguage();
-  const { data: workshops, isLoading } = useListWorkshops();
+  const { data: rawWorkshops, isLoading } = useListWorkshops();
+
+  // حماية صارمة لضمان أن البيانات دائماً مصفوفة لتجنب أي أخطاء وقت التشغيل (TypeError)
+  const workshops = Array.isArray(rawWorkshops) ? rawWorkshops : ((rawWorkshops as any)?.items || []);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -29,14 +32,16 @@ export default function Workshops() {
 
   return (
     <PublicLayout>
-      <div className="container py-12 px-4 md:px-8 mx-auto">
-        <h1 className="text-3xl font-bold text-primary mb-2">{t("الورش والدورات التدريبية")}</h1>
-        <p className="text-muted-foreground mb-8">{t("طور مهاراتك من خلال برامجنا التدريبية المتخصصة.")}</p>
+      <div className="container py-12 px-4 md:px-8 mx-auto max-w-6xl">
+        <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
+          <GraduationCap className="h-8 w-8" /> {t("الورش والدورات التدريبية")}
+        </h1>
+        <p className="text-muted-foreground mb-8 text-lg">{t("طور مهاراتك من خلال برامجنا التدريبية والورش المتخصصة.")}</p>
         
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i}>
+              <Card key={i} className="border-border/50">
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4 mb-2" />
                   <Skeleton className="h-4 w-1/2" />
@@ -48,46 +53,54 @@ export default function Workshops() {
               </Card>
             ))}
           </div>
-        ) : workshops?.length === 0 ? (
-          <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed">
-            <GraduationCap className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+        ) : workshops.length === 0 ? (
+          <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed border-border/60">
+            <GraduationCap className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-40" />
             <h3 className="text-xl font-medium text-foreground">{t("لا توجد ورش حالياً")}</h3>
-            <p className="text-muted-foreground mt-2">{t("ترقبوا برامجنا التدريبية القادمة.")}</p>
+            <p className="text-muted-foreground mt-2 text-sm">{t("ترقبوا برامجنا التدريبية القادمة قريباً.")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {workshops?.map((workshop) => (
-              <Card key={workshop.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3 border-b mb-3 bg-muted/30">
-                  <div className="flex justify-between items-start mb-2 gap-2">
-                    <CardTitle className="text-xl leading-tight text-primary">{workshop.title}</CardTitle>
-                    {getStatusBadge(workshop.status)}
-                  </div>
-                  <CardDescription className="line-clamp-2">{workshop.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {workshop.trainerName && (
-                    <div className="flex items-center text-sm">
-                      <GraduationCap className="h-4 w-4 mr-2 rtl:ml-2 text-secondary" />
-                      <span className="font-medium">{t("المدرب:")} </span>
-                      <span className="mr-1 rtl:ml-1">{workshop.trainerName}</span>
+            {workshops.map((workshop: any) => (
+              <Card key={workshop.id} className="hover:shadow-md transition-all border-primary/10 flex flex-col justify-between overflow-hidden">
+                <div>
+                  <CardHeader className="pb-3 border-b mb-3 bg-muted/30">
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                      <CardTitle className="text-xl leading-tight text-primary">{workshop.title}</CardTitle>
+                      {getStatusBadge(workshop.status)}
                     </div>
-                  )}
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <CalendarIcon className="h-4 w-4 mr-2 rtl:ml-2 text-primary" />
-                    <span>{format(new Date(workshop.workshopDate), 'dd MMMM yyyy - hh:mm a', { locale: isEnglish ? undefined : ar })}</span>
-                  </div>
-                  {workshop.location && (
+                    <CardDescription className="line-clamp-2 text-sm">{workshop.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 pt-2">
+                    {workshop.trainerName && (
+                      <div className="flex items-center text-sm">
+                        <GraduationCap className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-secondary shrink-0" />
+                        <span className="font-medium text-muted-foreground">{t("المدرب:")} </span>
+                        <span className="mr-1 rtl:ml-1 font-semibold text-foreground">{workshop.trainerName}</span>
+                      </div>
+                    )}
                     <div className="flex items-center text-sm text-muted-foreground">
-                      <MapPinIcon className="h-4 w-4 mr-2 rtl:ml-2 text-primary" />
-                      <span className="line-clamp-1">{workshop.location}</span>
+                      <CalendarIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-primary shrink-0" />
+                      <span dir="ltr" className="text-right">
+                        {workshop.workshopDate ? format(new Date(workshop.workshopDate), 'dd MMMM yyyy - hh:mm a', { locale: isEnglish ? undefined : ar }) : '-'}
+                      </span>
                     </div>
-                  )}
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <UsersIcon className="h-4 w-4 mr-2 rtl:ml-2 text-primary" />
-                    <span>{new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(workshop.registeredCount || 0)} {workshop.capacity ? `/ ${new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(workshop.capacity)}` : ''} {t("متدرب")}</span>
-                  </div>
-                </CardContent>
+                    {workshop.location && (
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <MapPinIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-primary shrink-0" />
+                        <span className="line-clamp-1">{workshop.location}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center text-sm text-muted-foreground pt-1 border-t">
+                      <UsersIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-primary shrink-0" />
+                      <span>
+                        {new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(workshop.registeredCount || 0)} 
+                        {workshop.capacity ? ` / ${new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(workshop.capacity)}` : ''} 
+                        {' '}{t("متدرب")}
+                      </span>
+                    </div>
+                  </CardContent>
+                </div>
               </Card>
             ))}
           </div>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
-import { Check, RefreshCw, X } from "lucide-react";
+import { Check, RefreshCw, X, UserCheck } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
 export default function AdminJoinRequests() {
@@ -17,19 +17,28 @@ export default function AdminJoinRequests() {
   const [filter, setFilter] = useState("pending");
   const [activeRequestId, setActiveRequestId] = useState<number | null>(null);
 
-  const { data: requests, isLoading, refetch } = useListJoinRequests({
+  const { data: rawRequests, isLoading, refetch } = useListJoinRequests({
     status: filter === "all" ? undefined : filter,
   });
-  const { data: departments } = useListDepartments();
+  const { data: rawDepartments } = useListDepartments();
   const updateRequest = useUpdateJoinRequest();
   const { toast } = useToast();
+
+  // حماية صارمة لضمان أن البيانات دائماً مصفوفة لتجنب أخطاء التشغيل (TypeError)
+  const requests = Array.isArray(rawRequests) 
+    ? rawRequests 
+    : ((rawRequests as any)?.items || []);
+
+  const departments = Array.isArray(rawDepartments) 
+    ? rawDepartments 
+    : ((rawDepartments as any)?.items || []);
 
   const handleUpdateStatus = (id: number, status: string) => {
     setActiveRequestId(id);
     updateRequest.mutate(
       { id, data: { status } },
       {
-        onSuccess: (result) => {
+        onSuccess: (result: any) => {
           if (status === "approved" && !result.emailSent) {
             toast({
               title: t("تم قبول الطلب، لكن لم يُرسل البريد"),
@@ -43,11 +52,11 @@ export default function AdminJoinRequests() {
               title: status === "approved" ? t("تم قبول الطلب وإرسال رسالة الانتساب") : t("تم رفض الطلب"),
               description:
                 status === "approved"
-                  ? `${t("أُرسلت رسالة القبول ورابط نموذج الانتساب إلى")} ${result.email}.`
+                  ? `${t("أُرسلت رسالة القبول ورابط نموذج الانتساب إلى")} ${result.email || ''}.`
                   : t("تم تحديث حالة طلب الانضمام بنجاح."),
             });
           }
-          refetch();
+          void refetch();
         },
         onError: () => {
           toast({
@@ -66,13 +75,15 @@ export default function AdminJoinRequests() {
   return (
     <AdminLayout>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-primary">{t("طلبات الانضمام")}</h1>
+        <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
+          <UserCheck className="h-6 w-6" /> {t("طلبات الانضمام")}
+        </h1>
         <p className="text-muted-foreground text-sm mt-1">
           {t("طلبات نموذج الموقع تظهر هنا للمراجعة. عند الموافقة، يُنشأ الحساب ويُرسل رابط آمن لإعداد كلمة المرور عبر البريد الإلكتروني.")}
         </p>
       </div>
 
-      <Card>
+      <Card className="shadow-sm border-border/50">
         <CardHeader className="pb-3">
           <div className="flex flex-wrap gap-2">
             {[
@@ -99,8 +110,9 @@ export default function AdminJoinRequests() {
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
             </div>
-          ) : !requests || requests.length === 0 ? (
+          ) : requests.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
+              <UserCheck className="h-12 w-12 mx-auto mb-3 opacity-20" />
               {t("لا توجد طلبات في هذا القسم حالياً")}
             </div>
           ) : (
@@ -118,17 +130,18 @@ export default function AdminJoinRequests() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {requests.map((req) => {
+                  {requests.map((req: any) => {
                     const isPendingAction = updateRequest.isPending && activeRequestId === req.id;
+                    const matchedDept = departments.find((department: any) => department.id === req.departmentId);
 
                     return (
-                      <TableRow key={req.id}>
+                      <TableRow key={req.id} className="hover:bg-muted/50 transition-colors">
                         <TableCell className="whitespace-nowrap font-mono text-xs">
-                          {format(new Date(req.createdAt), "dd MMM yyyy", { locale: isEnglish ? undefined : ar })}
+                          {req.createdAt ? format(new Date(req.createdAt), "dd MMM yyyy", { locale: isEnglish ? undefined : ar }) : '-'}
                         </TableCell>
                         <TableCell className="font-medium">{req.name}</TableCell>
                         <TableCell>
-                          {t(departments?.find((department) => department.id === req.departmentId)?.name ?? "غير محدد")}
+                          {t(matchedDept?.name ?? "غير محدد")}
                         </TableCell>
                         <TableCell>
                           <Badge

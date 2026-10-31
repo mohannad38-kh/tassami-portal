@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
-import { Clock, MapPin, Star, Users, Heart, Target, Lightbulb } from "lucide-react";
+import { Clock, MapPin, Star, Users, Heart, Target, Lightbulb, Sparkles, ArrowRight, ArrowLeft } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
 const SPECIALIZED_DEPARTMENT_COUNT = 5;
@@ -72,7 +72,6 @@ export default function Home() {
     };
   }, []);
 
-  // حساب عدد المتطوعين المعروض
   const displayVolunteerCount =
     volunteerCountError || registeredVolunteers === null
       ? "3"
@@ -89,11 +88,15 @@ export default function Home() {
     <PublicLayout>
       {/* Hero Section */}
       <section
-        className="relative flex min-h-[460px] items-center overflow-hidden text-center"
+        className="relative flex min-h-[500px] items-center overflow-hidden text-center py-20"
         style={{ background: "linear-gradient(115deg, #602531 0%, #7a3342 55%, #602531 100%)" }}
       >
-        <div className="container mx-auto px-4 py-16 md:px-8">
-          <h1 className="mb-4 text-4xl font-bold text-white md:text-6xl">
+        <div className="container mx-auto px-4 md:px-8 relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-white/90 backdrop-blur-sm text-sm mb-6 border border-white/15">
+            <Sparkles className="h-4 w-4 text-[#d5b976]" />
+            <span>{t("منصة العمل التطوعي في جامعة جدارا")}</span>
+          </div>
+          <h1 className="mb-6 text-4xl font-extrabold text-white md:text-6xl tracking-tight leading-tight">
             {isEnglish ? (
               <>
                 Tasami <span style={{ color: "#d5b976" }}>Volunteer</span> Initiative
@@ -104,22 +107,25 @@ export default function Home() {
               </>
             )}
           </h1>
-          <p className="mx-auto mb-10 max-w-3xl text-lg leading-relaxed text-white/90 md:text-2xl">
+          <p className="mx-auto mb-10 max-w-3xl text-lg leading-relaxed text-white/90 md:text-2xl font-light">
             {t("نسمو بالعمل التطوعي لنصنع أثراً مستداماً ومجتمعاً متكافلاً.")}
           </p>
           <div className="flex flex-col justify-center gap-4 sm:flex-row">
             <Button
               size="lg"
-              className="px-8 text-lg font-bold"
+              className="px-8 text-lg font-bold h-12 shadow-lg hover:opacity-95 transition-all"
               style={{ background: "#d5b976", color: "#382a20" }}
               asChild
             >
-              <Link href="/join">{t("انضم إلينا")}</Link>
+              <Link href="/join" className="flex items-center gap-2">
+                {t("انضم إلينا")}
+                {isEnglish ? <ArrowRight className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
+              </Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
-              className="border-white/50 px-8 text-lg font-bold text-white hover:bg-white/10 hover:text-white"
+              className="border-white/40 px-8 text-lg font-bold text-white hover:bg-white/10 hover:text-white h-12 backdrop-blur-sm"
               asChild
             >
               <Link href="/about">{t("اكتشف المزيد")}</Link>
@@ -129,21 +135,21 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-muted/40 py-12">
+      <section className="bg-muted/40 py-12 border-y border-border/40">
         <div className="container mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 gap-5 text-center sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 text-center sm:grid-cols-2 lg:grid-cols-4">
             {statsList.map((stat, index) => (
               <div
                 key={stat.label}
-                className="rounded-2xl border border-border/60 bg-card px-5 py-6 shadow-sm"
+                className="rounded-2xl border border-border/60 bg-card px-6 py-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div
-                  className="mb-1 text-4xl font-bold"
+                  className="mb-1 text-4xl font-bold font-mono"
                   style={{ color: index % 2 === 0 ? "#702632" : "#a27a37" }}
                 >
                   {stat.number}
                 </div>
-                <div className="text-muted-foreground">{stat.label}</div>
+                <div className="text-muted-foreground font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -152,24 +158,28 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="bg-white py-16">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-5">
+        <div className="container mx-auto px-4 md:px-8 max-w-6xl">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-primary mb-3">{t("قيمنا وأهدافنا")}</h2>
+            <p className="text-muted-foreground text-lg">{t("الركائز الأساسية التي تنطلق منها مبادرة تسامي")}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-6 text-center md:grid-cols-5">
             {FEATURES.map((feature, i) => (
               <div
                 key={i}
-                className="rounded-2xl border p-5 transition-shadow hover:shadow-md"
+                className="rounded-2xl border p-6 transition-all hover:shadow-lg bg-card group"
                 style={{ borderColor: "rgba(112,38,50,0.14)" }}
               >
                 <div
-                  className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full"
+                  className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl group-hover:scale-110 transition-transform"
                   style={{ background: "rgba(112,38,50,0.08)" }}
                 >
-                  <feature.icon className="h-6 w-6" style={{ color: "#702632" }} />
+                  <feature.icon className="h-7 w-7" style={{ color: "#702632" }} />
                 </div>
-                <div className="mb-1 font-bold" style={{ color: "#702632" }}>
+                <div className="mb-2 font-bold text-lg" style={{ color: "#702632" }}>
                   {t(feature.label)}
                 </div>
-                <div className="text-sm text-gray-500">{t(feature.desc)}</div>
+                <div className="text-xs text-muted-foreground leading-relaxed">{t(feature.desc)}</div>
               </div>
             ))}
           </div>
@@ -177,31 +187,38 @@ export default function Home() {
       </section>
 
       {/* Upcoming Events Section */}
-      <section className="bg-muted/40 py-20">
-        <div className="container mx-auto px-4 md:px-8">
-          <div className="mb-10 flex items-center justify-between">
-            <Button variant="outline" className="border-primary text-primary" asChild>
+      <section className="bg-muted/40 py-20 border-t border-border/40">
+        <div className="container mx-auto px-4 md:px-8 max-w-6xl">
+          <div className="mb-10 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-primary">{t("الفعاليات القادمة")}</h2>
+              <p className="text-muted-foreground mt-1">{t("ترقبوا أحدث الفعاليات والأنشطة القادمة لمبادرة تسامي")}</p>
+            </div>
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary/5" asChild>
               <Link href="/events">{t("عرض الكل")}</Link>
             </Button>
-            <h2 className="text-3xl font-bold text-primary">{t("الفعاليات القادمة")}</h2>
           </div>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {UPCOMING_EVENTS.map((event, i) => (
-              <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-md transition-shadow hover:shadow-lg">
+              <div key={i} className="overflow-hidden rounded-2xl bg-card border border-border/60 shadow-sm transition-all hover:shadow-md flex flex-col">
                 <div className="flex items-center gap-3 bg-primary p-4 text-white">
-                  <div className="text-lg font-bold">{t("فعالية قادمة")}</div>
+                  <div className="text-sm font-semibold tracking-wide">{t("فعالية قادمة")}</div>
                 </div>
-                <div className="p-5">
-                  <h3 className="mb-3 text-lg font-bold text-primary">{t(event.title)}</h3>
-                  <div className="mb-2 flex items-center gap-2 text-sm text-gray-500">
-                    <Clock className="h-4 w-4" />
-                    <span>{t("موعد يحدد قريباً")}</span>
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="mb-3 text-lg font-bold text-primary leading-snug">{t(event.title)}</h3>
+                    <div className="space-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-secondary shrink-0" />
+                        <span>{t("موعد يحدد قريباً")}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-secondary shrink-0" />
+                        <span>{t(event.place)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
-                    <MapPin className="h-4 w-4" />
-                    <span>{t(event.place)}</span>
-                  </div>
-                  <Button className="w-full font-bold" variant="secondary" asChild>
+                  <Button className="w-full font-bold mt-2" variant="secondary" asChild>
                     <Link href="/events">{t("عرض التفاصيل")}</Link>
                   </Button>
                 </div>

@@ -2,11 +2,11 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useParams, Link } from "wouter";
 import { useGetMember } from "@workspace/api-client-react";
 import { getGetMemberQueryKey } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, QrCode, Mail, Phone, Building, Hash } from "lucide-react";
+import { ChevronRight, QrCode, Mail, Phone, Building, Hash, UserCheck } from "lucide-react";
 import logoUrl from "@assets/image_1782739252068.png";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -37,17 +37,20 @@ export default function AdminMemberDetail() {
           <Skeleton className="h-10 w-64" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Skeleton className="h-64 md:col-span-2" />
-            <Skeleton className="h-[400px]" />
+            <Skeleton className="h-[450px]" />
           </div>
         </div>
       ) : isError || !member ? (
-        <div className="text-center py-20 bg-muted/20 rounded-2xl">
+        <div className="text-center py-20 bg-muted/20 rounded-2xl border border-border/50">
+          <UserCheck className="h-12 w-12 mx-auto mb-3 opacity-20 text-destructive" />
           <h3 className="text-xl font-medium text-destructive mb-2">{t("تعذر تحميل بيانات العضو")}</h3>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-primary">{t("تفاصيل العضو:")} {member.userName}</h1>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
+              <UserCheck className="h-6 w-6" /> {t("تفاصيل العضو:")} {member.userName}
+            </h1>
             <Badge variant={
               member.status === 'active' ? 'default' : 
               member.status === 'pending' ? 'secondary' : 'destructive'
@@ -59,7 +62,7 @@ export default function AdminMemberDetail() {
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <Card>
+              <Card className="shadow-sm border-border/50">
                 <CardHeader>
                   <CardTitle>{t("البيانات الأساسية")}</CardTitle>
                 </CardHeader>
@@ -70,7 +73,7 @@ export default function AdminMemberDetail() {
                         <Hash className="h-4 w-4 mr-2 rtl:ml-2" /> {t("رقم العضوية")}
                       </div>
                       <div className="font-mono font-medium bg-muted px-3 py-1.5 rounded-md inline-block">
-                        {member.membershipNumber}
+                        {member.membershipNumber || "-"}
                       </div>
                     </div>
                     
@@ -98,7 +101,7 @@ export default function AdminMemberDetail() {
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="shadow-sm border-border/50">
                 <CardHeader>
                   <CardTitle>{t("ملخص الساعات التطوعية")}</CardTitle>
                 </CardHeader>
@@ -109,7 +112,9 @@ export default function AdminMemberDetail() {
                     </div>
                     <div>
                       <div className="font-medium text-lg">{t("إجمالي الساعات المعتمدة")}</div>
-                      <div className="text-sm text-muted-foreground">{t("منذ الانضمام في")} {format(new Date(member.createdAt), 'MMMM yyyy', { locale: isEnglish ? undefined : ar })}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {t("منذ الانضمام في")} {member.createdAt ? format(new Date(member.createdAt), 'MMMM yyyy', { locale: isEnglish ? undefined : ar }) : '-'}
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -136,7 +141,7 @@ export default function AdminMemberDetail() {
                       )}
                     </div>
                     <div className="font-mono tracking-widest text-lg bg-white/10 px-4 py-1 rounded-full">
-                      {member.membershipNumber}
+                      {member.membershipNumber || "---"}
                     </div>
                   </div>
                   

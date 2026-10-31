@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/hooks/use-language";
 import { useDepartments } from "@/hooks/use-departments";
+import { UserPlus, Lock, Mail, Phone, Building, UserCheck } from "lucide-react";
 
 function normalizeJordanMobile(value: string): string | null {
   const digits = value
@@ -37,7 +38,6 @@ export default function Join() {
   const { t } = useLanguage();
   const { data: rawDepartments, isLoading: isLoadingDepartments } = useDepartments();
 
-  // معالجة آمنة لضمان أن الأقسام مصفوفة دائماً حتى لو جاءت بتنسيق مختلف
   const departments = Array.isArray(rawDepartments) 
     ? rawDepartments 
     : (rawDepartments as any)?.data && Array.isArray((rawDepartments as any).data) 
@@ -164,11 +164,14 @@ export default function Join() {
     <PublicLayout>
       <div className="container py-16 px-4 md:px-8 mx-auto max-w-2xl">
         <Card className="border-primary/10 shadow-lg">
-          <CardHeader className="text-center pb-8">
+          <CardHeader className="text-center pb-6">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3 text-primary">
+              <UserPlus className="h-8 w-8" />
+            </div>
             <CardTitle className="text-3xl font-bold text-primary mb-2">{t("نموذج الانضمام")}</CardTitle>
-            <CardDescription className="text-lg">
+            <CardDescription className="text-base">
               {t("انضم إلى نخبة المتطوعين في مبادرة تسامي وكن جزءاً من التغيير الإيجابي.")}
-              <span className="mt-2 block text-sm">
+              <span className="mt-2 block text-xs text-muted-foreground">
                 {t("أنشئ كلمة مرورك الآن؛ سيبقى الحساب بانتظار الموافقة قبل أن تتمكن من الدخول.")}
               </span>
             </CardDescription>
@@ -177,101 +180,122 @@ export default function Join() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="name">{t("الاسم الثلاثي")}</Label>
-                <Input 
-                  id="name" 
-                  required 
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder={t("أدخل اسمك الكامل")}
-                />
+                <div className="relative">
+                  <UserCheck className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    id="name" 
+                    required 
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder={t("أدخل اسمك الكامل...")}
+                    className="px-10 rtl:pr-10 rtl:pl-3"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="password">{t("كلمة المرور")}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                    value={formData.password}
-                    onChange={(event) =>
-                      setFormData({ ...formData, password: event.target.value })
-                    }
-                    dir="ltr"
-                    className="text-left"
-                  />
+                  <div className="relative">
+                    <Lock className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      minLength={12}
+                      autoComplete="new-password"
+                      value={formData.password}
+                      onChange={(event) =>
+                        setFormData({ ...formData, password: event.target.value })
+                      }
+                      dir="ltr"
+                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                      placeholder="••••••••••••"
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {t("يجب أن تتكون كلمة المرور من 8 أحرف على الأقل")}
+                    {t("يجب أن تتكون كلمة المرور من 12 حرفاً على الأقل")}
                   </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">{t("تأكيد كلمة المرور")}</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    required
-                    minLength={8}
-                    autoComplete="new-password"
-                    value={formData.confirmPassword}
-                    onChange={(event) =>
-                      setFormData({ ...formData, confirmPassword: event.target.value })
-                    }
-                    dir="ltr"
-                    className="text-left"
-                  />
+                  <div className="relative">
+                    <Lock className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      required
+                      minLength={12}
+                      autoComplete="new-password"
+                      value={formData.confirmPassword}
+                      onChange={(event) =>
+                        setFormData({ ...formData, confirmPassword: event.target.value })
+                      }
+                      dir="ltr"
+                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                      placeholder="••••••••••••"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="department">{t("القسم الذي ترغب بالانضمام إليه")}</Label>
-                <select
-                  id="department"
-                  required
-                  value={formData.departmentId}
-                  onChange={(event) => setFormData({ ...formData, departmentId: event.target.value })}
-                  disabled={isLoadingDepartments}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="">
-                    {isLoadingDepartments ? t("جارٍ تحميل الأقسام...") : t("اختر القسم")}
-                  </option>
-                  {departments.map((department: any) => (
-                    <option key={department.id} value={department.id}>
-                      {t(department.name)}
+                <div className="relative">
+                  <Building className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+                  <select
+                    id="department"
+                    required
+                    value={formData.departmentId}
+                    onChange={(event) => setFormData({ ...formData, departmentId: event.target.value })}
+                    disabled={isLoadingDepartments}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 px-10 rtl:pr-10 rtl:pl-3"
+                  >
+                    <option value="">
+                      {isLoadingDepartments ? t("جارٍ تحميل الأقسام...") : t("اختر القسم")}
                     </option>
-                  ))}
-                </select>
+                    {departments.map((department: any) => (
+                      <option key={department.id} value={department.id}>
+                        {t(department.name)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="email">{t("البريد الإلكتروني")}</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    required 
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="example@domain.com"
-                    dir="ltr"
-                    className="text-left"
-                  />
+                  <div className="relative">
+                    <Mail className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      required 
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="name@example.com"
+                      dir="ltr"
+                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                    />
+                  </div>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t("رقم الجوال (اختياري)")}</Label>
-                  <Input 
-                    id="phone" 
-                    type="tel"
-                    inputMode="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="0790000000"
-                    dir="ltr"
-                    className="text-left"
-                  />
+                  <div className="relative">
+                    <Phone className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      id="phone" 
+                      type="tel"
+                      inputMode="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="0790000000"
+                      dir="ltr"
+                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {t("رقم أردني: 07xxxxxxxx أو +962 7x xxx xxxx")}
                   </p>
@@ -291,9 +315,10 @@ export default function Join() {
               
               <Button 
                 type="submit" 
-                className="w-full text-lg h-12" 
+                className="w-full text-lg h-12 gap-2" 
                 disabled={isSubmitting || submitRequest.isPending || isLoadingDepartments}
               >
+                <UserPlus className="h-5 w-5" />
                 {isSubmitting || submitRequest.isPending ? t("جاري الإرسال...") : t("إرسال طلب الانضمام")}
               </Button>
             </form>

@@ -1,16 +1,19 @@
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { useListEvents } from "@workspace/api-client-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, MapPinIcon, UsersIcon } from "lucide-react";
+import { CalendarIcon, MapPinIcon, UsersIcon, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useLanguage } from "@/hooks/use-language";
 
 export default function Events() {
   const { t, isEnglish } = useLanguage();
-  const { data: events, isLoading } = useListEvents();
+  const { data: rawEvents, isLoading } = useListEvents();
+
+  // حماية صارمة لضمان أن البيانات دائماً مصفوفة لتجنب أي أخطاء وقت التشغيل (TypeError)
+  const events = Array.isArray(rawEvents) ? rawEvents : ((rawEvents as any)?.items || []);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -29,14 +32,16 @@ export default function Events() {
 
   return (
     <PublicLayout>
-      <div className="container py-12 px-4 md:px-8 mx-auto">
-        <h1 className="text-3xl font-bold text-primary mb-2">{t("الفعاليات")}</h1>
-        <p className="text-muted-foreground mb-8">{t("شارك معنا في صناعة الأثر عبر فعالياتنا المتنوعة.")}</p>
+      <div className="container py-12 px-4 md:px-8 mx-auto max-w-6xl">
+        <h1 className="text-3xl font-bold text-primary mb-2 flex items-center gap-2">
+          <Calendar className="h-8 w-8" /> {t("الفعاليات")}
+        </h1>
+        <p className="text-muted-foreground mb-8 text-lg">{t("شارك معنا في صناعة الأثر عبر فعالياتنا وورشنا المتنوعة.")}</p>
         
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="overflow-hidden">
+              <Card key={i} className="overflow-hidden border-border/50">
                 <Skeleton className="h-48 w-full" />
                 <CardHeader>
                   <Skeleton className="h-6 w-3/4 mb-2" />
@@ -49,16 +54,16 @@ export default function Events() {
               </Card>
             ))}
           </div>
-        ) : events?.length === 0 ? (
-          <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed">
-            <CalendarIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-50" />
+        ) : events.length === 0 ? (
+          <div className="text-center py-20 bg-muted/20 rounded-2xl border border-dashed border-border/60">
+            <CalendarIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4 opacity-40" />
             <h3 className="text-xl font-medium text-foreground">{t("لا توجد فعاليات حالياً")}</h3>
-            <p className="text-muted-foreground mt-2">{t("ترقبوا فعالياتنا القادمة قريباً.")}</p>
+            <p className="text-muted-foreground mt-2 text-sm">{t("ترقبوا فعالياتنا وبرامجنا القادمة قريباً.")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events?.map((event) => (
-              <Card key={event.id} className="overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+            {events.map((event: any) => (
+              <Card key={event.id} className="overflow-hidden flex flex-col hover:shadow-md transition-all border-primary/10">
                 {event.imageUrl ? (
                   <div className="h-48 overflow-hidden">
                     <img src={event.imageUrl} alt={event.title} className="w-full h-full object-cover" />
@@ -70,26 +75,32 @@ export default function Events() {
                 )}
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start mb-2 gap-2">
-                    <CardTitle className="text-xl leading-tight line-clamp-2">{event.title}</CardTitle>
+                    <CardTitle className="text-xl leading-tight line-clamp-2 text-primary">{event.title}</CardTitle>
                     {getStatusBadge(event.status)}
                   </div>
-                  <CardDescription className="line-clamp-2">{event.description}</CardDescription>
+                  <CardDescription className="line-clamp-2 text-sm">{event.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="mt-auto pb-4">
-                  <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="space-y-2 text-sm text-muted-foreground pt-2 border-t">
                     <div className="flex items-center">
-                      <CalendarIcon className="h-4 w-4 mr-2 rtl:ml-2 text-primary" />
-                      <span>{format(new Date(event.eventDate), 'dd MMMM yyyy - hh:mm a', { locale: isEnglish ? undefined : ar })}</span>
+                      <CalendarIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-primary shrink-0" />
+                      <span dir="ltr" className="text-right">
+                        {event.eventDate ? format(new Date(event.eventDate), 'dd MMMM yyyy - hh:mm a', { locale: isEnglish ? undefined : ar }) : '-'}
+                      </span>
                     </div>
                     {event.location && (
                       <div className="flex items-center">
-                        <MapPinIcon className="h-4 w-4 mr-2 rtl:ml-2 text-primary" />
+                        <MapPinIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-primary shrink-0" />
                         <span className="line-clamp-1">{event.location}</span>
                       </div>
                     )}
                     <div className="flex items-center">
-                      <UsersIcon className="h-4 w-4 mr-2 rtl:ml-2 text-primary" />
-                      <span>{new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(event.registeredCount || 0)} {event.capacity ? `/ ${new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(event.capacity)}` : ''} {t("مسجل")}</span>
+                      <UsersIcon className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0 text-primary shrink-0" />
+                      <span>
+                        {new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(event.registeredCount || 0)} 
+                        {event.capacity ? ` / ${new Intl.NumberFormat(isEnglish ? "en" : "ar", { useGrouping: false }).format(event.capacity)}` : ''} 
+                        {' '}{t("مسجل")}
+                      </span>
                     </div>
                   </div>
                 </CardContent>

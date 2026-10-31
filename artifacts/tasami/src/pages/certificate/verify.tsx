@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "wouter";
+import { useParams } from "wouter";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import {
   getVerifyCertificateQueryKey,
@@ -104,7 +104,7 @@ export default function CertificateVerify() {
               <div className="grid grid-cols-3 gap-4 border-b border-green-200 dark:border-green-800/50 pb-4">
                 <div className="col-span-1 text-muted-foreground text-sm font-medium">{t("تاريخ الإصدار:")}</div>
                 <div className="col-span-2 font-medium" dir="ltr">
-                  {format(new Date(data.issuedAt), 'dd MMMM yyyy', { locale: isEnglish ? undefined : ar })}
+                  {data.issuedAt ? format(new Date(data.issuedAt), 'dd MMMM yyyy', { locale: isEnglish ? undefined : ar }) : '-'}
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4">

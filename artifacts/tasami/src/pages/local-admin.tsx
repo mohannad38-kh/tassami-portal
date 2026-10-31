@@ -157,9 +157,9 @@ export default function LocalAdmin() {
       const response = await fetch(
         setup ? "/local-api/admin/setup" : "/local-api/admin/login",
         {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
         },
       );
       const result = await readResponse<LocalAdminSession>(response);
@@ -238,29 +238,29 @@ export default function LocalAdmin() {
 
   if (!session) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4" dir={direction}>
-        <Button variant="outline" size="sm" className="absolute top-4 right-4" onClick={toggleLanguage}>
+      <main className="flex min-h-screen items-center justify-center bg-muted/40 p-4 relative" dir={direction}>
+        <Button variant="outline" size="sm" className="absolute top-4 right-4 rtl:right-auto rtl:left-4" onClick={toggleLanguage}>
           {isEnglish ? "العربية" : "English"}
         </Button>
         <Card className="w-full max-w-md border-primary/10 shadow-lg">
-          <CardHeader className="space-y-3 text-center">
+          <CardHeader className="space-y-3 text-center pb-2">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <ShieldCheck className="h-7 w-7" />
             </div>
-            <CardTitle className="text-2xl">{t("إدارة طلبات تسامي")}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl text-primary">{t("إدارة طلبات تسامي")}</CardTitle>
+            <CardDescription className="text-sm">
               {needsSetup
                 ? t("أنشئي كلمة مرور المسؤول لأول مرة. ستُحفظ مشفّرة على هذا الجهاز.")
                 : t("سجّلي الدخول لعرض الطلبات وإدارتها على هذا الجهاز.")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {needsSetup === null ? (
               <p className="py-8 text-center text-sm text-muted-foreground">{t("جارٍ تجهيز لوحة الإدارة...")}</p>
             ) : (
             <form className="space-y-4" onSubmit={needsSetup ? setup : login}>
               {loginError && (
-                <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive" role="alert">
+                <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive font-medium" role="alert">
                   {loginError}
                 </p>
               )}
@@ -289,6 +289,7 @@ export default function LocalAdmin() {
                   onChange={(event) => setPassword(event.target.value)}
                   dir="ltr"
                   className="text-left"
+                  placeholder="••••••••••••"
                 />
               </div>
               {needsSetup && (
@@ -304,13 +305,14 @@ export default function LocalAdmin() {
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     dir="ltr"
                     className="text-left"
+                    placeholder="••••••••••••"
                   />
                   <p className="text-xs text-muted-foreground">
                     {t("اختاري 12 حرفاً أو أكثر. لا تستخدمي كلمة مرور Gmail.")}
                   </p>
                 </div>
               )}
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full h-11" disabled={loading}>
                 {loading
                   ? t("جارٍ التحقق...")
                   : needsSetup
@@ -323,8 +325,8 @@ export default function LocalAdmin() {
             </form>
             )}
           </CardContent>
-          <div className="px-6 pb-5 text-center">
-            <Button variant="link" asChild>
+          <div className="px-6 pb-5 text-center border-t pt-4">
+            <Button variant="link" asChild className="text-muted-foreground">
               <Link href="/">{t("العودة إلى الموقع")}</Link>
             </Button>
           </div>
@@ -341,22 +343,22 @@ export default function LocalAdmin() {
 
   return (
     <main className="min-h-screen bg-muted/30" dir={direction}>
-      <header className="border-b bg-background">
+      <header className="border-b bg-background shadow-sm">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div>
             <h1 className="text-xl font-bold text-primary sm:text-2xl">{t("إدارة طلبات تسامي")}</h1>
-            <p className="mt-1 text-sm text-muted-foreground" dir="ltr">{session.email}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground font-mono" dir="ltr">{session.email}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => void refreshRequests()} disabled={loading}>
-              <RefreshCw className={`ms-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <Button variant="outline" size="sm" onClick={() => void refreshRequests()} disabled={loading} className="gap-1.5">
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               {t("تحديث")}
             </Button>
             <Button variant="outline" size="sm" onClick={toggleLanguage}>
               {isEnglish ? "العربية" : "English"}
             </Button>
-            <Button variant="ghost" size="sm" onClick={() => void logout()}>
-              <LogOut className="ms-2 h-4 w-4" />
+            <Button variant="ghost" size="sm" onClick={() => void logout()} className="text-destructive hover:text-destructive gap-1.5">
+              <LogOut className="h-4 w-4" />
               {t("خروج")}
             </Button>
           </div>
@@ -365,31 +367,31 @@ export default function LocalAdmin() {
 
       <div className="mx-auto max-w-6xl space-y-6 px-4 py-8">
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card>
+          <Card className="shadow-sm border-border/50">
             <CardContent className="flex items-center gap-4 p-5">
               <span className="rounded-xl bg-secondary/15 p-3 text-secondary-foreground"><Clock3 className="h-5 w-5" /></span>
-              <div><p className="text-2xl font-bold" dir="ltr">{counts.pending}</p><p className="text-sm text-muted-foreground">{t("بانتظار المراجعة")}</p></div>
+              <div><p className="text-2xl font-bold font-mono" dir="ltr">{counts.pending}</p><p className="text-sm text-muted-foreground">{t("بانتظار المراجعة")}</p></div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="shadow-sm border-border/50">
             <CardContent className="flex items-center gap-4 p-5">
               <span className="rounded-xl bg-primary/10 p-3 text-primary"><Users className="h-5 w-5" /></span>
-              <div><p className="text-2xl font-bold" dir="ltr">{counts.approved}</p><p className="text-sm text-muted-foreground">{t("طلبات مقبولة")}</p></div>
+              <div><p className="text-2xl font-bold font-mono" dir="ltr">{counts.approved}</p><p className="text-sm text-muted-foreground">{t("طلبات مقبولة")}</p></div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="shadow-sm border-border/50">
             <CardContent className="flex items-center gap-4 p-5">
               <span className="rounded-xl bg-muted p-3 text-muted-foreground"><UserRound className="h-5 w-5" /></span>
-              <div><p className="text-2xl font-bold" dir="ltr">{requests.length}</p><p className="text-sm text-muted-foreground">{t("إجمالي الطلبات")}</p></div>
+              <div><p className="text-2xl font-bold font-mono" dir="ltr">{requests.length}</p><p className="text-sm text-muted-foreground">{t("إجمالي الطلبات")}</p></div>
             </CardContent>
           </Card>
         </div>
 
-        <Card>
-          <CardHeader className="gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <Card className="shadow-sm border-border/50">
+          <CardHeader className="gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
             <div>
-              <CardTitle>{t("طلبات الانضمام")}</CardTitle>
-              <CardDescription>{t("راجعي الطلب ثم اقبليه أو ارفضي؛ عند القبول يحاول الموقع إرسال بريد إلكتروني.")}</CardDescription>
+              <CardTitle className="text-xl text-primary">{t("طلبات الانضمام")}</CardTitle>
+              <CardDescription className="mt-1">{t("راجعي الطلب ثم اقبليه أو ارفضي؛ عند القبول يحاول الموقع إرسال بريد إلكتروني.")}</CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">
               {[
@@ -403,59 +405,63 @@ export default function LocalAdmin() {
                   size="sm"
                   variant={filter === item.value ? "default" : "outline"}
                   onClick={() => setFilter(item.value)}
+                  className="gap-1.5"
                 >
                   {item.label}
-                  <span className="ms-2 tabular-nums" dir="ltr">
+                  <span className="tabular-nums font-mono text-xs px-1.5 py-0.5 rounded-full bg-background/20" dir="ltr">
                     {item.value === "all" ? requests.length : counts[item.value as keyof typeof counts]}
                   </span>
                 </Button>
               ))}
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4 pt-2">
             {loading && requests.length === 0 ? (
-              <p className="py-10 text-center text-muted-foreground">{t("جارٍ تحميل الطلبات...")}</p>
+              <p className="py-12 text-center text-muted-foreground">{t("جارٍ تحميل الطلبات...")}</p>
             ) : visibleRequests.length === 0 ? (
-              <p className="py-10 text-center text-muted-foreground">{t("لا توجد طلبات في هذا القسم حالياً")}</p>
+              <p className="py-12 text-center text-muted-foreground">{t("لا توجد طلبات في هذا القسم حالياً")}</p>
             ) : (
               visibleRequests.map((request) => (
-                <article key={request.id} className="rounded-xl border bg-card p-4 sm:p-5">
+                <article key={request.id} className="rounded-2xl border bg-card p-5 shadow-sm transition-all hover:shadow-md">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-semibold">{request.name}</h2>
-                        <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">
+                    <div className="min-w-0 space-y-2.5">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h2 className="text-lg font-bold text-foreground">{request.name}</h2>
+                        <span className="rounded-full bg-muted px-3 py-0.5 text-xs font-semibold">
                           {statusLabel(request.status, t)}
                         </span>
                       </div>
-                      <p className="flex items-center gap-2 text-sm text-muted-foreground" dir="ltr">
-                        <Mail className="h-4 w-4 shrink-0" />{request.email}
-                      </p>
-                      {request.phone && (
-                        <p className="text-sm text-muted-foreground" dir="ltr">{request.phone}</p>
-                      )}
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                        <p className="flex items-center gap-1.5 font-mono" dir="ltr">
+                          <Mail className="h-4 w-4 shrink-0 text-primary" />{request.email}
+                        </p>
+                        {request.phone && (
+                          <p className="font-mono text-xs bg-muted/50 px-2 py-0.5 rounded" dir="ltr">{request.phone}</p>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{formatDate(request.createdAt, isEnglish)}</p>
                       {request.departmentName && (
-                        <p className="text-sm">
-                          <span className="text-muted-foreground">{t("القسم المختار:")}</span>{" "}
-                          {t(request.departmentName)}
+                        <p className="text-sm font-medium">
+                          <span className="text-muted-foreground font-normal">{t("القسم المختار:")}</span>{" "}
+                          <span className="text-secondary-foreground bg-secondary/10 px-2 py-0.5 rounded">{t(request.departmentName)}</span>
                         </p>
                       )}
-                      {request.message && <p className="whitespace-pre-wrap text-sm leading-7">{request.message}</p>}
+                      {request.message && <p className="whitespace-pre-wrap text-sm leading-relaxed bg-muted/20 p-3 rounded-xl border border-border/40 mt-2">{request.message}</p>}
                       {request.status === "approved" && (
-                        <p className={`text-sm ${request.approvalEmailSentAt ? "text-primary" : "text-destructive"}`}>
+                        <p className={`text-xs font-medium pt-1 ${request.approvalEmailSentAt ? "text-green-600" : "text-destructive"}`}>
                           {request.approvalEmailSentAt ? t("أُرسلت رسالة القبول") : t("لم تُرسل رسالة القبول بعد")}
                         </p>
                       )}
                     </div>
-                    <div className="flex shrink-0 flex-wrap gap-2">
+                    <div className="flex shrink-0 flex-wrap gap-2 pt-1">
                       {(request.status === "pending" || (request.status === "approved" && !request.approvalEmailSentAt)) && (
                         <Button
                           size="sm"
                           onClick={() => void updateStatus(request, "approved")}
                           disabled={busyId === request.id}
+                          className="gap-1.5 h-9 bg-primary text-primary-foreground hover:bg-primary/90"
                         >
-                          <Check className="ms-1 h-4 w-4" />
+                          <Check className="h-4 w-4" />
                           {request.status === "approved" ? t("إعادة الإرسال") : t("قبول وإرسال")}
                         </Button>
                       )}
@@ -463,11 +469,11 @@ export default function LocalAdmin() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 h-9 border-destructive/30"
                           onClick={() => void updateStatus(request, "rejected")}
                           disabled={busyId === request.id}
                         >
-                          <X className="ms-1 h-4 w-4" />
+                          <X className="h-4 w-4" />
                           {t("رفض")}
                         </Button>
                       )}

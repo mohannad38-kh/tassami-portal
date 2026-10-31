@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Plus, Edit } from "lucide-react";
+import { Plus, Edit, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { useLanguage } from "@/hooks/use-language";
@@ -22,34 +22,46 @@ const emptyForm: MeetingForm = { title: "", meetingDate: "", location: "", agend
 
 export default function AdminMeetings() {
   const { t, isEnglish } = useLanguage();
-  const { data: meetings, isLoading, refetch } = useListMeetings();
+  const { data: rawMeetings, isLoading, refetch } = useListMeetings();
   const createMeeting = useCreateMeeting();
   const updateMeeting = useUpdateMeeting();
   const { toast } = useToast();
+  
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<MeetingForm>(emptyForm);
 
-  const openCreate = () => { setEditingId(null); setFormData(emptyForm); setIsOpen(true); };
-  const openEdit = (meeting: NonNullable<typeof meetings>[number]) => {
-    const parsedDate = new Date(meeting.meetingDate);
+  // حماية صارمة لضمان أن البيانات دائماً مصفوفة لتجنب أي أخطاء وقت التشغيل
+  const meetings = Array.isArray(rawMeetings) 
+    ? rawMeetings 
+    : ((rawMeetings as any)?.items || []);
+
+  const openCreate = () => { 
+    setEditingId(null); 
+    setFormData(emptyForm); 
+    setIsOpen(true); 
+  };
+
+  const openEdit = (meeting: any) => {
+    const parsedDate = meeting.meetingDate ? new Date(meeting.meetingDate) : new Date();
     setEditingId(meeting.id);
     setFormData({
-      title: meeting.title,
+      title: meeting.title || "",
       meetingDate: Number.isNaN(parsedDate.getTime()) ? "" : new Date(parsedDate.getTime() - parsedDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16),
       location: meeting.location ?? "",
       agenda: meeting.agenda ?? "",
-      status: meeting.status,
+      status: meeting.status || "scheduled",
     });
     setIsOpen(true);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.meetingDate) {
-      toast({ title: t("بيانات غير مكتملة"), description: t("يرجى تحديد تاريخ الاجتماع"), variant: "destructive" });
+    if (!formData.meetingDate || !formData.title.trim()) {
+      toast({ title: t("بيانات غير مكتملة"), description: t("يرجى إدخال عنوان الاجتماع وتحديد التاريخ"), variant: "destructive" });
       return;
     }
+
     const payload = {
       title: formData.title.trim(),
       meetingDate: new Date(formData.meetingDate).toISOString(),
@@ -57,19 +69,23 @@ export default function AdminMeetings() {
       agenda: formData.agenda.trim(),
       ...(editingId !== null ? { status: formData.status } : {}),
     };
-    if (!payload.title) return;
+
     const options = {
       onSuccess: () => {
         toast({ title: t("تم بنجاح"), description: editingId === null ? t("تم إنشاء الاجتماع") : t("تم تحديث الاجتماع") });
         setIsOpen(false);
         setFormData(emptyForm);
         setEditingId(null);
-        refetch();
+        void refetch();
       },
       onError: () => toast({ title: t("تعذر الحفظ"), description: t("حدث خطأ أثناء حفظ الاجتماع"), variant: "destructive" as const }),
     };
-    if (editingId === null) createMeeting.mutate({ data: { title: payload.title, meetingDate: payload.meetingDate, location: payload.location, agenda: payload.agenda } }, options);
-    else updateMeeting.mutate({ id: editingId, data: payload }, options);
+
+    if (editingId === null) {
+      createMeeting.mutate({ data: { title: payload.title, meetingDate: payload.meetingDate, location: payload.location, agenda: payload.agenda } }, options);
+    } else {
+      updateMeeting.mutate({ id: editingId, data: payload }, options);
+    }
   };
 
   const isSaving = createMeeting.isPending || updateMeeting.isPending;
@@ -77,17 +93,26 @@ export default function AdminMeetings() {
   return (
     <AdminLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div><h1 className="text-2xl font-bold text-primary">{t("الاجتماعات")}</h1></div>
-        <Button onClick={openCreate}><Plus className="h-4 w-4 mr-2 rtl:ml-2" /> {t("إضافة اجتماع")}</Button>
+        <div>
+          <h1 className="text-2xl font-bold text-primary flex items-center gap-2">
+            <Calendar className="h-6 w-6" /> {t("الاجتماعات")}
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">{t("إدارة اجتماعات لجان ومجلس المبادرة وجداول أعمالها")}</p>
+        </div>
+        <Button onClick={openCreate} className="gap-2">
+          <Plus className="h-4 w-4" /> {t("إضافة اجتماع")}
+        </Button>
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>{editingId === null ? t("إضافة اجتماع") : t("تعديل الاجتماع")}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editingId === null ? t("إضافة اجتماع جديد") : t("تعديل الاجتماع")}</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label htmlFor="meeting-title">{t("عنوان الاجتماع")}</Label>
-              <Input id="meeting-title" maxLength={200} required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
+              <Input id="meeting-title" maxLength={200} required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder={t("أدخل عنوان الاجتماع...")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="meeting-date">{t("التاريخ والوقت")}</Label>
@@ -95,11 +120,11 @@ export default function AdminMeetings() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="meeting-location">{t("المكان")}</Label>
-              <Input id="meeting-location" maxLength={300} value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+              <Input id="meeting-location" maxLength={300} value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} placeholder={t("مكان الاجتماع أو الرابط الإلكتروني")} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="meeting-agenda">{t("جدول الأعمال")}</Label>
-              <Textarea id="meeting-agenda" rows={4} maxLength={5000} value={formData.agenda} onChange={(e) => setFormData({ ...formData, agenda: e.target.value })} />
+              <Textarea id="meeting-agenda" rows={4} maxLength={5000} value={formData.agenda} onChange={(e) => setFormData({ ...formData, agenda: e.target.value })} placeholder={t("بنود ونقاط جدول الأعمال...")} />
             </div>
             {editingId !== null && (
               <div className="space-y-2">
@@ -111,7 +136,7 @@ export default function AdminMeetings() {
                 </select>
               </div>
             )}
-            <DialogFooter>
+            <DialogFooter className="gap-2">
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>{t("إلغاء")}</Button>
               <Button type="submit" disabled={isSaving}>{isSaving ? t("جاري الحفظ...") : t("حفظ")}</Button>
             </DialogFooter>
@@ -119,26 +144,43 @@ export default function AdminMeetings() {
         </DialogContent>
       </Dialog>
 
-      <Card>
+      <Card className="shadow-sm border-border/50">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-4">{[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          ) : meetings?.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">{t("لا توجد اجتماعات مسجلة")}</div>
+          ) : meetings.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              {t("لا توجد اجتماعات مسجلة")}
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader><TableRow>
-                  <TableHead>{t("عنوان الاجتماع")}</TableHead><TableHead>{t("التاريخ")}</TableHead><TableHead>{t("المكان")}</TableHead><TableHead>{t("الحالة")}</TableHead><TableHead className="text-left"></TableHead>
-                </TableRow></TableHeader>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("عنوان الاجتماع")}</TableHead>
+                    <TableHead>{t("التاريخ")}</TableHead>
+                    <TableHead>{t("المكان")}</TableHead>
+                    <TableHead>{t("الحالة")}</TableHead>
+                    <TableHead className="text-left">{t("إجراءات")}</TableHead>
+                  </TableRow>
+                </TableHeader>
                 <TableBody>
-                  {meetings?.map((meeting) => (
-                    <TableRow key={meeting.id}>
+                  {meetings.map((meeting: any) => (
+                    <TableRow key={meeting.id} className="hover:bg-muted/50 transition-colors">
                       <TableCell className="font-medium max-w-[200px] truncate">{meeting.title}</TableCell>
-                      <TableCell>{format(new Date(meeting.meetingDate), "dd MMM yyyy", { locale: isEnglish ? undefined : ar })}</TableCell>
+                      <TableCell>
+                        {meeting.meetingDate ? format(new Date(meeting.meetingDate), "dd MMM yyyy", { locale: isEnglish ? undefined : ar }) : '-'}
+                      </TableCell>
                       <TableCell>{meeting.location || "-"}</TableCell>
-                      <TableCell><Badge variant="outline">{t(meeting.status)}</Badge></TableCell>
-                      <TableCell className="text-left"><Button size="sm" variant="ghost" onClick={() => openEdit(meeting)} aria-label={t("تعديل الاجتماع")}><Edit className="h-4 w-4" /></Button></TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{t(meeting.status)}</Badge>
+                      </TableCell>
+                      <TableCell className="text-left">
+                        <Button size="sm" variant="ghost" onClick={() => openEdit(meeting)} aria-label={t("تعديل الاجتماع")}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

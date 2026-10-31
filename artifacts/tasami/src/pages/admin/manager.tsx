@@ -3,8 +3,9 @@ import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Edit2, X } from "lucide-react";
+import { Trash2, Plus, Edit2, X, SlidersHorizontal } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
+import { useToast } from "@/hooks/use-toast";
 
 type SectionType = 
   | "events" 
@@ -15,7 +16,7 @@ type SectionType =
   | "join_requests" 
   | "volunteer_hours" 
   | "tasks"
-  | "projects"; // تم إضافة قسم المشاريع هنا
+  | "projects";
 
 interface Item {
   id: number;
@@ -32,6 +33,7 @@ interface Item {
 
 export default function ComprehensiveAdminManager() {
   const { t } = useLanguage();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<SectionType>("events");
   
   const [items, setItems] = useState<Item[]>([]);
@@ -41,13 +43,12 @@ export default function ComprehensiveAdminManager() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // جلب البيانات مع التأكد من حمايتها ومعالجة استجابة الخادم
+  // جلب البيانات مع حماية كاملة ومعالجة الاستجابة
   const fetchData = async () => {
     try {
       const res = await fetch(`/api/${activeTab}`);
       if (res.ok) {
         const data = await res.json();
-        // ضمان أن البيانات المرتجعة عبارة عن مصفوفة لتجنب انهيار التطبيق
         setItems(Array.isArray(data) ? data : (data.items || []));
       } else {
         setItems([]);
@@ -104,14 +105,18 @@ export default function ComprehensiveAdminManager() {
       });
 
       if (res.ok) {
+        toast({ title: t("تم بنجاح"), description: t("تم حفظ البيانات وتحديث السجلات") });
         setInputField1("");
         setInputField2("");
         setInputField3("");
         setEditingId(null);
         void fetchData();
+      } else {
+        toast({ title: t("تعذر الحفظ"), description: t("حدث خطأ أثناء إرسال البيانات"), variant: "destructive" });
       }
     } catch (error) {
       console.error("Operation failed", error);
+      toast({ title: t("خطأ في الاتصال"), description: t("تعذر الاتصال بالخادم"), variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -134,11 +139,14 @@ export default function ComprehensiveAdminManager() {
 
   // حذف عنصر
   const handleDelete = async (id: number) => {
-    if (!confirm("هل أنت متأكد من الحذف؟")) return;
+    if (!confirm(t("هل أنت متأكد من الحذف؟"))) return;
     try {
       const res = await fetch(`/api/${activeTab}/${id}`, { method: "DELETE" });
       if (res.ok) {
+        toast({ title: t("تم الحذف"), description: t("تمت إزالة العنصر بنجاح") });
         void fetchData();
+      } else {
+        toast({ title: t("تعذر الحذف"), description: t("حدث خطأ أثناء محاولة الحذف"), variant: "destructive" });
       }
     } catch (error) {
       console.error("Failed to delete", error);
@@ -154,13 +162,15 @@ export default function ComprehensiveAdminManager() {
     join_requests: "طلبات الانضمام",
     volunteer_hours: "ساعات التطوع",
     tasks: "المهام",
-    projects: "المشاريع", // تمت إضافة العنوان العربي للقسم الجديد
+    projects: "المشاريع",
   };
 
   return (
     <AdminLayout>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-primary mb-2">لوحة التحكم الشاملة والموحدة</h1>
+        <h1 className="text-2xl font-bold text-primary mb-2 flex items-center gap-2">
+          <SlidersHorizontal className="h-6 w-6" /> لوحة التحكم الشاملة والموحدة
+        </h1>
         <p className="text-muted-foreground">التحكم الكامل والآمن في كافة بيانات وجداول الموقع من مكان واحد.</p>
       </div>
 
@@ -171,7 +181,7 @@ export default function ComprehensiveAdminManager() {
             key={tab}
             variant={activeTab === tab ? "default" : "outline"} 
             onClick={() => setActiveTab(tab)}
-            className="text-sm"
+            className="text-sm transition-all"
           >
             {tabTitles[tab]}
           </Button>
@@ -181,7 +191,7 @@ export default function ComprehensiveAdminManager() {
       {/* نموذج الإضافة والتعديل الديناميكي */}
       <Card className="mb-8 shadow-sm border-border/50">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-lg">
             {editingId ? `تعديل عناصر ${tabTitles[activeTab]}` : `إضافة جديد إلى ${tabTitles[activeTab]}`}
           </CardTitle>
         </CardHeader>
@@ -205,7 +215,7 @@ export default function ComprehensiveAdminManager() {
                 onChange={(e) => setInputField3(e.target.value)}
               />
             )}
-            <div className="flex gap-2">
+            <div className="flex gap-2 shrink-0">
               <Button type="submit" disabled={loading} className="gap-2">
                 {editingId ? <Edit2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 {editingId ? "حفظ التعديل" : "إضافة"}
@@ -223,26 +233,26 @@ export default function ComprehensiveAdminManager() {
       {/* عرض البيانات الحالية مع الحماية ضد القيم غير المصفوفة */}
       <Card className="shadow-sm border-border/50">
         <CardHeader>
-          <CardTitle>سجلات {tabTitles[activeTab]}</CardTitle>
+          <CardTitle className="text-lg">سجلات {tabTitles[activeTab]}</CardTitle>
         </CardHeader>
         <CardContent>
           {!Array.isArray(items) || items.length === 0 ? (
-            <p className="text-muted-foreground text-center py-6">لا توجد بيانات مسجلة في هذا القسم حالياً.</p>
+            <p className="text-muted-foreground text-center py-12">لا توجد بيانات مسجلة في هذا القسم حالياً.</p>
           ) : (
             <div className="space-y-4">
               {items.map((item: any) => (
-                <div key={item.id} className="flex items-center justify-between p-4 border rounded-xl bg-card">
+                <div key={item.id} className="flex items-center justify-between p-4 border rounded-xl bg-card hover:bg-muted/30 transition-colors">
                   <div>
-                    <h3 className="font-bold text-lg text-primary">{item.title || item.name || `عنصر #${item.id}`}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="font-bold text-base text-primary">{item.title || item.name || `عنصر #${item.id}`}</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
                       {item.place || item.content || item.description || item.email || `قيمة البيانات: ${item.hours || 'غير متوفر'}`}
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="icon" onClick={() => handleEdit(item)}>
+                    <Button variant="outline" size="icon" onClick={() => handleEdit(item)} aria-label="تعديل">
                       <Edit2 className="h-4 w-4" />
                     </Button>
-                    <Button variant="destructive" size="icon" onClick={() => handleDelete(item.id)}>
+                    <Button variant="destructive" size="icon" onClick={() => handleDelete(item.id)} aria-label="حذف">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

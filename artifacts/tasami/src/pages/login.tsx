@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import logoUrl from "@assets/image_1782739252068.png";
 import { useLanguage } from "@/hooks/use-language";
+import { LogIn, Mail, Lock, ArrowRight, ArrowLeft } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -46,67 +47,78 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4" dir={direction}>
-      <Button variant="outline" size="sm" className="absolute top-4 right-4" onClick={toggleLanguage}>
+    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4 relative" dir={direction}>
+      <Button variant="outline" size="sm" className="absolute top-4 right-4 rtl:right-auto rtl:left-4" onClick={toggleLanguage}>
         {isEnglish ? "العربية" : "English"}
       </Button>
       <Card className="w-full max-w-md shadow-lg border-primary/20">
-        <CardHeader className="space-y-4 items-center text-center">
+        <CardHeader className="space-y-3 items-center text-center pb-2">
           <Link href="/">
-            <img src={logoUrl} alt="تسامي" className="h-20 object-contain mx-auto" />
+            <img src={logoUrl} alt="تسامي" className="h-16 object-contain mx-auto" />
           </Link>
-          <div className="space-y-2">
-            <CardTitle className="text-2xl font-bold">{t("تسجيل الدخول")}</CardTitle>
-            <CardDescription>
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-primary">{t("تسجيل الدخول")}</CardTitle>
+            <CardDescription className="text-sm">
               {t("أدخل البريد الإلكتروني وكلمة المرور للوصول لحسابك")}
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 text-sm text-destructive-foreground bg-destructive rounded-md">
+              <div className="p-3 text-sm text-destructive-foreground bg-destructive rounded-md font-medium">
                 {error}
               </div>
             )}
             <div className="space-y-2">
               <Label htmlFor="email">{t("البريد الإلكتروني")}</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                dir="ltr"
-                className="text-left"
-              />
+              <div className="relative">
+                <Mail className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  dir="ltr"
+                  className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                />
+              </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">{t("كلمة المرور")}</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                dir="ltr"
-                className="text-left"
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">{t("كلمة المرور")}</Label>
+                <Link href="/forgot-password" className="text-xs text-primary hover:underline font-medium">
+                  {t("نسيت كلمة المرور؟")}
+                </Link>
+              </div>
+              <div className="relative">
+                <Lock className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  dir="ltr"
+                  className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                  placeholder="••••••••••••"
+                />
+              </div>
             </div>
-            <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+            <Button type="submit" className="w-full h-11 gap-2" disabled={loginMutation.isPending}>
+              <LogIn className="h-4 w-4" />
               {loginMutation.isPending ? t("جاري الدخول...") : t("دخول")}
             </Button>
-            <div className="text-center">
-              <Link href="/forgot-password" className="text-sm text-muted-foreground underline">
-                {t("نسيت كلمة المرور؟")}
-              </Link>
-            </div>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center border-t p-4">
-          <Button variant="link" asChild className="text-muted-foreground">
-            <Link href="/">{t("العودة للرئيسية")}</Link>
+          <Button variant="link" asChild className="text-muted-foreground gap-1 text-sm">
+            <Link href="/">
+              {isEnglish ? <ArrowLeft className="h-3.5 w-3.5 mr-1" /> : <ArrowRight className="h-3.5 w-3.5 ml-1" />}
+              {t("العودة للرئيسية")}
+            </Link>
           </Button>
         </CardFooter>
       </Card>
