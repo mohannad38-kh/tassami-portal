@@ -37,7 +37,7 @@ app.use("/api", router);
 const frontendDistPath = path.resolve(__dirname, "../../tasami/dist");
 app.use(express.static(frontendDistPath));
 
-// التوجيه النهائي المتوافق تماماً مع Express 5 لخدمة SPA
+// التوجيه النهائي المتوافق تماماً لخدمة نظام الـ SPA (Single Page Application)
 app.use((req, res, next) => {
   if (req.method === "GET" && !req.path.startsWith("/api")) {
     return res.sendFile(path.join(frontendDistPath, "index.html"));
