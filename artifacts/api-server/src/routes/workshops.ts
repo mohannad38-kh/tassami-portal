@@ -154,6 +154,39 @@ router.get("/workshops/:id/registrations", authMiddleware, requireRole("secretar
   }));
 });
 
+router.post("/workshops/:id/attendance", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const workshopId = Number(raw);
+  const { qrCode } = req.body ?? {};
+  if (!Number.isSafeInteger(workshopId) || workshopId <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
+  if (typeof qrCode !== "string" || !qrCode.trim() || qrCode.length > 500) { res.status(400).json({ error: "Invalid QR code" }); return; }
+  const [member] = await db.select().from(membersTable).where(eq(membersTable.qrCode, qrCode.trim()));
+  if (!member || member.status !== "active") { res.status(404).json({ error: "Active member not found" }); return; }
+
+  const result = await db.transaction(async (tx) => {
+    const [workshop] = await tx.select().from(workshopsTable).where(eq(workshopsTable.id, workshopId)).for("update");
+    if (!workshop) return { error: "not_found" as const };
+    const registrations = await tx.select().from(workshopRegistrationsTable).where(eq(workshopRegistrationsTable.workshopId, workshopId));
+    const registration = registrations.find((item) => item.memberId === member.id);
+    if (!registration || registration.status !== "registered") return { error: "registration_not_found" as const };
+    if (registration.attended === "true") return { registration, alreadyAttended: true as const };
+    const [updated] = await tx.update(workshopRegistrationsTable).set({ attended: "true" })
+      .where(eq(workshopRegistrationsTable.id, registration.id)).returning();
+    if (!updated) throw new Error("Could not update workshop attendance");
+    return { registration: updated, alreadyAttended: false as const };
+  });
+
+  if ("error" in result) {
+    if (result.error === "not_found") { res.status(404).json({ error: "Workshop not found" }); return; }
+    res.status(404).json({ error: "Registration not found" }); return;
+  }
+  const registration = result.registration;
+  res.status(result.alreadyAttended ? 200 : 200).json({
+    id: registration.id, workshopId: registration.workshopId, memberId: registration.memberId,
+    status: registration.status, attended: registration.attended === "true",
+    alreadyAttended: result.alreadyAttended, createdAt: registration.createdAt,
+  });
+});
 router.post("/workshops/:id/evaluate", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const workshopId = Number(raw);
