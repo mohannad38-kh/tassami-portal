@@ -9,12 +9,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { eq } from "drizzle-orm";
 
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { hashPassword } from "./lib/auth";
-import { db, usersTable as users } from "../libs/db/src/index";
 
 const app: Express = express();
 
@@ -22,45 +19,6 @@ const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
 const isProduction = process.env.NODE_ENV === "production";
-
-// إنشاء المشرف العام إذا لم يكن موجوداً
-async function seedSuperAdmin(): Promise<void> {
-  try {
-    const email = process.env.SUPER_ADMIN_EMAIL?.trim().toLowerCase();
-    const password = process.env.SUPER_ADMIN_PASSWORD;
-    const name = process.env.SUPER_ADMIN_NAME?.trim() || "Super Admin";
-
-    if (!email || !password) {
-      logger.warn("Super admin configuration is missing.");
-      return;
-    }
-
-    const existing = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (existing.length > 0) {
-      logger.info("Super admin already exists.");
-      return;
-    }
-
-    const passwordHash = await hashPassword(password);
-
-    await db.insert(users).values({
-      name,
-      email,
-      passwordHash,
-      role: "super_admin",
-      isActive: true,
-    });
-
-    logger.info("Super admin created successfully.");
-  } catch (err) {
-    logger.error({ err }, "Failed to seed super admin");
-  }
-}
 
 // تسجيل الطلبات
 app.use(
@@ -191,5 +149,3 @@ app.use(
 // تصدير التطبيق
 export default app;
 
-// إنشاء المشرف عند تحميل التطبيق
-void seedSuperAdmin();
