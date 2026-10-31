@@ -1,4 +1,3 @@
-
 import express, {
   type Express,
   type Request,
@@ -10,15 +9,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import { randomBytes, scrypt as cryptoScrypt } from "node:crypto";
-import { promisify } from "node:util";
-import { eq } from "drizzle-orm";
 
 import router from "./routes";
 import { logger } from "./lib/logger";
+<<<<<<< HEAD
 import { db, usersTable as users } from "@workspace/db";
 
 const asyncScrypt = promisify(cryptoScrypt);
+=======
+>>>>>>> d07509b0361b542d2786252c09576b57db8e68d0
 
 const app: Express = express();
 
@@ -27,6 +26,7 @@ const dirname = path.dirname(filename);
 
 const isProduction = process.env.NODE_ENV === "production";
 
+<<<<<<< HEAD
 // تشفير كلمات المرور
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
@@ -79,6 +79,8 @@ async function seedSuperAdmin(): Promise<void> {
   }
 }
 
+=======
+>>>>>>> d07509b0361b542d2786252c09576b57db8e68d0
 // تسجيل الطلبات
 app.use(
   pinoHttp({
@@ -101,10 +103,24 @@ app.use(
 );
 
 // إعدادات CORS
-const allowedOrigins = (process.env.CORS_ORIGINS || "")
+const configuredOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
+
+// The deployed frontend and API share one origin. Always allow that exact
+// origin even when no separate CORS_ORIGINS list is configured.
+const appOrigin = process.env.APP_BASE_URL
+  ? new URL(process.env.APP_BASE_URL).origin
+  : null;
+const renderOrigin = process.env.RENDER_EXTERNAL_URL
+  ? new URL(process.env.RENDER_EXTERNAL_URL).origin
+  : null;
+const allowedOrigins = new Set([
+  ...configuredOrigins,
+  appOrigin,
+  renderOrigin,
+].filter((origin): origin is string => Boolean(origin)));
 
 app.use(
   cors({
@@ -113,11 +129,11 @@ app.use(
         return callback(null, true);
       }
 
-      if (!isProduction && allowedOrigins.length === 0) {
+      if (!isProduction && allowedOrigins.size === 0) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.has(origin)) {
         return callback(null, true);
       }
 
@@ -194,5 +210,3 @@ app.use(
 // تصدير التطبيق
 export default app;
 
-// إنشاء المشرف عند تحميل التطبيق
-void seedSuperAdmin();

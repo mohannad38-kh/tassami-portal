@@ -21,20 +21,6 @@ export default function Login() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // تجاوز مباشر لتسجيل الدخول الفوري بحساب المشرف العام
-    if (email.trim().toLowerCase() === "mohannadkhaloof38@gmail.com") {
-      const superAdminUser = {
-        id: "super-admin-bypass",
-        name: "مهند الخلوف",
-        email: "mohannadkhaloof38@gmail.com",
-        role: "super_admin",
-        isActive: true,
-      };
-      authenticate("super-admin-bypass-token", superAdminUser);
-      setLocation("/admin");
-      return;
-    }
-
     loginMutation.mutate(
       { data: { email, password } },
       {

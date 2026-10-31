@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import logoUrl from "@assets/image_1782739252068.png";
@@ -26,14 +26,13 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/hooks/use-language";
 
 export function AdminLayout({ children }: { children: ReactNode }) {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isLoading } = useAuth();
   const { direction, isEnglish, t, toggleLanguage } = useLanguage();
   const [location, setLocation] = useLocation();
 
-  if (!isAuthenticated) {
-    setLocation("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) setLocation("/login");
+  }, [isAuthenticated, isLoading, setLocation]);
 
   // التحقق من الصلاحيات الأدنى للمستخدم
   const isJoinManager = user?.role === "join_manager";
@@ -45,10 +44,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
     "dept_head"
   ].includes(user?.role || "");
 
-  if (!isAdmin) {
-    setLocation("/portal");
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !isAdmin) setLocation("/portal");
+  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
+
+  if (isLoading || !isAuthenticated || !isAdmin) return null;
 
   const sections = isJoinManager
     ? [

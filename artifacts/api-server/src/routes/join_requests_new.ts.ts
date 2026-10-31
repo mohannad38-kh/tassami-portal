@@ -120,6 +120,10 @@ async function sendApprovalEmail(
 
 router.get("/join-requests", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const { status } = req.query;
+  if (status !== undefined && (typeof status !== "string" || !["pending", "approved", "rejected"].includes(status))) {
+    res.status(400).json({ error: "Invalid join request status" });
+    return;
+  }
   let requests = await db.select().from(joinRequestsTable).orderBy(joinRequestsTable.createdAt);
   if (typeof status === "string") requests = requests.filter((r) => r.status === status);
   res.json(requests);
@@ -130,9 +134,13 @@ router.post("/join-requests", async (req, res): Promise<void> => {
   if (
     typeof name !== "string" ||
     !name.trim() ||
+    name.trim().length > 120 ||
     typeof email !== "string" ||
     !email.trim() ||
+    email.trim().length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+    (phone !== undefined && phone !== null && (typeof phone !== "string" || phone.length > 40)) ||
+    (message !== undefined && message !== null && (typeof message !== "string" || message.length > 2000)) ||
     !Number.isSafeInteger(departmentId) ||
     departmentId < 1 ||
     typeof password !== "string" ||
@@ -157,6 +165,20 @@ router.post("/join-requests", async (req, res): Promise<void> => {
 
   const normalizedEmail = email.trim().toLowerCase();
   const result = await db.transaction(async (tx) => {
+    // Serialize submissions for the same normalized email across concurrent requests.
+    // The transaction-scoped lock is released automatically on commit or rollback.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${normalizedEmail})::bigint)`);
+
+    const [pendingRequest] = await tx
+      .select({ id: joinRequestsTable.id })
+      .from(joinRequestsTable)
+      .where(and(
+        sql`lower(${joinRequestsTable.email}) = ${normalizedEmail}`,
+        eq(joinRequestsTable.status, "pending"),
+      ))
+      .limit(1);
+    if (pendingRequest) return { request: null, conflict: true };
+
     const [existingUser] = await tx
       .select()
       .from(usersTable)
@@ -175,7 +197,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
           email: normalizedEmail,
           passwordHash,
           role: "member",
-          phone: typeof phone === "string" ? phone : null,
+          phone: typeof phone === "string" ? phone.trim() : null,
           departmentId,
           isActive: false,
         })
@@ -198,8 +220,8 @@ router.post("/join-requests", async (req, res): Promise<void> => {
       .values({
         name: name.trim(),
         email: normalizedEmail,
-        phone,
-        message,
+        phone: typeof phone === "string" ? phone.trim() : null,
+        message: typeof message === "string" ? message.trim() : null,
         departmentId,
       })
       .returning();
@@ -220,7 +242,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
 
 router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   if (!Number.isSafeInteger(id) || id < 1) {
     res.status(400).json({ error: "Invalid join request ID" });
     return;
@@ -232,7 +254,7 @@ router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), as
 
 router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   const { status } = req.body;
   if (status !== "approved" && status !== "rejected") {
     res.status(400).json({ error: "Status must be approved or rejected" });
@@ -244,6 +266,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
   }
 
   let passwordSetupToken: string | undefined;
+  let needsPasswordSetup = false;
   let hasExistingAccount = false;
 
   const updated = await db.transaction(async (tx) => {
@@ -257,8 +280,9 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
     const [updatedRequest] = await tx
       .update(joinRequestsTable)
       .set({ status })
-      .where(eq(joinRequestsTable.id, id))
+      .where(and(eq(joinRequestsTable.id, id), eq(joinRequestsTable.status, "pending")))
       .returning();
+    if (!updatedRequest) return { notPending: true };
 
     if (status !== "approved") return updatedRequest;
 
@@ -280,10 +304,11 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
           role: "member",
           phone: request.phone,
           departmentId: request.departmentId,
-          isActive: true,
+          isActive: false,
         })
         .returning();
       user = createdUser;
+      needsPasswordSetup = true;
 
       const membershipNumber = `TSM-${String(Date.now()).slice(-6)}-${nanoid(4).toUpperCase()}`;
       await tx.insert(membersTable).values({
@@ -328,7 +353,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
       }
     }
 
-    if (!user.isActive) {
+    if (needsPasswordSetup) {
       passwordSetupToken = signPasswordSetupToken({
         userId: user.id,
         email: user.email,
@@ -340,13 +365,14 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
   });
 
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+  if ("notPending" in updated) { res.status(409).json({ error: "Join request has already been processed" }); return; }
 
   let emailResult: { emailSent: boolean; emailMessage?: string } = { emailSent: false };
   if (status === "approved") {
     const appBaseUrl =
       process.env.APP_BASE_URL ||
       (process.env.NODE_ENV === "production"
-        ? "https://tassami-portal.onrender.com"
+        ? "https://tassami-portal-1-8prm.onrender.com"
         : "http://localhost:4173");
     const passwordSetupUrl = passwordSetupToken
       ? new URL(

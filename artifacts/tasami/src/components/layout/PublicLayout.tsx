@@ -18,6 +18,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
     { href: "/initiative", label: t("المبادرة") },
     { href: "/departments", label: t("الأقسام") },
     { href: "/events", label: t("الفعاليات") },
+    { href: "/workshops", label: t("الورشات") },
     { href: "/news", label: t("الأخبار") },
     { href: "/gallery", label: t("معرض الصور") },
     { href: "/partners", label: t("شركاء النجاح") },

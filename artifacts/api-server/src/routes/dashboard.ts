@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db, membersTable, eventsTable, workshopsTable, departmentsTable, joinRequestsTable, volunteerHoursTable, tasksTable, activityLogTable, newsTable, announcementsTable, usersTable } from "@workspace/db";
-import { count, sum, eq } from "drizzle-orm";
+import { count, sum, eq, isNull } from "drizzle-orm";
 import { authMiddleware, requireRole } from "../lib/auth";
 
 const router: IRouter = Router();
@@ -48,7 +48,7 @@ router.get("/dashboard/reports", authMiddleware, requireRole("secretary"), async
       return { departmentName: dept.name, count: Number(cnt) };
     })
   );
-  const [{ unassigned }] = await db.select({ unassigned: count() }).from(membersTable).where(eq(membersTable.departmentId, null as unknown as number));
+  const [{ unassigned }] = await db.select({ unassigned: count() }).from(membersTable).where(isNull(membersTable.departmentId));
   if (Number(unassigned) > 0) membersByDepartment.push({ departmentName: "غير محدد", count: Number(unassigned) });
 
   // Events by month (last 6 months)

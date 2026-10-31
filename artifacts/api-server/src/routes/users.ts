@@ -1,7 +1,17 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable, departmentsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { authMiddleware, requireRole, hashPassword } from "../lib/auth";
+import { authMiddleware, requireRole, hashPassword, effectiveRole } from "../lib/auth";
+
+const VALID_ROLES = new Set([
+  "member",
+  "join_manager",
+  "dept_head",
+  "secretary",
+  "vice_president",
+  "president",
+  "super_admin",
+]);
 import { Resend } from "resend"; // استيراد المكتبة
 
 const router: IRouter = Router();
@@ -52,14 +62,24 @@ router.post(
   requireRole("super_admin"),
   async (req, res): Promise<void> => {
     const { name, email, password, role, phone, departmentId } = req.body;
-    if (!name || !email || !password || !role) {
-      res.status(400).json({ error: "Missing required fields" });
+    if (
+      typeof name !== "string" ||
+      !name.trim() ||
+      typeof email !== "string" ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+      typeof password !== "string" ||
+      password.length < 12 ||
+      Buffer.byteLength(password, "utf8") > 72 ||
+      typeof role !== "string" ||
+      !VALID_ROLES.has(role)
+    ) {
+      res.status(400).json({ error: "Enter valid user details and a valid role; password must be 12–72 UTF-8 bytes" });
       return;
     }
     const passwordHash = await hashPassword(password);
     const [user] = await db
       .insert(usersTable)
-      .values({ name, email, passwordHash, role, phone, departmentId })
+      .values({ name: name.trim(), email: email.trim().toLowerCase(), passwordHash, role, phone: phone ?? null, departmentId: departmentId ?? null })
       .returning();
     res.status(201).json(formatUser(user));
   },
@@ -98,8 +118,12 @@ router.patch(
   requireRole("secretary"),
   async (req, res): Promise<void> => {
     const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const id = parseInt(raw, 10);
+    const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
     const { name, email, role, phone, departmentId, isActive } = req.body;
+    if (!Number.isSafeInteger(id) || id < 1) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
 
     const [oldUser] = await db
       .select()
@@ -110,9 +134,47 @@ router.patch(
       return;
     }
 
+    const currentUser = (req as typeof req & {
+      user?: { email: string; role: string };
+    }).user;
+    if (isActive !== undefined && (!currentUser || effectiveRole(currentUser) !== "super_admin")) {
+      res.status(403).json({ error: "Only a super administrator can activate or deactivate accounts" });
+      return;
+    }
+    if (name !== undefined && (typeof name !== "string" || !name.trim() || name.length > 120)) {
+      res.status(400).json({ error: "Invalid name" });
+      return;
+    }
+    if (email !== undefined && (typeof email !== "string" || email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))) {
+      res.status(400).json({ error: "Invalid email" });
+      return;
+    }
+    if (phone !== undefined && phone !== null && (typeof phone !== "string" || phone.length > 40)) {
+      res.status(400).json({ error: "Invalid phone" });
+      return;
+    }
+    if (departmentId !== undefined && departmentId !== null && (!Number.isSafeInteger(departmentId) || departmentId < 1)) {
+      res.status(400).json({ error: "Invalid department ID" });
+      return;
+    }
+    if (isActive !== undefined && typeof isActive !== "boolean") {
+      res.status(400).json({ error: "isActive must be a boolean" });
+      return;
+    }
+    if (role != null) {
+      if (!currentUser || effectiveRole(currentUser) !== "super_admin") {
+        res.status(403).json({ error: "Only a super administrator can change user roles" });
+        return;
+      }
+      if (typeof role !== "string" || !VALID_ROLES.has(role)) {
+        res.status(400).json({ error: "Invalid user role" });
+        return;
+      }
+    }
+
     const updateData: Record<string, unknown> = {};
     if (name != null) updateData.name = name;
-    if (email != null) updateData.email = email;
+    if (email != null) updateData.email = email.trim().toLowerCase();
     if (role != null) updateData.role = role;
     if (phone != null) updateData.phone = phone;
     if (departmentId !== undefined) updateData.departmentId = departmentId;
@@ -152,8 +214,16 @@ router.delete(
   requireRole("super_admin"),
   async (req, res): Promise<void> => {
     const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const id = parseInt(raw, 10);
-    await db.delete(usersTable).where(eq(usersTable.id, id));
+    const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
+    if (!Number.isSafeInteger(id) || id < 1) {
+      res.status(400).json({ error: "Invalid user ID" });
+      return;
+    }
+    const [deleted] = await db.delete(usersTable).where(eq(usersTable.id, id)).returning({ id: usersTable.id });
+    if (!deleted) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
     res.sendStatus(204);
   },
 );

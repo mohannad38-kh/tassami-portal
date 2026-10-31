@@ -27,6 +27,8 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
     !name.trim() ||
     name.trim().length > 100 ||
     typeof email !== "string" ||
+    !email.trim() ||
+    email.trim().length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
     typeof password !== "string" ||
     password.length < 12 ||
@@ -55,7 +57,7 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
 
   const normalizedEmail = email.trim().toLowerCase();
   const configuredSuperAdminEmails = process.env.SUPER_ADMIN_EMAILS?.trim();
-  if (configuredSuperAdminEmails && effectiveRole({ email: normalizedEmail, role: "member" }) !== "super_admin") {
+  if (!configuredSuperAdminEmails || effectiveRole({ email: normalizedEmail, role: "member" }) !== "super_admin") {
     res.status(403).json({ error: "البريد الإلكتروني غير مدرج في قائمة SUPER_ADMIN_EMAILS المعرفة في Render" });
     return;
   }
@@ -93,8 +95,8 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
   const email = typeof req.body?.email === "string"
     ? req.body.email.trim().toLowerCase()
     : "";
-  if (!email) {
-    res.status(400).json({ error: "Email is required" });
+  if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ error: "A valid email is required" });
     return;
   }
 
@@ -122,7 +124,7 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
     return;
   }
 
-  const appBaseUrl = process.env.APP_BASE_URL || "https://tassami-portal.onrender.com";
+  const appBaseUrl = process.env.APP_BASE_URL || "https://tassami-portal-1-8prm.onrender.com";
   const token = signPasswordResetToken({
     userId: user.id,
     email: user.email,
@@ -164,8 +166,8 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
 
 router.post("/auth/password-reset/confirm", async (req, res): Promise<void> => {
   const { token, password } = req.body;
-  if (typeof token !== "string" || typeof password !== "string") {
-    res.status(400).json({ error: "A reset token and password are required" });
+  if (typeof token !== "string" || token.length > 4096 || typeof password !== "string") {
+    res.status(400).json({ error: "A valid reset token and password are required" });
     return;
   }
   if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
@@ -225,8 +227,8 @@ router.post("/auth/password-reset/confirm", async (req, res): Promise<void> => {
 
 router.post("/auth/set-password", async (req, res): Promise<void> => {
   const { token, password } = req.body;
-  if (typeof token !== "string" || typeof password !== "string") {
-    res.status(400).json({ error: "A setup token and password are required" });
+  if (typeof token !== "string" || token.length > 4096 || typeof password !== "string") {
+    res.status(400).json({ error: "A valid setup token and password are required" });
     return;
   }
   if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
@@ -263,14 +265,21 @@ router.post("/auth/set-password", async (req, res): Promise<void> => {
 });
 
 router.post("/auth/login", async (req, res): Promise<void> => {
-  const { email, password } = req.body;
+  const { email, password } = req.body ?? {};
 
-  if (!email || !password) {
+  if (
+    typeof email !== "string" ||
+    !email.trim() ||
+    email.trim().length > 254 ||
+    typeof password !== "string" ||
+    !password ||
+    Buffer.byteLength(password, "utf8") > 72
+  ) {
     res.status(400).json({ error: "Email and password required" });
     return;
   }
 
-  const normalizedLoginEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const normalizedLoginEmail = email.trim().toLowerCase();
   const [user] = await db
     .select()
     .from(usersTable)
@@ -281,8 +290,7 @@ router.post("/auth/login", async (req, res): Promise<void> => {
     return;
   }
 
-  // تجاوز كلمة المرور مؤقتاً لتسهيل الدخول
-  const valid = password === "121Aqra6$" || (await comparePassword(password, user.passwordHash));
+  const valid = await comparePassword(password, user.passwordHash);
   if (!valid) {
     res.status(401).json({ error: "Invalid credentials" });
     return;
