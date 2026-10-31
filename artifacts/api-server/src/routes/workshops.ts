@@ -6,6 +6,29 @@ import { nanoid } from "nanoid";
 
 const router: IRouter = Router();
 
+// دالة تحليل التواريخ المرنة لدعم صيغ مثل DD/MM/YYYY
+function parseWorkshopDate(val: unknown): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) return Number.isNaN(val.getTime()) ? null : val;
+  if (typeof val === "string") {
+    const customRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})\s*(AM|PM)?)?$/i;
+    const match = val.trim().match(customRegex);
+    if (match) {
+      const [, day, month, year, hours = "0", minutes = "0", ampm] = match;
+      let h = parseInt(hours, 10);
+      if (ampm) {
+        if (ampm.toUpperCase() === "PM" && h < 12) h += 12;
+        if (ampm.toUpperCase() === "AM" && h === 12) h = 0;
+      }
+      const d = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10), h, parseInt(minutes, 10));
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    const d = new Date(val);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
 async function formatWorkshop(w: typeof workshopsTable.$inferSelect) {
   let trainerName: string | null = null;
   if (w.trainerId) {
@@ -45,8 +68,8 @@ router.get("/workshops", optionalAuthMiddleware, async (_req, res): Promise<void
 
 router.post("/workshops", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const { title, description, trainerId, workshopDate, location, capacity, imageUrl } = req.body ?? {};
-  const date = typeof workshopDate === "string" ? new Date(workshopDate) : null;
-  if (typeof title !== "string" || !title.trim() || title.length > 200 || !date || Number.isNaN(date.getTime()) ||
+  const date = parseWorkshopDate(workshopDate);
+  if (typeof title !== "string" || !title.trim() || title.length > 200 || !date ||
       (description != null && (typeof description !== "string" || description.length > 20000)) ||
       (location != null && (typeof location !== "string" || location.length > 500)) ||
       (imageUrl != null && (typeof imageUrl !== "string" || imageUrl.length > 2048)) ||
@@ -84,7 +107,11 @@ router.patch("/workshops/:id", authMiddleware, requireRole("secretary"), async (
     if (trainerId !== null) { const [trainer] = await db.select({ id: trainersTable.id }).from(trainersTable).where(eq(trainersTable.id, trainerId)); if (!trainer) { res.status(404).json({ error: "Trainer not found" }); return; } }
     updateData.trainerId = trainerId;
   }
-  if (workshopDate !== undefined) { const date = typeof workshopDate === "string" ? new Date(workshopDate) : null; if (!date || Number.isNaN(date.getTime())) { res.status(400).json({ error: "Invalid workshopDate" }); return; } updateData.workshopDate = date; }
+  if (workshopDate !== undefined) { 
+    const date = parseWorkshopDate(workshopDate); 
+    if (!date) { res.status(400).json({ error: "Invalid workshopDate" }); return; } 
+    updateData.workshopDate = date; 
+  }
   if (location !== undefined) { if (location !== null && (typeof location !== "string" || location.length > 500)) { res.status(400).json({ error: "Invalid location" }); return; } updateData.location = location; }
   if (capacity !== undefined) { if (capacity !== null && (!Number.isSafeInteger(capacity) || capacity <= 0)) { res.status(400).json({ error: "Invalid capacity" }); return; } updateData.capacity = capacity; }
   if (status !== undefined) { if (!["upcoming", "completed", "cancelled"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; } updateData.status = status; }
@@ -110,11 +137,9 @@ router.post("/workshops/:id/register", authMiddleware, requireRole("member"), as
   const user = (req as typeof req & { user: { userId: number } }).user;
   if (!Number.isSafeInteger(workshopId) || workshopId <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
 
-  // Resolve the member from the verified session; never trust a client-supplied memberId.
   const [member] = await db.select().from(membersTable).where(eq(membersTable.userId, user.userId));
   if (!member || member.status !== "active") { res.status(403).json({ error: "An active membership is required" }); return; }
   const registration = await db.transaction(async (tx) => {
-    // Lock the parent workshop so simultaneous requests are serialized.
     const [workshop] = await tx.select().from(workshopsTable).where(eq(workshopsTable.id, workshopId)).for("update");
     if (!workshop) return { error: "not_found" as const };
     if (workshop.status !== "upcoming" || workshop.workshopDate <= new Date()) return { error: "closed" as const };
@@ -181,12 +206,13 @@ router.post("/workshops/:id/attendance", authMiddleware, requireRole("secretary"
     res.status(404).json({ error: "Registration not found" }); return;
   }
   const registration = result.registration;
-  res.status(result.alreadyAttended ? 200 : 200).json({
+  res.status(200).json({
     id: registration.id, workshopId: registration.workshopId, memberId: registration.memberId,
     status: registration.status, attended: registration.attended === "true",
     alreadyAttended: result.alreadyAttended, createdAt: registration.createdAt,
   });
 });
+
 router.post("/workshops/:id/evaluate", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const workshopId = Number(raw);
@@ -206,7 +232,6 @@ router.post("/workshops/:id/evaluate", authMiddleware, requireRole("member"), as
     return;
   }
 
-  // Resolve the member from the authenticated session, not from client input.
   const [member] = await db.select().from(membersTable).where(eq(membersTable.userId, user.userId));
   if (!member || member.status !== "active") {
     res.status(403).json({ error: "An active membership is required" });
