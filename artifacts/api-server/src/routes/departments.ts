@@ -55,8 +55,8 @@ router.get("/departments", optionalAuthMiddleware, async (_req, res): Promise<vo
 
 router.post("/departments", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const { name, description, headId } = req.body;
-  if (!name) { res.status(400).json({ error: "Name required" }); return; }
-  const [dept] = await db.insert(departmentsTable).values({ name, description, headId }).returning();
+  if (typeof name !== "string" || !name.trim() || name.trim().length > 120 || (description != null && (typeof description !== "string" || description.length > 1000)) || (headId != null && (!Number.isSafeInteger(headId) || headId < 1))) { res.status(400).json({ error: "Invalid department details" }); return; }
+  const [dept] = await db.insert(departmentsTable).values({ name: name.trim(), description: typeof description === "string" ? description.trim() : null, headId: headId ?? null }).returning();
   res.status(201).json(await formatDept(dept));
 });
 
