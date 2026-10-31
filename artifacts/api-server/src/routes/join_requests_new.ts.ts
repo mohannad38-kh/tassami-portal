@@ -120,6 +120,10 @@ async function sendApprovalEmail(
 
 router.get("/join-requests", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const { status } = req.query;
+  if (status !== undefined && (typeof status !== "string" || !["pending", "approved", "rejected"].includes(status))) {
+    res.status(400).json({ error: "Invalid join request status" });
+    return;
+  }
   let requests = await db.select().from(joinRequestsTable).orderBy(joinRequestsTable.createdAt);
   if (typeof status === "string") requests = requests.filter((r) => r.status === status);
   res.json(requests);
@@ -175,7 +179,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
           email: normalizedEmail,
           passwordHash,
           role: "member",
-          phone: typeof phone === "string" ? phone : null,
+          phone: typeof phone === "string" ? phone.trim() : null,
           departmentId,
           isActive: false,
         })
@@ -198,8 +202,8 @@ router.post("/join-requests", async (req, res): Promise<void> => {
       .values({
         name: name.trim(),
         email: normalizedEmail,
-        phone,
-        message,
+        phone: typeof phone === "string" ? phone.trim() : null,
+        message: typeof message === "string" ? message.trim() : null,
         departmentId,
       })
       .returning();
@@ -220,7 +224,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
 
 router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\\d+$/.test(raw) ? Number(raw) : NaN;
   if (!Number.isSafeInteger(id) || id < 1) {
     res.status(400).json({ error: "Invalid join request ID" });
     return;
@@ -258,8 +262,9 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
     const [updatedRequest] = await tx
       .update(joinRequestsTable)
       .set({ status })
-      .where(eq(joinRequestsTable.id, id))
+      .where(and(eq(joinRequestsTable.id, id), eq(joinRequestsTable.status, "pending")))
       .returning();
+    if (!updatedRequest) return { notPending: true };
 
     if (status !== "approved") return updatedRequest;
 
@@ -342,6 +347,7 @@ router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), 
   });
 
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
+  if ("notPending" in updated) { res.status(409).json({ error: "Join request has already been processed" }); return; }
 
   let emailResult: { emailSent: boolean; emailMessage?: string } = { emailSent: false };
   if (status === "approved") {
