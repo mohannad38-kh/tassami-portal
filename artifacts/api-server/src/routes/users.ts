@@ -118,7 +118,7 @@ router.patch(
   requireRole("secretary"),
   async (req, res): Promise<void> => {
     const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const id = /^\\d+$/.test(raw) ? Number(raw) : NaN;
+    const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
     const { name, email, role, phone, departmentId, isActive } = req.body;
     if (!Number.isSafeInteger(id) || id < 1) {
       res.status(400).json({ error: "Invalid user ID" });
@@ -145,7 +145,7 @@ router.patch(
       res.status(400).json({ error: "Invalid name" });
       return;
     }
-    if (email !== undefined && (typeof email !== "string" || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email.trim()))) {
+    if (email !== undefined && (typeof email !== "string" || email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))) {
       res.status(400).json({ error: "Invalid email" });
       return;
     }
@@ -214,7 +214,7 @@ router.delete(
   requireRole("super_admin"),
   async (req, res): Promise<void> => {
     const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const id = /^\\d+$/.test(raw) ? Number(raw) : NaN;
+    const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
     if (!Number.isSafeInteger(id) || id < 1) {
       res.status(400).json({ error: "Invalid user ID" });
       return;
