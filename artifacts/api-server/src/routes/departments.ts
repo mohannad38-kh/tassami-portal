@@ -62,7 +62,7 @@ router.post("/departments", authMiddleware, requireRole("secretary"), async (req
 
 router.get("/departments/:id", optionalAuthMiddleware, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   const [dept] = await db.select().from(departmentsTable).where(eq(departmentsTable.id, id));
   if (!dept) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatDept(dept));
@@ -70,7 +70,7 @@ router.get("/departments/:id", optionalAuthMiddleware, async (req, res): Promise
 
 router.patch("/departments/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   const { name, description, headId } = req.body;
   const updateData: Record<string, unknown> = {};
   if (name != null) updateData.name = name;
@@ -83,14 +83,14 @@ router.patch("/departments/:id", authMiddleware, requireRole("secretary"), async
 
 router.delete("/departments/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   await db.delete(departmentsTable).where(eq(departmentsTable.id, id));
   res.sendStatus(204);
 });
 
 router.get("/departments/:id/members", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   const members = await db.select().from(membersTable).where(eq(membersTable.departmentId, id));
   const userIds = members.map((m) => m.userId);
   const users = userIds.length > 0
