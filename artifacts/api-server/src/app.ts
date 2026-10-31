@@ -7,17 +7,17 @@ import express, {
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { randomBytes, scrypt as cryptoScrypt } from "node:crypto";
+import { promisify } from "node:util";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import { eq } from "drizzle-orm";
 
 import router from "./routes";
 import { logger } from "./lib/logger";
-<<<<<<< HEAD
 import { db, usersTable as users } from "@workspace/db";
 
 const asyncScrypt = promisify(cryptoScrypt);
-=======
->>>>>>> d07509b0361b542d2786252c09576b57db8e68d0
 
 const app: Express = express();
 
@@ -26,7 +26,6 @@ const dirname = path.dirname(filename);
 
 const isProduction = process.env.NODE_ENV === "production";
 
-<<<<<<< HEAD
 // تشفير كلمات المرور
 async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
@@ -79,8 +78,6 @@ async function seedSuperAdmin(): Promise<void> {
   }
 }
 
-=======
->>>>>>> d07509b0361b542d2786252c09576b57db8e68d0
 // تسجيل الطلبات
 app.use(
   pinoHttp({
@@ -108,8 +105,6 @@ const configuredOrigins = (process.env.CORS_ORIGINS || "")
   .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
 
-// The deployed frontend and API share one origin. Always allow that exact
-// origin even when no separate CORS_ORIGINS list is configured.
 const appOrigin = process.env.APP_BASE_URL
   ? new URL(process.env.APP_BASE_URL).origin
   : null;
@@ -207,6 +202,5 @@ app.use(
   },
 );
 
-// تصدير التطبيق
+export { seedSuperAdmin };
 export default app;
-
