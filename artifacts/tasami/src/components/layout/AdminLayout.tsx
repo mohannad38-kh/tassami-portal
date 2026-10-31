@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import logoUrl from "@assets/image_1782739252068.png";
@@ -20,107 +20,78 @@ import {
   Settings, 
   BarChart3,
   LogOut,
-  Menu
+  Menu,
+  ChevronDown
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useLanguage } from "@/hooks/use-language";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export function AdminLayout({ children }: { children: ReactNode }) {
-  const { user, logout, isAuthenticated, isLoading } = useAuth();
-  const { direction, isEnglish, t, toggleLanguage } = useLanguage();
+  const { user, logout, isAuthenticated } = useAuth();
   const [location, setLocation] = useLocation();
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) setLocation("/login");
-  }, [isAuthenticated, isLoading, setLocation]);
+  if (!isAuthenticated) {
+    setLocation("/login");
+    return null;
+  }
 
-  // التحقق من الصلاحيات الأدنى للمستخدم
-  const isJoinManager = user?.role === "join_manager";
-  const isAdmin = isJoinManager || [
-    "super_admin", 
-    "president", 
-    "vice_president", 
-    "secretary", 
-    "dept_head"
-  ].includes(user?.role || "");
+  // Check minimum role
+  const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head"].includes(user?.role || "");
+  if (!isAdmin) {
+    setLocation("/portal");
+    return null;
+  }
 
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && !isAdmin) setLocation("/portal");
-  }, [isAuthenticated, isAdmin, isLoading, setLocation]);
-
-  if (isLoading || !isAuthenticated || !isAdmin) return null;
-
-  const sections = isJoinManager
-    ? [
-        {
-          title: t("إدارة الطلبات"),
-          items: [
-            { href: "/admin/join-requests", label: t("طلبات الانضمام"), icon: UserPlus },
-          ],
-        },
+  const sections = [
+    {
+      title: "الرئيسية",
+      items: [
+        { href: "/admin", label: "لوحة التحكم", icon: LayoutDashboard },
+        { href: "/admin/reports", label: "التقارير", icon: BarChart3 },
       ]
-    : [
-        {
-          title: t("الرئيسية"),
-          items: [
-            { href: "/admin", label: t("لوحة التحكم"), icon: LayoutDashboard },
-            { href: "/admin/reports", label: t("التقارير"), icon: BarChart3 },
-          ],
-        },
-        {
-          title: t("الأعضاء"),
-          items: [
-            { href: "/admin/members", label: t("إدارة الأعضاء"), icon: Users },
-            { href: "/admin/join-requests", label: t("طلبات الانضمام"), icon: UserPlus },
-            { href: "/admin/volunteer-hours", label: t("ساعات التطوع"), icon: Clock },
-          ],
-        },
-        {
-          title: t("الفعاليات والبرامج"),
-          items: [
-            { href: "/admin/events", label: t("إدارة الفعاليات"), icon: Calendar },
-            { href: "/admin/workshops", label: t("إدارة الورش"), icon: GraduationCap },
-            { href: "/admin/certificates", label: t("الشهادات"), icon: Award },
-          ],
-        },
-        {
-          title: t("الإدارة"),
-          items: [
-            { href: "/admin/departments", label: t("إدارة الأقسام"), icon: LayoutGrid },
-            { href: "/admin/meetings", label: t("الاجتماعات"), icon: Video },
-            { href: "/admin/tasks", label: t("المهام"), icon: CheckSquare },
-          ],
-        },
-        {
-          title: t("المحتوى"),
-          items: [
-            { href: "/admin/news", label: t("الأخبار والإعلانات"), icon: Newspaper },
-            { href: "/admin/partners", label: t("الشركاء"), icon: Handshake },
-            { href: "/admin/gallery", label: t("معرض الصور"), icon: ImageIcon },
-          ],
-        },
-      ];
+    },
+    {
+      title: "الأعضاء",
+      items: [
+        { href: "/admin/members", label: "إدارة الأعضاء", icon: Users },
+        { href: "/admin/join-requests", label: "طلبات الانضمام", icon: UserPlus },
+        { href: "/admin/volunteer-hours", label: "ساعات التطوع", icon: Clock },
+      ]
+    },
+    {
+      title: "الفعاليات والبرامج",
+      items: [
+        { href: "/admin/events", label: "إدارة الفعاليات", icon: Calendar },
+        { href: "/admin/workshops", label: "إدارة الورش", icon: GraduationCap },
+        { href: "/admin/certificates", label: "الشهادات", icon: Award },
+      ]
+    },
+    {
+      title: "الإدارة",
+      items: [
+        { href: "/admin/departments", label: "إدارة الأقسام", icon: LayoutGrid },
+        { href: "/admin/meetings", label: "الاجتماعات", icon: Video },
+        { href: "/admin/tasks", label: "المهام", icon: CheckSquare },
+      ]
+    },
+    {
+      title: "المحتوى",
+      items: [
+        { href: "/admin/news", label: "الأخبار والإعلانات", icon: Newspaper },
+        { href: "/admin/partners", label: "الشركاء", icon: Handshake },
+        { href: "/admin/gallery", label: "معرض الصور", icon: ImageIcon },
+      ]
+    },
+  ];
 
   if (user?.role === "super_admin") {
     sections.push({
-      title: t("النظام"),
+      title: "النظام",
       items: [
-        { href: "/admin/users", label: t("إدارة المستخدمين"), icon: Settings },
-      ],
+        { href: "/admin/users", label: "إدارة المستخدمين", icon: Settings },
+      ]
     });
   }
-
-  const getRoleLabel = () => {
-    switch (user?.role) {
-      case "super_admin": return t("مدير النظام");
-      case "president": return t("رئيس المبادرة");
-      case "vice_president": return t("نائب الرئيس");
-      case "secretary": return t("الأمين العام");
-      case "dept_head": return t("رئيس قسم");
-      case "join_manager": return t("مسؤول طلبات الانضمام");
-      default: return t("إداري");
-    }
-  };
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
@@ -130,9 +101,13 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         </Link>
       </div>
       <div className="p-4 border-b border-sidebar-border/50 bg-sidebar-accent/10">
-        <p className="font-semibold truncate text-sm">{user?.name}</p>
-        <p className="text-xs text-sidebar-accent-foreground/80 font-medium truncate mt-0.5">
-          {getRoleLabel()}
+        <p className="font-medium truncate">{user?.name}</p>
+        <p className="text-sm text-sidebar-accent-foreground font-medium truncate">
+          {user?.role === 'super_admin' ? 'مدير النظام' :
+           user?.role === 'president' ? 'رئيس المبادرة' :
+           user?.role === 'vice_president' ? 'نائب الرئيس' :
+           user?.role === 'secretary' ? 'الأمين العام' :
+           user?.role === 'dept_head' ? 'رئيس قسم' : 'إداري'}
         </p>
       </div>
       <nav className="flex-1 overflow-y-auto py-4">
@@ -147,13 +122,13 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                 const Icon = item.icon;
                 return (
                   <Link key={item.href} href={item.href}>
-                    <div className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors cursor-pointer text-sm ${
+                    <div className={`flex items-center space-x-3 space-x-reverse px-3 py-2 rounded-md transition-colors cursor-pointer ${
                       isActive 
-                        ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium shadow-sm" 
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground font-medium" 
                         : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/80"
                     }`}>
-                      <Icon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{item.label}</span>
+                      <Icon className="h-4 w-4" />
+                      <span className="text-sm">{item.label}</span>
                     </div>
                   </Link>
                 );
@@ -165,29 +140,29 @@ export function AdminLayout({ children }: { children: ReactNode }) {
       <div className="p-4 border-t border-sidebar-border/50 bg-sidebar">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive"
+          className="w-full justify-start text-sidebar-foreground hover:bg-destructive hover:text-destructive-foreground"
           onClick={() => {
             logout();
             setLocation("/login");
           }}
         >
-          <LogOut className="h-4 w-4 me-2" />
-          <span>{t("تسجيل خروج")}</span>
+          <LogOut className="h-5 w-5 ml-2 rtl:ml-2 rtl:mr-0" />
+          تسجيل خروج
         </Button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col md:flex-row font-sans" dir={direction}>
+    <div className="min-h-screen bg-muted/30 flex flex-col md:flex-row font-sans" dir="rtl">
       {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex w-64 flex-col fixed inset-y-0 ${isEnglish ? "left-0" : "right-0"} z-50 border-e`}>
+      <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 right-0 z-50">
         <SidebarContent />
       </aside>
 
-      {/* Main Content Area */}
-      <div className={`flex-1 ${isEnglish ? "md:ml-64" : "md:mr-64"} flex flex-col min-h-screen transition-all`}>
-        <header className="h-16 bg-background border-b flex items-center justify-between px-4 md:px-8 sticky top-0 z-40 shadow-sm">
+      {/* Mobile Header & Content */}
+      <div className="flex-1 md:mr-64 flex flex-col min-h-screen">
+        <header className="h-16 bg-background border-b flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
           <div className="flex items-center md:hidden">
             <Sheet>
               <SheetTrigger asChild>
@@ -195,23 +170,20 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                   <Menu className="h-6 w-6" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side={isEnglish ? "left" : "right"} className="p-0 w-64 border-none">
+              <SheetContent side="right" className="p-0 w-64 border-l-0">
                 <SidebarContent />
               </SheetContent>
             </Sheet>
-            <span className="font-bold text-primary ms-2">{isEnglish ? "Admin" : "الإدارة"}</span>
+            <span className="font-bold text-primary mr-2">الإدارة</span>
           </div>
           
-          <div className="hidden md:flex items-center font-semibold text-base text-foreground/80">
-            {isEnglish ? "Administration Dashboard" : "لوحة تحكم المشرفين"}
+          <div className="hidden md:flex items-center font-medium text-lg text-foreground/80">
+            لوحة تحكم المشرفين
           </div>
 
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" asChild>
-              <Link href="/">{t("عرض الموقع")}</Link>
-            </Button>
-            <Button variant="outline" size="sm" onClick={toggleLanguage}>
-              {isEnglish ? "العربية" : "English"}
+              <Link href="/">عرض الموقع</Link>
             </Button>
           </div>
         </header>

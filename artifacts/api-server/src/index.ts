@@ -1,21 +1,22 @@
-import { db, users } from "@workspace/db";
+import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import app from "./app";
 
-// دالة التحقق وإنشاء حساب الـ Super Admin
+// دالة إنشاء حساب الـ Super Admin تلقائياً
 async function ensureSuperAdmin() {
   try {
     const adminEmail = "mohannadkhaloof38@gmail.com";
-    const existing = await db.select().from(users).where(eq(users.email, adminEmail));
+    const existing = await db.select().from(usersTable).where(eq(usersTable.email, adminEmail));
     
     if (existing.length === 0) {
+      // كلمة المرور التي ستستخدمها لتسجيل الدخول
       const hashedPassword = await bcrypt.hash("121Aqra6$", 10);
       
-      await db.insert(users).values({
+      await db.insert(usersTable).values({
         name: "مهند الخلوف",
         email: adminEmail,
-        password: hashedPassword,
+        passwordHash: hashedPassword,
         role: "super_admin",
         status: "approved",
       });
