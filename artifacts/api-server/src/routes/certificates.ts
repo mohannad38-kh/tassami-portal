@@ -63,9 +63,21 @@ router.get("/certificates/:id", optionalAuthMiddleware, async (req, res): Promis
 
 router.get("/certificates/verify/:code", async (req, res): Promise<void> => {
   const code = Array.isArray(req.params.code) ? req.params.code[0] : req.params.code;
-  const [cert] = await db.select().from(certificatesTable).where(eq(certificatesTable.verifyCode, code));
+  if (typeof code !== "string" || !code.trim() || code.length > 100) {
+    res.status(400).json({ error: "Invalid verification code" });
+    return;
+  }
+  const [cert] = await db.select().from(certificatesTable).where(eq(certificatesTable.verifyCode, code.trim()));
   if (!cert) { res.status(404).json({ error: "Certificate not found" }); return; }
-  res.json(await formatCertificate(cert));
+  const details = await formatCertificate(cert);
+  res.json({
+    type: details.type,
+    recipientName: details.recipientName,
+    eventTitle: details.eventTitle,
+    workshopTitle: details.workshopTitle,
+    verifyCode: details.verifyCode,
+    issuedAt: details.issuedAt,
+  });
 });
 
 export default router;
