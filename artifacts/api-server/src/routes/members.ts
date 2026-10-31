@@ -63,7 +63,7 @@ router.post("/members", authMiddleware, requireRole("secretary"), async (req, re
 
 router.get("/members/:id", authMiddleware, requireRole("member"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = Number(raw);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid member ID" }); return; }
   const user = (req as typeof req & { user: JwtPayload }).user;
   const [member] = await db.select().from(membersTable).where(eq(membersTable.id, id));
@@ -76,7 +76,7 @@ router.get("/members/:id", authMiddleware, requireRole("member"), async (req, re
 
 router.patch("/members/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = Number(raw);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid member ID" }); return; }
   const { status, departmentId } = req.body;
   const updateData: Record<string, unknown> = {};
@@ -100,7 +100,7 @@ router.patch("/members/:id", authMiddleware, requireRole("secretary"), async (re
 
 router.delete("/members/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = Number(raw);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid member ID" }); return; }
   const [deleted] = await db.delete(membersTable).where(eq(membersTable.id, id)).returning({ id: membersTable.id });
   if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
