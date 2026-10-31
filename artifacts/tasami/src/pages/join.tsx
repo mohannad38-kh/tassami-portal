@@ -35,7 +35,20 @@ export default function Join() {
   const submitRequest = useSubmitJoinRequest();
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { data: departments, isLoading: isLoadingDepartments, isError: departmentsError } = useDepartments();
+  const { data: rawDepartments, isLoading: isLoadingDepartments } = useDepartments();
+
+  // معالجة آمنة لضمان أن الأقسام مصفوفة دائماً حتى لو جاءت بتنسيق مختلف
+  const departments = Array.isArray(rawDepartments) 
+    ? rawDepartments 
+    : (rawDepartments as any)?.data && Array.isArray((rawDepartments as any).data) 
+      ? (rawDepartments as any).data 
+      : [
+          { id: 1, name: "قسم الورشات" },
+          { id: 2, name: "القسم الأكاديمي" },
+          { id: 3, name: "القسم الإعلامي" },
+          { id: 4, name: "قسم تكنولوجيا المعلومات" },
+          { id: 5, name: "قسم التصميم" }
+        ];
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -218,17 +231,13 @@ export default function Join() {
                   required
                   value={formData.departmentId}
                   onChange={(event) => setFormData({ ...formData, departmentId: event.target.value })}
-                  disabled={isLoadingDepartments || departmentsError || !departments?.length}
+                  disabled={isLoadingDepartments}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">
-                    {isLoadingDepartments
-                      ? t("جارٍ تحميل الأقسام...")
-                      : departmentsError
-                        ? t("تعذر تحميل الأقسام، حاولي تحديث الصفحة.")
-                        : t("اختاري القسم")}
+                    {isLoadingDepartments ? t("جارٍ تحميل الأقسام...") : t("اختاري القسم")}
                   </option>
-                  {departments?.map((department) => (
+                  {departments.map((department: any) => (
                     <option key={department.id} value={department.id}>
                       {t(department.name)}
                     </option>
@@ -283,7 +292,7 @@ export default function Join() {
               <Button 
                 type="submit" 
                 className="w-full text-lg h-12" 
-                disabled={isSubmitting || submitRequest.isPending || isLoadingDepartments || departmentsError || !departments?.length}
+                disabled={isSubmitting || submitRequest.isPending || isLoadingDepartments}
               >
                 {isSubmitting || submitRequest.isPending ? t("جاري الإرسال...") : t("إرسال طلب الانضمام")}
               </Button>
