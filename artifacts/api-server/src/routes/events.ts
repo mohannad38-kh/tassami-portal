@@ -8,7 +8,7 @@ const router: IRouter = Router();
 
 const EVENT_STATUSES = ["upcoming", "completed", "cancelled"] as const;
 function parsePositiveId(raw: string): number | null {
-  if (!/^\\d+$/.test(raw)) return null;
+  if (!/^\d+$/.test(raw)) return null;
   const value = Number(raw);
   return Number.isSafeInteger(value) && value > 0 ? value : null;
 }
