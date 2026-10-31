@@ -84,10 +84,24 @@ app.use(
 );
 
 // إعدادات CORS
-const allowedOrigins = (process.env.CORS_ORIGINS || "")
+const configuredOrigins = (process.env.CORS_ORIGINS || "")
   .split(",")
-  .map((origin) => origin.trim())
+  .map((origin) => origin.trim().replace(/\/$/, ""))
   .filter(Boolean);
+
+// The deployed frontend and API share one origin. Always allow that exact
+// origin even when no separate CORS_ORIGINS list is configured.
+const appOrigin = process.env.APP_BASE_URL
+  ? new URL(process.env.APP_BASE_URL).origin
+  : null;
+const renderOrigin = process.env.RENDER_EXTERNAL_URL
+  ? new URL(process.env.RENDER_EXTERNAL_URL).origin
+  : null;
+const allowedOrigins = new Set([
+  ...configuredOrigins,
+  appOrigin,
+  renderOrigin,
+].filter((origin): origin is string => Boolean(origin)));
 
 app.use(
   cors({
@@ -96,11 +110,11 @@ app.use(
         return callback(null, true);
       }
 
-      if (!isProduction && allowedOrigins.length === 0) {
+      if (!isProduction && allowedOrigins.size === 0) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.has(origin)) {
         return callback(null, true);
       }
 
