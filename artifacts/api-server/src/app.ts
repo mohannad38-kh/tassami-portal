@@ -34,10 +34,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", router);
 
 // --- خدمة ملفات الواجهة الأمامية (Frontend Dist) ---
+// --- خدمة ملفات الواجهة الأمامية (Frontend Dist) ---
 const frontendDistPath = path.resolve(__dirname, "../../tasami/dist");
 app.use(express.static(frontendDistPath));
 
-app.get("*", (_req, res) => {
+// Express 5 wildcard syntax: (.*)
+app.get("(.*)", (_req, res) => {
   res.sendFile(path.join(frontendDistPath, "index.html"));
 });
 // ---------------------------------------------------
