@@ -44,15 +44,28 @@ router.get("/workshops", optionalAuthMiddleware, async (_req, res): Promise<void
 });
 
 router.post("/workshops", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
-  const { title, description, trainerId, workshopDate, location, capacity, imageUrl } = req.body;
-  if (!title || !workshopDate) { res.status(400).json({ error: "Title and workshopDate required" }); return; }
-  const [workshop] = await db.insert(workshopsTable).values({ title, description, trainerId, workshopDate: new Date(workshopDate), location, capacity, imageUrl }).returning();
+  const { title, description, trainerId, workshopDate, location, capacity, imageUrl } = req.body ?? {};
+  const date = typeof workshopDate === "string" ? new Date(workshopDate) : null;
+  if (typeof title !== "string" || !title.trim() || title.length > 200 || !date || Number.isNaN(date.getTime()) ||
+      (description != null && (typeof description !== "string" || description.length > 20000)) ||
+      (location != null && (typeof location !== "string" || location.length > 500)) ||
+      (imageUrl != null && (typeof imageUrl !== "string" || imageUrl.length > 2048)) ||
+      (capacity != null && (!Number.isSafeInteger(capacity) || capacity <= 0)) ||
+      (trainerId != null && (!Number.isSafeInteger(trainerId) || trainerId <= 0))) {
+    res.status(400).json({ error: "Invalid workshop details" }); return;
+  }
+  if (trainerId != null) {
+    const [trainer] = await db.select({ id: trainersTable.id }).from(trainersTable).where(eq(trainersTable.id, trainerId));
+    if (!trainer) { res.status(404).json({ error: "Trainer not found" }); return; }
+  }
+  const [workshop] = await db.insert(workshopsTable).values({ title: title.trim(), description: description ?? null, trainerId: trainerId ?? null, workshopDate: date, location: location ?? null, capacity: capacity ?? null, imageUrl: imageUrl ?? null }).returning();
   res.status(201).json(await formatWorkshop(workshop));
 });
 
 router.get("/workshops/:id", optionalAuthMiddleware, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
   const [workshop] = await db.select().from(workshopsTable).where(eq(workshopsTable.id, id));
   if (!workshop) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatWorkshop(workshop));
@@ -60,17 +73,23 @@ router.get("/workshops/:id", optionalAuthMiddleware, async (req, res): Promise<v
 
 router.patch("/workshops/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
-  const { title, description, trainerId, workshopDate, location, capacity, status, imageUrl } = req.body;
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
+  const { title, description, trainerId, workshopDate, location, capacity, status, imageUrl } = req.body ?? {};
   const updateData: Record<string, unknown> = {};
-  if (title != null) updateData.title = title;
-  if (description != null) updateData.description = description;
-  if (trainerId !== undefined) updateData.trainerId = trainerId;
-  if (workshopDate != null) updateData.workshopDate = new Date(workshopDate);
-  if (location != null) updateData.location = location;
-  if (capacity != null) updateData.capacity = capacity;
-  if (status != null) updateData.status = status;
-  if (imageUrl != null) updateData.imageUrl = imageUrl;
+  if (title !== undefined) { if (typeof title !== "string" || !title.trim() || title.length > 200) { res.status(400).json({ error: "Invalid title" }); return; } updateData.title = title.trim(); }
+  if (description !== undefined) { if (description !== null && (typeof description !== "string" || description.length > 20000)) { res.status(400).json({ error: "Invalid description" }); return; } updateData.description = description; }
+  if (trainerId !== undefined) {
+    if (trainerId !== null && (!Number.isSafeInteger(trainerId) || trainerId <= 0)) { res.status(400).json({ error: "Invalid trainerId" }); return; }
+    if (trainerId !== null) { const [trainer] = await db.select({ id: trainersTable.id }).from(trainersTable).where(eq(trainersTable.id, trainerId)); if (!trainer) { res.status(404).json({ error: "Trainer not found" }); return; } }
+    updateData.trainerId = trainerId;
+  }
+  if (workshopDate !== undefined) { const date = typeof workshopDate === "string" ? new Date(workshopDate) : null; if (!date || Number.isNaN(date.getTime())) { res.status(400).json({ error: "Invalid workshopDate" }); return; } updateData.workshopDate = date; }
+  if (location !== undefined) { if (location !== null && (typeof location !== "string" || location.length > 500)) { res.status(400).json({ error: "Invalid location" }); return; } updateData.location = location; }
+  if (capacity !== undefined) { if (capacity !== null && (!Number.isSafeInteger(capacity) || capacity <= 0)) { res.status(400).json({ error: "Invalid capacity" }); return; } updateData.capacity = capacity; }
+  if (status !== undefined) { if (!["upcoming", "completed", "cancelled"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; } updateData.status = status; }
+  if (imageUrl !== undefined) { if (imageUrl !== null && (typeof imageUrl !== "string" || imageUrl.length > 2048)) { res.status(400).json({ error: "Invalid imageUrl" }); return; } updateData.imageUrl = imageUrl; }
+  if (!Object.keys(updateData).length) { res.status(400).json({ error: "No valid fields to update" }); return; }
   const [updated] = await db.update(workshopsTable).set(updateData).where(eq(workshopsTable.id, id)).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatWorkshop(updated));
@@ -78,8 +97,10 @@ router.patch("/workshops/:id", authMiddleware, requireRole("secretary"), async (
 
 router.delete("/workshops/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
-  await db.delete(workshopsTable).where(eq(workshopsTable.id, id));
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
+  const [deleted] = await db.delete(workshopsTable).where(eq(workshopsTable.id, id)).returning({ id: workshopsTable.id });
+  if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
   res.sendStatus(204);
 });
 
