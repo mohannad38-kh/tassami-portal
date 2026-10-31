@@ -49,6 +49,9 @@ import AdminGallery from "@/pages/admin/gallery/index";
 import AdminUsers from "@/pages/admin/users/index";
 import AdminReports from "@/pages/admin/reports/index";
 
+// استيراد لوحة التحكم الشاملة الجديدة
+import ComprehensiveAdminManager from "@/pages/admin/manager";
+
 const queryClient = new QueryClient();
 
 function Router() {
@@ -84,6 +87,9 @@ function Router() {
       <Route path="/portal/volunteer-hours" component={PortalVolunteerHours} />
 
       <Route path="/admin" component={AdminIndex} />
+      {/* مسار لوحة التحكم الشاملة والموحدة */}
+      <Route path="/admin/manager" component={ComprehensiveAdminManager} />
+      
       <Route path="/admin/members" component={AdminMembers} />
       <Route path="/admin/members/:id" component={AdminMemberDetail} />
       <Route path="/admin/join-requests" component={AdminJoinRequests} />

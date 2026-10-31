@@ -5,7 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Clock, MapPin, Star, Users, Heart, Target, Lightbulb } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 
-const specializedDepartmentCount = 5;
+const SPECIALIZED_DEPARTMENT_COUNT = 5;
+
+const FEATURES = [
+  { icon: Target, label: "أثر مستدام", desc: "نهدف إلى أثر حقيقي مستمر" },
+  { icon: Heart, label: "العمل التطوعي", desc: "نعزز ثقافة العطاء" },
+  { icon: Users, label: "تمكين الشباب", desc: "نطور مهارات الشباب" },
+  { icon: Lightbulb, label: "الابتكار", desc: "نشجع التفكير الإبداعي" },
+  { icon: Star, label: "التميز", desc: "نسعى للتميز دائماً" },
+];
+
+const UPCOMING_EVENTS = [
+  { title: "ملتقى الشباب المبدع", place: "سيتم الإعلان عنها لاحقاً" },
+  { title: "يوم التطوع البيئي", place: "سيتم الإعلان عنها لاحقاً" },
+  { title: "ورشة لتعلم اساسيات البرمجة والروبوتات", place: "سيتم الإعلان عنها لاحقاً" },
+];
 
 export default function Home() {
   const { t, isEnglish } = useLanguage();
@@ -58,15 +72,36 @@ export default function Home() {
     };
   }, []);
 
+  // حساب عدد المتطوعين المعروض
+  const displayVolunteerCount =
+    volunteerCountError || registeredVolunteers === null
+      ? "3"
+      : new Intl.NumberFormat("en", { useGrouping: false }).format(registeredVolunteers);
+
+  const statsList = [
+    { number: displayVolunteerCount, label: t("متطوع مسجل") },
+    { number: "+4", label: t("فعالية منجزة") },
+    { number: "+8", label: t("ساعة تطوعية") },
+    { number: String(SPECIALIZED_DEPARTMENT_COUNT), label: t("أقسام متخصصة") },
+  ];
+
   return (
     <PublicLayout>
-      <section className="relative flex min-h-[460px] items-center overflow-hidden text-center" style={{ background: "linear-gradient(115deg, #602531 0%, #7a3342 55%, #602531 100%)" }}>
+      {/* Hero Section */}
+      <section
+        className="relative flex min-h-[460px] items-center overflow-hidden text-center"
+        style={{ background: "linear-gradient(115deg, #602531 0%, #7a3342 55%, #602531 100%)" }}
+      >
         <div className="container mx-auto px-4 py-16 md:px-8">
           <h1 className="mb-4 text-4xl font-bold text-white md:text-6xl">
             {isEnglish ? (
-              <>Tasami <span style={{ color: "#d5b976" }}>Volunteer</span> Initiative</>
+              <>
+                Tasami <span style={{ color: "#d5b976" }}>Volunteer</span> Initiative
+              </>
             ) : (
-              <>مبادرة <span style={{ color: "#d5b976" }}>تسامي</span> التطوعية</>
+              <>
+                مبادرة <span style={{ color: "#d5b976" }}>تسامي</span> التطوعية
+              </>
             )}
           </h1>
           <p className="mx-auto mb-10 max-w-3xl text-lg leading-relaxed text-white/90 md:text-2xl">
@@ -95,21 +130,9 @@ export default function Home() {
 
       {/* Stats Section */}
       <section className="bg-muted/40 py-12">
-        <div className="container px-4 md:px-8 mx-auto">
+        <div className="container mx-auto px-4 md:px-8">
           <div className="grid grid-cols-1 gap-5 text-center sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                number: volunteerCountError
-                  ? "3"
-                  : registeredVolunteers === null
-                    ? "3"
-                    : new Intl.NumberFormat("en", { useGrouping: false }).format(registeredVolunteers),
-                label: t("متطوع مسجل"),
-              },
-              { number: "+4", label: t("فعالية منجزة") },
-              { number: "+8", label: t("ساعة تطوعية") },
-              { number: String(specializedDepartmentCount), label: t("أقسام متخصصة") },
-            ].map((stat, index) => (
+            {statsList.map((stat, index) => (
               <div
                 key={stat.label}
                 className="rounded-2xl border border-border/60 bg-card px-5 py-6 shadow-sm"
@@ -129,15 +152,9 @@ export default function Home() {
 
       {/* Features Section */}
       <section className="bg-white py-16">
-        <div className="container px-4 md:px-8 mx-auto">
+        <div className="container mx-auto px-4 md:px-8">
           <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-5">
-            {[
-              { icon: Target, label: t("أثر مستدام"), desc: t("نهدف إلى أثر حقيقي مستمر") },
-              { icon: Heart, label: t("العمل التطوعي"), desc: t("نعزز ثقافة العطاء") },
-              { icon: Users, label: t("تمكين الشباب"), desc: t("نطور مهارات الشباب") },
-              { icon: Lightbulb, label: t("الابتكار"), desc: t("نشجع التفكير الإبداعي") },
-              { icon: Star, label: t("التميز"), desc: t("نسعى للتميز دائماً") },
-            ].map((stat, i) => (
+            {FEATURES.map((feature, i) => (
               <div
                 key={i}
                 className="rounded-2xl border p-5 transition-shadow hover:shadow-md"
@@ -147,12 +164,12 @@ export default function Home() {
                   className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full"
                   style={{ background: "rgba(112,38,50,0.08)" }}
                 >
-                  <stat.icon className="h-6 w-6" style={{ color: "#702632" }} />
+                  <feature.icon className="h-6 w-6" style={{ color: "#702632" }} />
                 </div>
                 <div className="mb-1 font-bold" style={{ color: "#702632" }}>
-                  {stat.label}
+                  {t(feature.label)}
                 </div>
-                <div className="text-sm text-gray-500">{stat.desc}</div>
+                <div className="text-sm text-gray-500">{t(feature.desc)}</div>
               </div>
             ))}
           </div>
@@ -161,31 +178,27 @@ export default function Home() {
 
       {/* Upcoming Events Section */}
       <section className="bg-muted/40 py-20">
-        <div className="container px-4 md:px-8 mx-auto">
-          <div className="flex items-center justify-between mb-10">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="mb-10 flex items-center justify-between">
             <Button variant="outline" className="border-primary text-primary" asChild>
               <Link href="/events">{t("عرض الكل")}</Link>
             </Button>
             <h2 className="text-3xl font-bold text-primary">{t("الفعاليات القادمة")}</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { title: 'ملتقى الشباب المبدع', date: '', time: '', place: 'سيتم الإعلان عنها لاحقاً' },
-              { title: 'يوم التطوع البيئي', date: '', time: '', place: 'سيتم الإعلان عنها لاحقاً' },
-              { title: 'ورشة لتعلم اساسيات البرمجة والروبوتات', date: '', time: '', place: 'سيتم الإعلان عنها لاحقاً' },
-            ].map((event, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {UPCOMING_EVENTS.map((event, i) => (
+              <div key={i} className="overflow-hidden rounded-2xl bg-white shadow-md transition-shadow hover:shadow-lg">
                 <div className="flex items-center gap-3 bg-primary p-4 text-white">
                   <div className="text-lg font-bold">{t("فعالية قادمة")}</div>
                 </div>
                 <div className="p-5">
-                  <h3 className="font-bold text-lg mb-3 text-primary">{t(event.title)}</h3>
-                  <div className="flex items-center gap-2 text-gray-500 mb-2 text-sm">
-                    <Clock className="w-4 h-4" />
+                  <h3 className="mb-3 text-lg font-bold text-primary">{t(event.title)}</h3>
+                  <div className="mb-2 flex items-center gap-2 text-sm text-gray-500">
+                    <Clock className="h-4 w-4" />
                     <span>{t("موعد يحدد قريباً")}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-500 mb-4 text-sm">
-                    <MapPin className="w-4 h-4" />
+                  <div className="mb-4 flex items-center gap-2 text-sm text-gray-500">
+                    <MapPin className="h-4 w-4" />
                     <span>{t(event.place)}</span>
                   </div>
                   <Button className="w-full font-bold" variant="secondary" asChild>

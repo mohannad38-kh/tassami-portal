@@ -193,7 +193,7 @@ export default function Join() {
                     id="password"
                     type="password"
                     required
-                    minLength={12}
+                    minLength={8}
                     autoComplete="new-password"
                     value={formData.password}
                     onChange={(event) =>
@@ -203,7 +203,7 @@ export default function Join() {
                     className="text-left"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {t("يجب أن تتكون كلمة المرور من 12 حرفاً على الأقل.")}
+                    {t("يجب أن تتكون كلمة المرور من 8 أحرف على الأقل")}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -212,7 +212,7 @@ export default function Join() {
                     id="confirmPassword"
                     type="password"
                     required
-                    minLength={12}
+                    minLength={8}
                     autoComplete="new-password"
                     value={formData.confirmPassword}
                     onChange={(event) =>
@@ -235,7 +235,7 @@ export default function Join() {
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">
-                    {isLoadingDepartments ? t("جارٍ تحميل الأقسام...") : t("اختاري القسم")}
+                    {isLoadingDepartments ? t("جارٍ تحميل الأقسام...") : t("اختر القسم")}
                   </option>
                   {departments.map((department: any) => (
                     <option key={department.id} value={department.id}>
@@ -268,7 +268,7 @@ export default function Join() {
                     inputMode="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="079 123 4567"
+                    placeholder="0790000000"
                     dir="ltr"
                     className="text-left"
                   />
