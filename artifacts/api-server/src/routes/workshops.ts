@@ -87,7 +87,7 @@ router.patch("/workshops/:id", authMiddleware, requireRole("secretary"), async (
   if (workshopDate !== undefined) { const date = typeof workshopDate === "string" ? new Date(workshopDate) : null; if (!date || Number.isNaN(date.getTime())) { res.status(400).json({ error: "Invalid workshopDate" }); return; } updateData.workshopDate = date; }
   if (location !== undefined) { if (location !== null && (typeof location !== "string" || location.length > 500)) { res.status(400).json({ error: "Invalid location" }); return; } updateData.location = location; }
   if (capacity !== undefined) { if (capacity !== null && (!Number.isSafeInteger(capacity) || capacity <= 0)) { res.status(400).json({ error: "Invalid capacity" }); return; } updateData.capacity = capacity; }
-  if (status !== undefined) { if (!["upcoming", "completed", "cancelled"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; } updateData.status = status; }
+  if (status !== undefined) { if (!["upcoming", "ongoing", "completed", "cancelled"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; } updateData.status = status; }
   if (imageUrl !== undefined) { if (imageUrl !== null && (typeof imageUrl !== "string" || imageUrl.length > 2048)) { res.status(400).json({ error: "Invalid imageUrl" }); return; } updateData.imageUrl = imageUrl; }
   if (!Object.keys(updateData).length) { res.status(400).json({ error: "No valid fields to update" }); return; }
   const [updated] = await db.update(workshopsTable).set(updateData).where(eq(workshopsTable.id, id)).returning();
