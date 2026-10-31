@@ -7,6 +7,12 @@ import type { Request } from "express";
 
 const router: IRouter = Router();
 
+function isValidDateOnly(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(value)) return false;
+  const date = new Date(value + "T00:00:00.000Z");
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 async function formatTask(t: typeof tasksTable.$inferSelect) {
   let assigneeName: string | null = null;
   if (t.assignedTo) {
@@ -53,7 +59,7 @@ router.post("/tasks", authMiddleware, requireRole("secretary"), async (req, res)
   if (description !== undefined && description !== null && (typeof description !== "string" || description.length > 5000)) { res.status(400).json({ error: "Description must be 5000 characters or fewer" }); return; }
   if (assignedTo !== undefined && assignedTo !== null && (!Number.isSafeInteger(assignedTo) || assignedTo <= 0)) { res.status(400).json({ error: "Invalid assignedTo" }); return; }
   if (assignedTo != null) { const [assignee] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, assignedTo)); if (!assignee) { res.status(400).json({ error: "Assignee not found" }); return; } }
-  if (dueDate !== undefined && dueDate !== null && (typeof dueDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(dueDate) || new Date(dueDate + "T00:00:00.000Z").toISOString().slice(0, 10) !== dueDate)) { res.status(400).json({ error: "Invalid dueDate; expected YYYY-MM-DD" }); return; }
+  if (dueDate !== undefined && dueDate !== null && !isValidDateOnly(dueDate)) { res.status(400).json({ error: "Invalid dueDate; expected YYYY-MM-DD" }); return; }
   if (priority !== undefined && !["low", "medium", "high"].includes(priority)) { res.status(400).json({ error: "Invalid priority" }); return; }
   const [task] = await db.insert(tasksTable).values({ title: title.trim(), description: description ?? null, assignedTo: assignedTo ?? null, dueDate: dueDate ?? null, priority: priority ?? "medium", createdBy: user.userId }).returning();
   res.status(201).json(await formatTask(task));
@@ -97,7 +103,7 @@ router.patch("/tasks/:id", authMiddleware, requireRole("member"), async (req, re
       updateData.assignedTo = body.assignedTo;
     }
     if (body.dueDate !== undefined) {
-      if (body.dueDate !== null && (typeof body.dueDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(body.dueDate) || new Date(body.dueDate + "T00:00:00.000Z").toISOString().slice(0, 10) !== body.dueDate)) { res.status(400).json({ error: "Invalid dueDate; expected YYYY-MM-DD" }); return; }
+      if (body.dueDate !== null && !isValidDateOnly(body.dueDate)) { res.status(400).json({ error: "Invalid dueDate; expected YYYY-MM-DD" }); return; }
       updateData.dueDate = body.dueDate;
     }
     if (body.status !== undefined) {
