@@ -165,6 +165,10 @@ router.post("/join-requests", async (req, res): Promise<void> => {
 
   const normalizedEmail = email.trim().toLowerCase();
   const result = await db.transaction(async (tx) => {
+    // Serialize submissions for the same normalized email across concurrent requests.
+    // The transaction-scoped lock is released automatically on commit or rollback.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${normalizedEmail})::bigint)`);
+
     const [pendingRequest] = await tx
       .select({ id: joinRequestsTable.id })
       .from(joinRequestsTable)
