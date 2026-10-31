@@ -134,9 +134,13 @@ router.post("/join-requests", async (req, res): Promise<void> => {
   if (
     typeof name !== "string" ||
     !name.trim() ||
+    name.trim().length > 120 ||
     typeof email !== "string" ||
     !email.trim() ||
+    email.trim().length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+    (phone !== undefined && phone !== null && (typeof phone !== "string" || phone.length > 40)) ||
+    (message !== undefined && message !== null && (typeof message !== "string" || message.length > 2000)) ||
     !Number.isSafeInteger(departmentId) ||
     departmentId < 1 ||
     typeof password !== "string" ||
@@ -161,6 +165,16 @@ router.post("/join-requests", async (req, res): Promise<void> => {
 
   const normalizedEmail = email.trim().toLowerCase();
   const result = await db.transaction(async (tx) => {
+    const [pendingRequest] = await tx
+      .select({ id: joinRequestsTable.id })
+      .from(joinRequestsTable)
+      .where(and(
+        sql`lower(${joinRequestsTable.email}) = ${normalizedEmail}`,
+        eq(joinRequestsTable.status, "pending"),
+      ))
+      .limit(1);
+    if (pendingRequest) return { request: null, conflict: true };
+
     const [existingUser] = await tx
       .select()
       .from(usersTable)
