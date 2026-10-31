@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 
 const router: IRouter = Router();
 
-const EVENT_STATUSES = ["upcoming", "completed", "cancelled"] as const;
+const EVENT_STATUSES = ["upcoming", "ongoing", "completed", "cancelled"] as const;
 function parsePositiveId(raw: string): number | null {
   if (!/^\d+$/.test(raw)) return null;
   const value = Number(raw);
