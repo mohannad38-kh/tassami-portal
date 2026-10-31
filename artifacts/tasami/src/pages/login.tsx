@@ -20,7 +20,6 @@ export default function Login() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     loginMutation.mutate(
       { data: { email, password } },
       {

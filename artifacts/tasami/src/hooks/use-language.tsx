@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 
 export type Language = "ar" | "en";
 
@@ -7,7 +7,7 @@ export type LanguageContextValue = {
   direction: "rtl" | "ltr";
   isEnglish: boolean;
   toggleLanguage: () => void;
-  t: (arabicText: string) => string;
+  t: (arabicText: string | null | undefined) => string;
 };
 
 const translations: Record<string, string> = {
@@ -491,8 +491,6 @@ const translations: Record<string, string> = {
   "منذ الانضمام في": "Member since",
   "بطاقة العضوية": "Membership Card",
   "عضو مبادرة تسامي": "Tasami Initiative Member",
-  "404 Page Not Found": "الصفحة غير موجودة (404)",
-  "Did you forget to add the page to the router?": "هل نسيت إضافة الصفحة إلى المسارات؟",
   "٥ مايو": "May 5",
   "مايو": "May",
   "يونيو": "June",
@@ -521,6 +519,11 @@ const translations: Record<string, string> = {
   "راجعي الطلب ثم اقبليه أو ارفضي؛ عند القبول يحاول الموقع إرسال بريد إلكتروني.": "Review the application and approve or reject it. The site will try to send an email after approval.",
   "أُرسلت رسالة القبول": "Approval email sent",
   "لم تُرسل رسالة القبول بعد": "The approval email has not been sent yet",
+
+  // Used by the home page upcoming-events cards
+  قريباً: "Coming soon",
+  "سيتم الإعلان عنه لاحقاً": "To be announced",
+  "سيتم الإعلان عنها لاحقاً": "To be announced",
 };
 
 const statusTranslations: Record<string, { ar: string; en: string }> = {
@@ -537,6 +540,36 @@ const statusTranslations: Record<string, { ar: string; en: string }> = {
   scheduled: { ar: "مجدول", en: "Scheduled" },
 };
 
+// Texts written in English in the code (e.g. the 404 page) that must show in Arabic when the site is Arabic.
+const englishToArabic: Record<string, string> = {
+  "404 Page Not Found": "الصفحة غير موجودة (404)",
+  "Did you forget to add the page to the router?": "هل نسيت إضافة الصفحة إلى المسارات؟",
+};
+
+const hasOwn = (obj: object, key: string) => Object.prototype.hasOwnProperty.call(obj, key);
+const ARABIC_LETTERS = /[\u0600-\u06FF]/;
+const warnedMissing = new Set<string>();
+
+function translate(language: Language, text: string | null | undefined): string {
+  if (text == null) return "";
+  const key = text.trim();
+  if (!key) return text;
+
+  if (hasOwn(statusTranslations, key)) return statusTranslations[key][language];
+
+  if (language === "ar") {
+    return hasOwn(englishToArabic, key) ? englishToArabic[key] : text;
+  }
+
+  if (hasOwn(translations, key)) return translations[key];
+
+  if (import.meta.env.DEV && ARABIC_LETTERS.test(key) && !warnedMissing.has(key)) {
+    warnedMissing.add(key);
+    console.warn(`[i18n] Missing English translation: "${key}"`);
+  }
+  return text;
+}
+
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 function getInitialLanguage(): Language {
@@ -549,6 +582,7 @@ function getInitialLanguage(): Language {
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>(getInitialLanguage);
+
   const value = useMemo<LanguageContextValue>(
     () => ({
       language,
@@ -557,16 +591,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       toggleLanguage: () => {
         setLanguage((current) => (current === "ar" ? "en" : "ar"));
       },
-      t: (arabicText) => {
-        const status = statusTranslations[arabicText];
-        if (status) return status[language];
-        return language === "en" ? translations[arabicText] ?? arabicText : arabicText;
-      },
+      t: (text) => translate(language, text),
     }),
     [language],
   );
 
-  useEffect(() => {
+  // Layout effect: set lang/dir before the first paint so the page does not flash in the wrong direction.
+  useLayoutEffect(() => {
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     try {

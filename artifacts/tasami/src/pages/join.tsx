@@ -75,7 +75,7 @@ export default function Join() {
       departmentId: Number(formData.departmentId),
     };
 
-    if (!import.meta.env.DEV) {
+    if (import.meta.env.VITE_USE_LOCAL_API !== "true") {
       submitRequest.mutate(
         { data: submission },
         {

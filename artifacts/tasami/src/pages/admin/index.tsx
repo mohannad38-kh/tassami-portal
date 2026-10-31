@@ -28,8 +28,6 @@ export default function AdminIndex() {
     { title: t("مهام نشطة"), value: stats?.activeTasks, icon: CheckSquare, color: "text-destructive" },
   ];
 
-  const activitiesList = Array.isArray(activities) ? activities : [];
-
   return (
     <AdminLayout>
       <div className="mb-8">
@@ -72,11 +70,11 @@ export default function AdminIndex() {
                 </div>
               ))}
             </div>
-          ) : activitiesList.length === 0 ? (
+          ) : activities?.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">{t("لا يوجد نشاطات مسجلة حديثاً.")}</p>
           ) : (
             <div className="space-y-6">
-              {activitiesList.map((activity) => (
+              {activities?.map((activity) => (
                 <div key={activity.id} className="flex items-start">
                   <div className="bg-primary/10 p-2 rounded-full mr-4 rtl:ml-4 rtl:mr-0 shrink-0">
                     <Clock className="h-4 w-4 text-primary" />

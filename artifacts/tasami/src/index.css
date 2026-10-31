@@ -71,46 +71,46 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 38 33% 98%;
-  --foreground: 350 17% 18%;
+  --background: 0 0% 98%;
+  --foreground: 0 0% 15%;
 
-  --border: 35 19% 88%;
-  --input: 35 19% 88%;
-  --ring: 347 48% 29%;
+  --border: 0 0% 90%;
+  --input: 0 0% 90%;
+  --ring: 0 100% 27%;
 
   --card: 0 0% 100%;
   --card-foreground: 0 0% 15%;
-  --card-border: 35 19% 88%;
+  --card-border: 0 0% 90%;
 
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 15%;
   --popover-border: 0 0% 90%;
 
   /* Maroon #8B0000 */
-  --primary: 347 48% 29%;
+  --primary: 0 100% 27%;
   --primary-foreground: 0 0% 100%;
 
   /* Gold #D4AF37 */
-  --secondary: 39 43% 52%;
+  --secondary: 46 65% 52%;
   --secondary-foreground: 0 0% 10%;
 
-  --muted: 38 22% 94%;
-  --muted-foreground: 350 9% 43%;
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 45%;
 
-  --accent: 39 43% 52%;
+  --accent: 46 65% 52%;
   --accent-foreground: 0 0% 10%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --sidebar: 347 48% 25%;
+  --sidebar: 0 100% 25%;
   --sidebar-foreground: 0 0% 100%;
-  --sidebar-border: 347 42% 20%;
-  --sidebar-primary: 39 43% 52%;
-  --sidebar-primary-foreground: 347 48% 25%;
-  --sidebar-accent: 347 42% 20%;
-  --sidebar-accent-foreground: 39 43% 52%;
-  --sidebar-ring: 39 43% 52%;
+  --sidebar-border: 0 100% 20%;
+  --sidebar-primary: 46 65% 52%;
+  --sidebar-primary-foreground: 0 100% 25%;
+  --sidebar-accent: 0 100% 20%;
+  --sidebar-accent-foreground: 46 65% 52%;
+  --sidebar-ring: 46 65% 52%;
 
   --app-font-sans: 'Cairo', sans-serif;
   --app-font-serif: Georgia, serif;
@@ -157,16 +157,16 @@
   --popover-foreground: 0 0% 95%;
   --popover-border: 0 0% 20%;
 
-  --primary: 347 48% 35%;
+  --primary: 0 100% 27%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 39 43% 52%;
+  --secondary: 46 65% 52%;
   --secondary-foreground: 0 0% 10%;
 
   --muted: 0 0% 20%;
   --muted-foreground: 0 0% 65%;
 
-  --accent: 39 43% 52%;
+  --accent: 46 65% 52%;
   --accent-foreground: 0 0% 10%;
 
   --destructive: 0 84% 60%;
@@ -183,21 +183,12 @@
 }
 
 @layer base {
-  html,
-  body,
-  #root {
-    width: 100%;
-    min-width: 320px;
-  }
-
   * {
     @apply border-border;
   }
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
-    overflow-x: clip;
-    font-variant-numeric: lining-nums;
   }
 }
 
@@ -239,13 +230,9 @@
   /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
    * buttons/badges can remove the automatic brightness adjustment on interactions
    * and program their own. */
-  .no-default-hover-elevate {
-    display: revert;
-  }
+  .no-default-hover-elevate {}
 
-  .no-default-active-elevate {
-    display: revert;
-  }
+  .no-default-active-elevate {}
 
 
   /**
