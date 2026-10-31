@@ -1,17 +1,18 @@
-import { db, usersTable } from "./lib/db"; // حسب مسار الـ db لديك
+import { db, users } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import app from "./app";
 
+// دالة التحقق وإنشاء حساب الـ Super Admin
 async function ensureSuperAdmin() {
   try {
     const adminEmail = "mohannadkhaloof38@gmail.com";
-    const existing = await db.select().from(usersTable).where(eq(usersTable.email, adminEmail));
+    const existing = await db.select().from(users).where(eq(users.email, adminEmail));
     
     if (existing.length === 0) {
-      // ضع كلمة المرور التي تفضلها هنا (مثلاً 12 حرفاً فما فوق)
-      const hashedPassword = await bcrypt.hash("YourSecurePassword123", 10);
+      const hashedPassword = await bcrypt.hash("121Aqra6$", 10);
       
-      await db.insert(usersTable).values({
+      await db.insert(users).values({
         name: "مهند الخلوف",
         email: adminEmail,
         password: hashedPassword,
@@ -25,4 +26,9 @@ async function ensureSuperAdmin() {
   }
 }
 
-// استدعي هذه الدالة عند بدء تشغيل السيرفر قبل استماع الـ port
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, async () => {
+  console.log(`Server listening on port ${PORT}`);
+  await ensureSuperAdmin();
+});
