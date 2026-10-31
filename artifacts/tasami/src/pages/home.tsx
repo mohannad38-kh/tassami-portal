@@ -2,27 +2,19 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { PublicLayout } from "@/components/layout/PublicLayout";
 import { Button } from "@/components/ui/button";
-import { MapPin, Star, Users, Heart, Target, Lightbulb, CalendarDays } from "lucide-react";
+import { Clock, MapPin, Star, Users, Heart, Target, Lightbulb } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
-import { useListEvents } from "@workspace/api-client-react";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
+
+const specializedDepartmentCount = 5;
 
 export default function Home() {
   const { t, isEnglish } = useLanguage();
   const [registeredVolunteers, setRegisteredVolunteers] = useState<number | null>(null);
   const [volunteerCountError, setVolunteerCountError] = useState(false);
-  const { data: events = [], isLoading: eventsLoading, isError: eventsError } = useListEvents();
-  const upcomingEvents = events
-    .filter((event) => event.status === "upcoming" && new Date(event.eventDate).getTime() >= Date.now())
-    .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
-    .slice(0, 3);
 
   useEffect(() => {
     let active = true;
-    const statsUrl = import.meta.env.DEV
-      ? "/local-api/public/stats"
-      : "/api/public/stats";
+    const statsUrl = "/api/public/stats";
 
     const loadStats = async () => {
       try {
@@ -101,19 +93,22 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Stats Section */}
       <section className="bg-muted/40 py-12">
         <div className="container px-4 md:px-8 mx-auto">
-          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-5 text-center sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 text-center sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
                 number: volunteerCountError
-                  ? "تعذر التحميل"
+                  ? "3"
                   : registeredVolunteers === null
-                    ? "..."
+                    ? "3"
                     : new Intl.NumberFormat("en", { useGrouping: false }).format(registeredVolunteers),
                 label: t("متطوع مسجل"),
               },
-              { number: eventsLoading ? "..." : String(events.length), label: t("فعالية منشورة") },
+              { number: "+4", label: t("فعالية منجزة") },
+              { number: "+8", label: t("ساعة تطوعية") },
+              { number: String(specializedDepartmentCount), label: t("أقسام متخصصة") },
             ].map((stat, index) => (
               <div
                 key={stat.label}
@@ -132,6 +127,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Features Section */}
       <section className="bg-white py-16">
         <div className="container px-4 md:px-8 mx-auto">
           <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-5">
@@ -163,53 +159,44 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Upcoming Events */}
+      {/* Upcoming Events Section */}
       <section className="bg-muted/40 py-20">
         <div className="container px-4 md:px-8 mx-auto">
-          <div className="flex items-center justify-between mb-10 gap-4">
+          <div className="flex items-center justify-between mb-10">
             <Button variant="outline" className="border-primary text-primary" asChild>
               <Link href="/events">{t("عرض الكل")}</Link>
             </Button>
-            <h2 className="text-2xl md:text-3xl font-bold text-primary">{t("الفعاليات القادمة")}</h2>
+            <h2 className="text-3xl font-bold text-primary">{t("الفعاليات القادمة")}</h2>
           </div>
-          {eventsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[1, 2, 3].map((item) => <div key={item} className="h-56 rounded-2xl bg-background animate-pulse border" />)}
-            </div>
-          ) : eventsError ? (
-            <div className="rounded-2xl border border-dashed bg-background px-6 py-10 text-center text-muted-foreground">
-              {t("تعذر تحميل الفعاليات حالياً. يرجى المحاولة لاحقاً.")}
-            </div>
-          ) : upcomingEvents.length === 0 ? (
-            <div className="rounded-2xl border border-dashed bg-background px-6 py-12 text-center">
-              <CalendarDays className="mx-auto mb-3 h-10 w-10 text-primary/50" />
-              <h3 className="font-semibold text-lg text-primary">{t("لا توجد فعاليات قادمة حالياً")}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{t("تابعونا للاطلاع على الفعاليات الجديدة.")}</p>
-              <Button className="mt-5" variant="outline" asChild><Link href="/events">{t("تصفح جميع الفعاليات")}</Link></Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {upcomingEvents.map((event) => (
-                <article key={event.id} className="overflow-hidden rounded-2xl border bg-background shadow-sm transition-shadow hover:shadow-lg">
-                  {event.imageUrl ? <img src={event.imageUrl} alt={event.title} loading="lazy" className="h-44 w-full object-cover" /> : (
-                    <div className="flex h-44 items-center justify-center bg-primary/5"><CalendarDays className="h-14 w-14 text-primary/30" /></div>
-                  )}
-                  <div className="p-5">
-                    <h3 className="mb-3 line-clamp-2 text-lg font-bold text-primary">{event.title}</h3>
-                    <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">{event.description}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
-                      <span>{format(new Date(event.eventDate), "dd MMMM yyyy - hh:mm a", { locale: isEnglish ? undefined : ar })}</span>
-                    </div>
-                    {event.location && <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 shrink-0 text-primary" /><span className="line-clamp-1">{event.location}</span></div>}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { title: 'ملتقى الشباب المبدع', date: '', time: '', place: 'سيتم الإعلان عنها لاحقاً' },
+              { title: 'يوم التطوع البيئي', date: '', time: '', place: 'سيتم الإعلان عنها لاحقاً' },
+              { title: 'ورشة لتعلم اساسيات البرمجة والروبوتات', date: '', time: '', place: 'سيتم الإعلان عنها لاحقاً' },
+            ].map((event, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+                <div className="flex items-center gap-3 bg-primary p-4 text-white">
+                  <div className="text-lg font-bold">{t("فعالية قادمة")}</div>
+                </div>
+                <div className="p-5">
+                  <h3 className="font-bold text-lg mb-3 text-primary">{t(event.title)}</h3>
+                  <div className="flex items-center gap-2 text-gray-500 mb-2 text-sm">
+                    <Clock className="w-4 h-4" />
+                    <span>{t("موعد يحدد قريباً")}</span>
                   </div>
-                </article>
-              ))}
-            </div>
-          )}
+                  <div className="flex items-center gap-2 text-gray-500 mb-4 text-sm">
+                    <MapPin className="w-4 h-4" />
+                    <span>{t(event.place)}</span>
+                  </div>
+                  <Button className="w-full font-bold" variant="secondary" asChild>
+                    <Link href="/events">{t("عرض التفاصيل")}</Link>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </PublicLayout>
   );
 }
-// update Mon Jun 29 10:46:38 PM UTC 2026
