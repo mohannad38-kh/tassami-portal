@@ -138,7 +138,8 @@ router.post("/workshops/:id/register", authMiddleware, requireRole("member"), as
 
 router.get("/workshops/:id/registrations", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const workshopId = parseInt(raw, 10);
+  const workshopId = Number(raw);
+  if (!Number.isSafeInteger(workshopId) || workshopId <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
   const regs = await db.select().from(workshopRegistrationsTable).where(eq(workshopRegistrationsTable.workshopId, workshopId));
   const memberIds = regs.map((r) => r.memberId);
   const members = memberIds.length ? await db.select().from(membersTable).where(inArray(membersTable.id, memberIds)) : [];
