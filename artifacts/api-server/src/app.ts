@@ -16,7 +16,7 @@ import { eq } from "drizzle-orm";
 
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { db, usersTable as users } from "../libs/db/src/index";
+import { db, usersTable as users } from "@workspace/db";
 
 const asyncScrypt = promisify(cryptoScrypt);
 
@@ -68,7 +68,7 @@ async function seedSuperAdmin(): Promise<void> {
     await db.insert(users).values({
       name,
       email,
-      password: hashedPassword,
+      passwordHash: hashedPassword,
       role: "super_admin",
       isActive: true,
     });
@@ -84,14 +84,14 @@ app.use(
   pinoHttp({
     logger,
     serializers: {
-      req(req) {
+      req(req: any) {
         return {
           id: req.id,
           method: req.method,
           url: req.url?.split("?")[0],
         };
       },
-      res(res) {
+      res(res: any) {
         return {
           statusCode: res.statusCode,
         };

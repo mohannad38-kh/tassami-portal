@@ -11,40 +11,31 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH ?? "/";
+// تحديد مجلد العمل بشكل يتوافق مع جميع إصدارات Node.js
+const currentDir = typeof __dirname !== "undefined" ? __dirname : path.resolve();
+const basePath = process.env.NODE_ENV === "production" ? (process.env.BASE_PATH ?? "/") : "./";
 
 export default defineConfig({
   base: basePath,
-  publicDir: 'public', // أضفنا هذا لضمان نسخ ملف _redirects
+  publicDir: "public",
   plugins: [
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
     ...(process.env.NODE_ENV !== "production"
-      ? [localSqlitePlugin(path.resolve(import.meta.dirname, "..", ".."))]
-      : []),
-    ...(process.env.NODE_ENV !== "production" && process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({ root: path.resolve(import.meta.dirname, "..") }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
+      ? [localSqlitePlugin(path.resolve(currentDir, "..", ".."))]
       : []),
   ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      "@": path.resolve(currentDir, "src"),
+      "@assets": path.resolve(currentDir, "..", "..", "attached_assets"),
     },
     dedupe: ["react", "react-dom"],
   },
-  root: path.resolve(import.meta.dirname),
+  root: currentDir,
   build: {
-    // قمنا بتعديل المسار ليكون dist مباشرة بدلاً من dist/public
-    outDir: path.resolve(import.meta.dirname, "dist"), 
+    outDir: path.resolve(currentDir, "dist"),
     emptyOutDir: true,
   },
   server: {
