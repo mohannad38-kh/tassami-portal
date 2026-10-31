@@ -93,8 +93,8 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
   const email = typeof req.body?.email === "string"
     ? req.body.email.trim().toLowerCase()
     : "";
-  if (!email) {
-    res.status(400).json({ error: "Email is required" });
+  if (!email || email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    res.status(400).json({ error: "A valid email is required" });
     return;
   }
 
@@ -164,8 +164,8 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
 
 router.post("/auth/password-reset/confirm", async (req, res): Promise<void> => {
   const { token, password } = req.body;
-  if (typeof token !== "string" || typeof password !== "string") {
-    res.status(400).json({ error: "A reset token and password are required" });
+  if (typeof token !== "string" || token.length > 4096 || typeof password !== "string") {
+    res.status(400).json({ error: "A valid reset token and password are required" });
     return;
   }
   if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
@@ -225,8 +225,8 @@ router.post("/auth/password-reset/confirm", async (req, res): Promise<void> => {
 
 router.post("/auth/set-password", async (req, res): Promise<void> => {
   const { token, password } = req.body;
-  if (typeof token !== "string" || typeof password !== "string") {
-    res.status(400).json({ error: "A setup token and password are required" });
+  if (typeof token !== "string" || token.length > 4096 || typeof password !== "string") {
+    res.status(400).json({ error: "A valid setup token and password are required" });
     return;
   }
   if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
@@ -268,8 +268,10 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   if (
     typeof email !== "string" ||
     !email.trim() ||
+    email.trim().length > 254 ||
     typeof password !== "string" ||
-    !password
+    !password ||
+    Buffer.byteLength(password, "utf8") > 72
   ) {
     res.status(400).json({ error: "Email and password required" });
     return;
