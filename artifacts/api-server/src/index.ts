@@ -13,20 +13,22 @@ async function ensureSuperAdmin() {
     const existing = await db.select().from(usersTable).where(eq(usersTable.email, adminEmail));
     
     if (existing.length === 0) {
-      // إدراج الحساب إذا لم يكن موجوداً
+      // إدراج الحساب إذا لم يكن موجوداً مع تفعيله بـ isActive: true
       await db.insert(usersTable).values({
         name: "مهند الخلوف",
         email: adminEmail,
         passwordHash: hashedPassword,
         role: "super_admin",
+        isActive: true,
       });
       console.log("Super Admin account created successfully!");
     } else {
-      // تحديث كلمة المرور والصلاحيات بالقوة للتأكد من مطابقتها ودخولك بدون مشاكل
+      // تحديث كلمة المرور والصلاحيات وحالة التفعيل بالقوة
       await db.update(usersTable)
         .set({
           passwordHash: hashedPassword,
           role: "super_admin",
+          isActive: true,
         })
         .where(eq(usersTable.email, adminEmail));
       console.log("Super Admin account updated & verified successfully!");
