@@ -93,7 +93,7 @@ router.post("/auth/password-reset/request", async (req, res): Promise<void> => {
   const email = typeof req.body?.email === "string"
     ? req.body.email.trim().toLowerCase()
     : "";
-  if (!email || email.length > 254 || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+  if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     res.status(400).json({ error: "A valid email is required" });
     return;
   }
