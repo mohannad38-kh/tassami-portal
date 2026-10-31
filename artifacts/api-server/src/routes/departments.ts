@@ -64,6 +64,7 @@ router.post("/departments", authMiddleware, requireRole("secretary"), async (req
 router.get("/departments/:id", optionalAuthMiddleware, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid department ID" }); return; }
   const [dept] = await db.select().from(departmentsTable).where(eq(departmentsTable.id, id));
   if (!dept) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatDept(dept));
