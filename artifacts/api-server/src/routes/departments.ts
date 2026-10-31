@@ -56,6 +56,7 @@ router.get("/departments", optionalAuthMiddleware, async (_req, res): Promise<vo
 router.post("/departments", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const { name, description, headId } = req.body;
   if (typeof name !== "string" || !name.trim() || name.trim().length > 120 || (description != null && (typeof description !== "string" || description.length > 1000)) || (headId != null && (!Number.isSafeInteger(headId) || headId < 1))) { res.status(400).json({ error: "Invalid department details" }); return; }
+  if (headId != null) { const [head] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, headId)); if (!head) { res.status(400).json({ error: "Department head not found" }); return; } }
   const [dept] = await db.insert(departmentsTable).values({ name: name.trim(), description: typeof description === "string" ? description.trim() : null, headId: headId ?? null }).returning();
   res.status(201).json(await formatDept(dept));
 });
@@ -72,10 +73,16 @@ router.patch("/departments/:id", authMiddleware, requireRole("secretary"), async
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   const { name, description, headId } = req.body;
+  if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid department ID" }); return; }
+  if (name !== undefined && (typeof name !== "string" || !name.trim() || name.trim().length > 120)) { res.status(400).json({ error: "Invalid department name" }); return; }
+  if (description !== undefined && description !== null && (typeof description !== "string" || description.length > 1000)) { res.status(400).json({ error: "Invalid department description" }); return; }
+  if (headId !== undefined && headId !== null && (!Number.isSafeInteger(headId) || headId < 1)) { res.status(400).json({ error: "Invalid department head ID" }); return; }
+  if (headId != null) { const [head] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, headId)); if (!head) { res.status(400).json({ error: "Department head not found" }); return; } }
   const updateData: Record<string, unknown> = {};
-  if (name != null) updateData.name = name;
-  if (description != null) updateData.description = description;
+  if (name !== undefined) updateData.name = name.trim();
+  if (description !== undefined) updateData.description = typeof description === "string" ? description.trim() : null;
   if (headId !== undefined) updateData.headId = headId;
+  if (Object.keys(updateData).length === 0) { res.status(400).json({ error: "No valid fields to update" }); return; }
   const [updated] = await db.update(departmentsTable).set(updateData).where(eq(departmentsTable.id, id)).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatDept(updated));
@@ -84,13 +91,16 @@ router.patch("/departments/:id", authMiddleware, requireRole("secretary"), async
 router.delete("/departments/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
-  await db.delete(departmentsTable).where(eq(departmentsTable.id, id));
+  if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid department ID" }); return; }
+  const [deleted] = await db.delete(departmentsTable).where(eq(departmentsTable.id, id)).returning({ id: departmentsTable.id });
+  if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
   res.sendStatus(204);
 });
 
 router.get("/departments/:id/members", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid department ID" }); return; }
   const members = await db.select().from(membersTable).where(eq(membersTable.departmentId, id));
   const userIds = members.map((m) => m.userId);
   const users = userIds.length > 0
