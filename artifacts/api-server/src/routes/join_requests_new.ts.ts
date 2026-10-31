@@ -224,7 +224,7 @@ router.post("/join-requests", async (req, res): Promise<void> => {
 
 router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = /^\\d+$/.test(raw) ? Number(raw) : NaN;
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   if (!Number.isSafeInteger(id) || id < 1) {
     res.status(400).json({ error: "Invalid join request ID" });
     return;
