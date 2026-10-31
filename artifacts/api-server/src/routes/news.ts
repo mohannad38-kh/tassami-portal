@@ -36,14 +36,15 @@ router.get("/news", optionalAuthMiddleware, async (_req, res): Promise<void> => 
 router.post("/news", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const user = (req as Request & { user: JwtPayload }).user;
   const { title, body, imageUrl } = req.body;
-  if (!title || !body) { res.status(400).json({ error: "Title and body required" }); return; }
-  const [newsItem] = await db.insert(newsTable).values({ title, body, imageUrl, authorId: user.userId, publishedAt: new Date() }).returning();
+  if (typeof title !== "string" || !title.trim() || title.length > 200 || typeof body !== "string" || !body.trim() || body.length > 20000 || (imageUrl !== undefined && imageUrl !== null && (typeof imageUrl !== "string" || imageUrl.length > 2048))) { res.status(400).json({ error: "Valid title, body, and imageUrl are required" }); return; }
+  const [newsItem] = await db.insert(newsTable).values({ title: title.trim(), body, imageUrl: imageUrl ?? null, authorId: user.userId, publishedAt: new Date() }).returning();
   res.status(201).json(await formatNews(newsItem));
 });
 
 router.get("/news/:id", optionalAuthMiddleware, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid news id" }); return; }
   const [newsItem] = await db.select().from(newsTable).where(eq(newsTable.id, id));
   if (!newsItem) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatNews(newsItem));
@@ -51,12 +52,14 @@ router.get("/news/:id", optionalAuthMiddleware, async (req, res): Promise<void> 
 
 router.patch("/news/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
-  const { title, body, imageUrl } = req.body;
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid news id" }); return; }
+  const { title, body, imageUrl } = req.body ?? {};
   const updateData: Record<string, unknown> = {};
-  if (title != null) updateData.title = title;
-  if (body != null) updateData.body = body;
-  if (imageUrl != null) updateData.imageUrl = imageUrl;
+  if (title !== undefined) { if (typeof title !== "string" || !title.trim() || title.length > 200) { res.status(400).json({ error: "Invalid title" }); return; } updateData.title = title.trim(); }
+  if (body !== undefined) { if (typeof body !== "string" || !body.trim() || body.length > 20000) { res.status(400).json({ error: "Invalid body" }); return; } updateData.body = body; }
+  if (imageUrl !== undefined) { if (imageUrl !== null && (typeof imageUrl !== "string" || imageUrl.length > 2048)) { res.status(400).json({ error: "Invalid imageUrl" }); return; } updateData.imageUrl = imageUrl; }
+  if (!Object.keys(updateData).length) { res.status(400).json({ error: "No valid fields to update" }); return; }
   const [updated] = await db.update(newsTable).set(updateData).where(eq(newsTable.id, id)).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   res.json(await formatNews(updated));
@@ -64,8 +67,10 @@ router.patch("/news/:id", authMiddleware, requireRole("secretary"), async (req, 
 
 router.delete("/news/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
-  await db.delete(newsTable).where(eq(newsTable.id, id));
+  const id = Number(raw);
+  if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid news id" }); return; }
+  const [deleted] = await db.delete(newsTable).where(eq(newsTable.id, id)).returning({ id: newsTable.id });
+  if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
   res.sendStatus(204);
 });
 
