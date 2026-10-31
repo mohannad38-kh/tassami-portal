@@ -1,66 +1,125 @@
-import { Switch, Route } from "wouter";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "@/lib/queryClient";
+import { Switch, Route, Router as WouterRouter } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
-
-// الصفحات العامة
-import HomePage from "@/pages/home";
-import LoginPage from "@/pages/login";
-import PortalPage from "@/pages/portal";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/use-auth";
+import { LanguageProvider } from "@/hooks/use-language";
 import NotFound from "@/pages/not-found";
 
-// صفحات لوحة التحكم الإدارية
-import AdminDashboard from "@/pages/admin";
-import MembersPage from "@/pages/admin/members";
-import MemberDetailPage from "@/pages/admin/members/id";
-import JoinRequestsPage from "@/pages/admin/join-requests/JoinRequestsPage";
-import EventsPage from "@/pages/admin/events";
-import WorkshopsPage from "@/pages/admin/workshops";
-import CertificatesPage from "@/pages/admin/certificates";
-import DepartmentsPage from "@/pages/admin/departments";
-import MeetingsPage from "@/pages/admin/meetings";
-import TasksPage from "@/pages/admin/tasks";
-import NewsPage from "@/pages/admin/news";
-import PartnersPage from "@/pages/admin/partners";
-import GalleryPage from "@/pages/admin/gallery";
-import UsersPage from "@/pages/admin/users";
-import ReportsPage from "@/pages/admin/reports";
-import VolunteerHoursPage from "@/pages/admin/volunteer-hours";
+import Home from "@/pages/home";
+import Login from "@/pages/login";
+import AdminSetup from "@/pages/admin-setup";
+import ForgotPassword from "@/pages/forgot-password";
+import PasswordReset from "@/pages/password-reset";
+import SetPassword from "@/pages/set-password";
+import LocalAdmin from "@/pages/local-admin";
+import About from "@/pages/about";
+import Initiative from "@/pages/initiative";
+import Departments from "@/pages/departments";
+import Join from "@/pages/join";
+import Events from "@/pages/events";
+import Workshops from "@/pages/workshops";
+import NewsList from "@/pages/news/index";
+import NewsDetail from "@/pages/news/id";
+import Board from "@/pages/board";
+import Gallery from "@/pages/gallery";
+import Partners from "@/pages/partners";
+import Contact from "@/pages/contact";
+import CertificateVerify from "@/pages/certificate/verify";
+
+import PortalIndex from "@/pages/portal/index";
+import PortalProfile from "@/pages/portal/profile";
+import PortalCertificates from "@/pages/portal/certificates";
+import PortalVolunteerHours from "@/pages/portal/volunteer-hours";
+
+import AdminIndex from "@/pages/admin/index";
+import AdminMembers from "@/pages/admin/members/index";
+import AdminMemberDetail from "@/pages/admin/members/id";
+import AdminJoinRequests from "@/pages/admin/join-requests/JoinRequestsPage";
+import AdminDepartments from "@/pages/admin/departments/index";
+import AdminEvents from "@/pages/admin/events/index";
+import AdminWorkshops from "@/pages/admin/workshops/index";
+import AdminCertificates from "@/pages/admin/certificates/index";
+import AdminVolunteerHours from "@/pages/admin/volunteer-hours/index";
+import AdminMeetings from "@/pages/admin/meetings/index";
+import AdminTasks from "@/pages/admin/tasks/index";
+import AdminNews from "@/pages/admin/news/index";
+import AdminPartners from "@/pages/admin/partners/index";
+import AdminGallery from "@/pages/admin/gallery/index";
+import AdminUsers from "@/pages/admin/users/index";
+import AdminReports from "@/pages/admin/reports/index";
+
+const queryClient = new QueryClient();
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/portal" component={PortalPage} />
+      <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/admin-setup" component={AdminSetup} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      {/* The server emails the link /reset-password?token=..., so this path must exist. */}
+      <Route path="/reset-password" component={PasswordReset} />
+      <Route path="/password-reset" component={PasswordReset} />
+      <Route path="/set-password" component={SetPassword} />
+      {import.meta.env.DEV && <Route path="/local-admin" component={LocalAdmin} />}
+      <Route path="/about" component={About} />
+      <Route path="/initiative" component={Initiative} />
+      <Route path="/departments" component={Departments} />
+      <Route path="/join" component={Join} />
+      <Route path="/events" component={Events} />
+      <Route path="/workshops" component={Workshops} />
+      <Route path="/news" component={NewsList} />
+      <Route path="/news/:id" component={NewsDetail} />
+      <Route path="/board" component={Board} />
+      <Route path="/gallery" component={Gallery} />
+      <Route path="/partners" component={Partners} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/certificate/verify/:code" component={CertificateVerify} />
+      <Route path="/certificate/verify" component={CertificateVerify} />
 
-      <Route path="/admin" component={AdminDashboard} />
-      <Route path="/admin/members" component={MembersPage} />
-      <Route path="/admin/members/:id" component={MemberDetailPage} />
-      <Route path="/admin/join-requests" component={JoinRequestsPage} />
-      <Route path="/admin/events" component={EventsPage} />
-      <Route path="/admin/workshops" component={WorkshopsPage} />
-      <Route path="/admin/certificates" component={CertificatesPage} />
-      <Route path="/admin/departments" component={DepartmentsPage} />
-      <Route path="/admin/meetings" component={MeetingsPage} />
-      <Route path="/admin/tasks" component={TasksPage} />
-      <Route path="/admin/news" component={NewsPage} />
-      <Route path="/admin/partners" component={PartnersPage} />
-      <Route path="/admin/gallery" component={GalleryPage} />
-      <Route path="/admin/users" component={UsersPage} />
-      <Route path="/admin/reports" component={ReportsPage} />
-      <Route path="/admin/volunteer-hours" component={VolunteerHoursPage} />
+      <Route path="/portal" component={PortalIndex} />
+      <Route path="/portal/profile" component={PortalProfile} />
+      <Route path="/portal/certificates" component={PortalCertificates} />
+      <Route path="/portal/volunteer-hours" component={PortalVolunteerHours} />
+
+      <Route path="/admin" component={AdminIndex} />
+      <Route path="/admin/members" component={AdminMembers} />
+      <Route path="/admin/members/:id" component={AdminMemberDetail} />
+      <Route path="/admin/join-requests" component={AdminJoinRequests} />
+      <Route path="/admin/departments" component={AdminDepartments} />
+      <Route path="/admin/events" component={AdminEvents} />
+      <Route path="/admin/workshops" component={AdminWorkshops} />
+      <Route path="/admin/certificates" component={AdminCertificates} />
+      <Route path="/admin/volunteer-hours" component={AdminVolunteerHours} />
+      <Route path="/admin/meetings" component={AdminMeetings} />
+      <Route path="/admin/tasks" component={AdminTasks} />
+      <Route path="/admin/news" component={AdminNews} />
+      <Route path="/admin/partners" component={AdminPartners} />
+      <Route path="/admin/gallery" component={AdminGallery} />
+      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/reports" component={AdminReports} />
 
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-export default function App() {
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <AuthProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+export default App;
