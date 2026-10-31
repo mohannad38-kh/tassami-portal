@@ -236,7 +236,7 @@ router.get("/join-requests/:id", authMiddleware, requireRole("join_manager"), as
 
 router.patch("/join-requests/:id", authMiddleware, requireRole("join_manager"), async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const id = parseInt(raw, 10);
+  const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   const { status } = req.body;
   if (status !== "approved" && status !== "rejected") {
     res.status(400).json({ error: "Status must be approved or rejected" });
