@@ -27,6 +27,8 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
     !name.trim() ||
     name.trim().length > 100 ||
     typeof email !== "string" ||
+    !email.trim() ||
+    email.trim().length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
     typeof password !== "string" ||
     password.length < 12 ||
@@ -55,7 +57,7 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
 
   const normalizedEmail = email.trim().toLowerCase();
   const configuredSuperAdminEmails = process.env.SUPER_ADMIN_EMAILS?.trim();
-  if (configuredSuperAdminEmails && effectiveRole({ email: normalizedEmail, role: "member" }) !== "super_admin") {
+  if (!configuredSuperAdminEmails || effectiveRole({ email: normalizedEmail, role: "member" }) !== "super_admin") {
     res.status(403).json({ error: "البريد الإلكتروني غير مدرج في قائمة SUPER_ADMIN_EMAILS المعرفة في Render" });
     return;
   }
