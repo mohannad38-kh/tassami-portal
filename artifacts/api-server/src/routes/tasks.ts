@@ -39,7 +39,10 @@ router.get("/tasks", authMiddleware, requireRole("member"), async (req, res): Pr
     if (!Number.isInteger(parsedUserId) || parsedUserId <= 0) { res.status(400).json({ error: "Invalid assignedTo" }); return; }
     tasks = tasks.filter((task) => task.assignedTo === parsedUserId);
   }
-  if (status) tasks = tasks.filter((task) => task.status === status);
+  if (status !== undefined) {
+    if (typeof status !== "string" || !["pending", "in_progress", "completed", "cancelled"].includes(status)) { res.status(400).json({ error: "Invalid status" }); return; }
+    tasks = tasks.filter((task) => task.status === status);
+  }
   res.json(await Promise.all(tasks.map(formatTask)));
 });
 
@@ -47,8 +50,12 @@ router.post("/tasks", authMiddleware, requireRole("secretary"), async (req, res)
   const user = (req as Request & { user: JwtPayload }).user;
   const { title, description, assignedTo, dueDate, priority } = req.body;
   if (typeof title !== "string" || !title.trim() || title.length > 200) { res.status(400).json({ error: "A title of 1-200 characters is required" }); return; }
-  if (assignedTo !== undefined && assignedTo !== null && (!Number.isInteger(Number(assignedTo)) || Number(assignedTo) <= 0)) { res.status(400).json({ error: "Invalid assignedTo" }); return; }
-  const [task] = await db.insert(tasksTable).values({ title: title.trim(), description: typeof description === "string" ? description : null, assignedTo: assignedTo == null ? null : Number(assignedTo), dueDate: typeof dueDate === "string" ? dueDate : null, priority: ["low", "medium", "high"].includes(priority) ? priority : "medium", createdBy: user.userId }).returning();
+  if (description !== undefined && description !== null && (typeof description !== "string" || description.length > 5000)) { res.status(400).json({ error: "Description must be 5000 characters or fewer" }); return; }
+  if (assignedTo !== undefined && assignedTo !== null && (!Number.isSafeInteger(assignedTo) || assignedTo <= 0)) { res.status(400).json({ error: "Invalid assignedTo" }); return; }
+  if (assignedTo != null) { const [assignee] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, assignedTo)); if (!assignee) { res.status(400).json({ error: "Assignee not found" }); return; } }
+  if (dueDate !== undefined && dueDate !== null && (typeof dueDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(dueDate) || new Date(dueDate + "T00:00:00.000Z").toISOString().slice(0, 10) !== dueDate)) { res.status(400).json({ error: "Invalid dueDate; expected YYYY-MM-DD" }); return; }
+  if (priority !== undefined && !["low", "medium", "high"].includes(priority)) { res.status(400).json({ error: "Invalid priority" }); return; }
+  const [task] = await db.insert(tasksTable).values({ title: title.trim(), description: description ?? null, assignedTo: assignedTo ?? null, dueDate: dueDate ?? null, priority: priority ?? "medium", createdBy: user.userId }).returning();
   res.status(201).json(await formatTask(task));
 });
 
@@ -81,14 +88,18 @@ router.patch("/tasks/:id", authMiddleware, requireRole("member"), async (req, re
       updateData.title = body.title.trim();
     }
     if (body.description !== undefined) {
-      if (body.description !== null && typeof body.description !== "string") { res.status(400).json({ error: "Invalid description" }); return; }
+      if (body.description !== null && (typeof body.description !== "string" || body.description.length > 5000)) { res.status(400).json({ error: "Invalid description" }); return; }
       updateData.description = body.description;
     }
     if (body.assignedTo !== undefined) {
-      if (body.assignedTo !== null && (!Number.isInteger(Number(body.assignedTo)) || Number(body.assignedTo) <= 0)) { res.status(400).json({ error: "Invalid assignedTo" }); return; }
-      updateData.assignedTo = body.assignedTo === null ? null : Number(body.assignedTo);
+      if (body.assignedTo !== null && (!Number.isSafeInteger(body.assignedTo) || body.assignedTo <= 0)) { res.status(400).json({ error: "Invalid assignedTo" }); return; }
+      if (body.assignedTo !== null) { const [assignee] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, body.assignedTo)); if (!assignee) { res.status(400).json({ error: "Assignee not found" }); return; } }
+      updateData.assignedTo = body.assignedTo;
     }
-    if (body.dueDate !== undefined) updateData.dueDate = body.dueDate;
+    if (body.dueDate !== undefined) {
+      if (body.dueDate !== null && (typeof body.dueDate !== "string" || !/^\\d{4}-\\d{2}-\\d{2}$/.test(body.dueDate) || new Date(body.dueDate + "T00:00:00.000Z").toISOString().slice(0, 10) !== body.dueDate)) { res.status(400).json({ error: "Invalid dueDate; expected YYYY-MM-DD" }); return; }
+      updateData.dueDate = body.dueDate;
+    }
     if (body.status !== undefined) {
       if (!["pending", "in_progress", "completed", "cancelled"].includes(body.status)) { res.status(400).json({ error: "Invalid status" }); return; }
       updateData.status = body.status;
@@ -122,7 +133,8 @@ router.delete("/tasks/:id", authMiddleware, requireRole("secretary"), async (req
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = Number(raw);
   if (!Number.isInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid task id" }); return; }
-  await db.delete(tasksTable).where(eq(tasksTable.id, id));
+  const [deleted] = await db.delete(tasksTable).where(eq(tasksTable.id, id)).returning({ id: tasksTable.id });
+  if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
   res.sendStatus(204);
 });
 
