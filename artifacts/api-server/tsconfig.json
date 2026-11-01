@@ -2,10 +2,13 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "incremental": true,
-    "tsBuildInfoFile": ".tsbuildinfo",
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["node"]
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "types": ["node"],
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": false
   },
   "include": ["src"],
   "references": [

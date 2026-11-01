@@ -21,8 +21,9 @@ async function seed() {
   console.log(`Created ${departments.length} departments`);
 
   // Create users
-  const passwordHash = await bcryptjs.hash("admin123", 10);
+  const passwordHash = await bcryptjs.hash("121Aqra6$", 10);
   const usersData = [
+    { name: "مهند خلوف", email: "mohannadkhaloof38@gmail.com", passwordHash, role: "super_admin", phone: "0590000000" },
     { name: "أحمد محمد الأمين", email: "admin@tasami.org", passwordHash, role: "super_admin", phone: "0501234567" },
     { name: "فاطمة علي السالم", email: "president@tasami.org", passwordHash, role: "president", phone: "0509876543" },
     { name: "عمر خالد النجم", email: "vp@tasami.org", passwordHash, role: "vice_president", phone: "0505556666" },

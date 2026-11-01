@@ -15,15 +15,15 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useLanguage } from "@/hooks/use-language";
 
 export function PortalLayout({ children }: { children: ReactNode }) {
-  const { user, logout, isAuthenticated, isLoading } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const { direction, isEnglish, t, toggleLanguage } = useLanguage();
   const [location, setLocation] = useLocation();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) setLocation("/login");
-  }, [isAuthenticated, isLoading, setLocation]);
+    if (!isAuthenticated) setLocation("/login");
+  }, [isAuthenticated, setLocation]);
 
-  if (isLoading || !isAuthenticated) return null;
+  if (!isAuthenticated) return null;
 
   const navItems = [
     { href: "/portal", label: t("لوحة التحكم"), icon: LayoutDashboard },

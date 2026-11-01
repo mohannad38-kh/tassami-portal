@@ -8,3 +8,4 @@
 *.tsbuildinfo
 *.sqlite
 *.sqlite-*
+.aider*
