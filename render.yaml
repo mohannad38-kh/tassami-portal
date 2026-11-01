@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: tassami-portal
+    name: Tasami-Initiative
     runtime: node
     plan: free
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/tasami run build && pnpm --filter @workspace/api-server run build
