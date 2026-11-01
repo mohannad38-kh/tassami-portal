@@ -19,8 +19,8 @@ services:
           property: connectionString
       - key: SESSION_SECRET
         generateValue: true
-      - key: RESEND_API_KEY
-        sync: false
+      - key: SUPER_ADMIN_EMAILS
+        value: mohannadkhaloof38@gmail.com
       - key: RESEND_FROM_EMAIL
         sync: false
       - key: GMAIL_USER
