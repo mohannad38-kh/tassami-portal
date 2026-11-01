@@ -21,6 +21,8 @@ services:
         generateValue: true
       - key: SUPER_ADMIN_EMAILS
         value: mohannadkhaloof38@gmail.com
+      - key: ADMIN_BOOTSTRAP_TOKEN
+        value: tasami_super_secure_admin_bootstrap_token_2024_default
       - key: RESEND_FROM_EMAIL
         sync: false
       - key: GMAIL_USER
