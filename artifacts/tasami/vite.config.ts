@@ -13,7 +13,7 @@ if (Number.isNaN(port) || port <= 0) {
 
 // تحديد مجلد العمل بشكل يتوافق مع جميع إصدارات Node.js
 const currentDir = typeof __dirname !== "undefined" ? __dirname : path.resolve();
-const basePath = "/artifacts/tasami/";
+const basePath = "/";
 
 export default defineConfig({
   base: basePath,
