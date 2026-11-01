@@ -69,19 +69,28 @@ router.get("/workshops", optionalAuthMiddleware, async (_req, res): Promise<void
 router.post("/workshops", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
   const { title, description, trainerId, workshopDate, location, capacity, imageUrl } = req.body ?? {};
   const date = parseWorkshopDate(workshopDate);
-  if (typeof title !== "string" || !title.trim() || title.length > 200 || !date ||
-      (description != null && (typeof description !== "string" || description.length > 20000)) ||
-      (location != null && (typeof location !== "string" || location.length > 500)) ||
-      (imageUrl != null && (typeof imageUrl !== "string" || imageUrl.length > 2048)) ||
-      (capacity != null && (!Number.isSafeInteger(capacity) || capacity <= 0)) ||
-      (trainerId != null && (!Number.isSafeInteger(trainerId) || trainerId <= 0))) {
-    res.status(400).json({ error: "Invalid workshop details" }); return;
+  const parsedTrainerId = trainerId !== undefined && trainerId !== null && trainerId !== "" ? Number(trainerId) : null;
+  const parsedCapacity = capacity !== undefined && capacity !== null && capacity !== "" ? Number(capacity) : null;
+
+  if (typeof title !== "string" || !title.trim() || !date) {
+    res.status(400).json({ error: "Invalid title or date" }); return;
   }
-  if (trainerId != null) {
-    const [trainer] = await db.select({ id: trainersTable.id }).from(trainersTable).where(eq(trainersTable.id, trainerId));
+  
+  if (parsedTrainerId !== null) {
+    const [trainer] = await db.select({ id: trainersTable.id }).from(trainersTable).where(eq(trainersTable.id, parsedTrainerId));
     if (!trainer) { res.status(404).json({ error: "Trainer not found" }); return; }
   }
-  const [workshop] = await db.insert(workshopsTable).values({ title: title.trim(), description: description ?? null, trainerId: trainerId ?? null, workshopDate: date, location: location ?? null, capacity: capacity ?? null, imageUrl: imageUrl ?? null }).returning();
+
+  const [workshop] = await db.insert(workshopsTable).values({ 
+    title: title.trim(), 
+    description: description ?? null, 
+    trainerId: parsedTrainerId, 
+    workshopDate: date, 
+    location: location ?? null, 
+    capacity: parsedCapacity, 
+    imageUrl: imageUrl ?? null 
+  }).returning();
+  
   res.status(201).json(await formatWorkshop(workshop));
 });
 
