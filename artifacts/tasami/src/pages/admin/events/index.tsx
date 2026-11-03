@@ -91,11 +91,11 @@ export default function AdminEvents() {
         setForm(blank); 
         void refetch(); 
       }, 
-      onError: () => toast({ 
-        title: t("تعذر الحفظ"), 
-        description: t("حدث خطأ أثناء حفظ الفعالية"), 
-        variant: "destructive" as const 
-      }) 
+      onError: (error: unknown) => toast({
+        title: t("تعذر الحفظ"),
+        description: error instanceof Error ? error.message : t("حدث خطأ أثناء حفظ الفعالية"),
+        variant: "destructive" as const,
+      })
     };
 
     const data = { 

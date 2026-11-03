@@ -32,8 +32,13 @@ function parseWorkshopDate(val: unknown): Date | null {
 async function formatWorkshop(w: typeof workshopsTable.$inferSelect) {
   let trainerName: string | null = null;
   if (w.trainerId) {
-    const [trainer] = await db.select().from(trainersTable).where(eq(trainersTable.id, w.trainerId));
-    trainerName = trainer?.name ?? null;
+    const [user] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, w.trainerId));
+    if (user) {
+      trainerName = user.name;
+    } else {
+      const [trainer] = await db.select({ name: trainersTable.name }).from(trainersTable).where(eq(trainersTable.id, w.trainerId));
+      trainerName = trainer?.name ?? null;
+    }
   }
   const [{ count: registered }] = await db
     .select({ count: count() })
@@ -77,8 +82,8 @@ router.post("/workshops", authMiddleware, requireRole("secretary"), async (req, 
   }
   
   if (parsedTrainerId !== null) {
-    const [trainer] = await db.select({ id: trainersTable.id }).from(trainersTable).where(eq(trainersTable.id, parsedTrainerId));
-    if (!trainer) { res.status(404).json({ error: "Trainer not found" }); return; }
+    const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, parsedTrainerId));
+    if (!user) { res.status(404).json({ error: "Trainer not found" }); return; }
   }
 
   const [workshop] = await db.insert(workshopsTable).values({ 
@@ -113,7 +118,7 @@ router.patch("/workshops/:id", authMiddleware, requireRole("secretary"), async (
   if (description !== undefined) { if (description !== null && (typeof description !== "string" || description.length > 20000)) { res.status(400).json({ error: "Invalid description" }); return; } updateData.description = description; }
   if (trainerId !== undefined) {
     if (trainerId !== null && (!Number.isSafeInteger(trainerId) || trainerId <= 0)) { res.status(400).json({ error: "Invalid trainerId" }); return; }
-    if (trainerId !== null) { const [trainer] = await db.select({ id: trainersTable.id }).from(trainersTable).where(eq(trainersTable.id, trainerId)); if (!trainer) { res.status(404).json({ error: "Trainer not found" }); return; } }
+    if (trainerId !== null) { const [user] = await db.select({ id: usersTable.id }).from(usersTable).where(eq(usersTable.id, trainerId)); if (!user) { res.status(404).json({ error: "Trainer not found" }); return; } }
     updateData.trainerId = trainerId;
   }
   if (workshopDate !== undefined) { 
