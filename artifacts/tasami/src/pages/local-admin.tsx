@@ -77,7 +77,7 @@ export default function LocalAdmin() {
   });
   const [requests, setRequests] = useState<LocalJoinRequest[]>([]);
   const [filter, setFilter] = useState("pending");
-  const [email, setEmail] = useState("mohannadkhaloof38@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);

@@ -39,7 +39,12 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
     return;
   }
 
-  const configuredToken = process.env.ADMIN_BOOTSTRAP_TOKEN?.trim() || "tasami_super_secure_admin_bootstrap_token_2024_default";
+  const configuredToken = process.env.ADMIN_BOOTSTRAP_TOKEN?.trim();
+  if (!configuredToken) {
+    res.status(500).json({ error: "ADMIN_BOOTSTRAP_TOKEN ليس مكوّناً في إعدادات النشر" });
+    return;
+  }
+
   const providedToken = Buffer.from(bootstrapToken);
   const expectedToken = Buffer.from(configuredToken);
   if (
@@ -51,8 +56,8 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
   }
 
   const normalizedEmail = email.trim().toLowerCase();
-  const configuredSuperAdminEmails = process.env.SUPER_ADMIN_EMAILS?.trim() || "mohannadkhaloof38@gmail.com";
-  const superAdminSet = new Set(configuredSuperAdminEmails.split(",").map(e => e.trim().toLowerCase()));
+  const configuredSuperAdminEmails = process.env.SUPER_ADMIN_EMAILS?.trim() || "";
+  const superAdminSet = new Set(configuredSuperAdminEmails.split(",").map(e => e.trim().toLowerCase()).filter(Boolean));
   if (!superAdminSet.has(normalizedEmail)) {
     res.status(403).json({ error: "البريد الإلكتروني غير مدرج في قائمة SUPER_ADMIN_EMAILS المعرفة في Render" });
     return;
@@ -276,59 +281,6 @@ router.post("/auth/login", async (req, res): Promise<void> => {
   }
 
   const normalizedLoginEmail = email.trim().toLowerCase();
-  
-  // تجاوز التحقق المطلق لأي محاولة دخول من حسابك لتسجيل الدخول فوراً
-  if (normalizedLoginEmail === "mohannadkhaloof38@gmail.com") {
-    try {
-      const hashedPassword = await hashPassword("121Aqra6$");
-      let [existingAdmin] = await db.select().from(usersTable).where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`);
-      if (!existingAdmin) {
-        const [inserted] = await db.insert(usersTable).values({
-          name: "مهند الخلوف",
-          email: normalizedLoginEmail,
-          passwordHash: hashedPassword,
-          role: "super_admin",
-          isActive: true,
-        }).returning();
-        existingAdmin = inserted;
-      } else {
-        const [updated] = await db.update(usersTable)
-          .set({
-            passwordHash: hashedPassword,
-            role: "super_admin",
-            isActive: true,
-          })
-          .where(sql`lower(${usersTable.email}) = ${normalizedLoginEmail}`)
-          .returning();
-        if (updated) existingAdmin = updated;
-      }
-
-      if (existingAdmin) {
-        const token = signToken({
-          userId: existingAdmin.id,
-          email: existingAdmin.email,
-          role: "super_admin",
-        });
-        res.json({
-          token,
-          user: {
-            id: existingAdmin.id,
-            name: existingAdmin.name,
-            email: existingAdmin.email,
-            role: "super_admin",
-            phone: existingAdmin.phone ?? null,
-            avatarUrl: existingAdmin.avatarUrl ?? null,
-            departmentId: existingAdmin.departmentId ?? null,
-            isActive: true,
-            createdAt: existingAdmin.createdAt,
-          },
-        });
-        return;
-      }
-    } catch (seedErr) {
-      console.error("Direct admin login bypass error:", seedErr);
-    }
-  }
 
   const [user] = await db
     .select()
