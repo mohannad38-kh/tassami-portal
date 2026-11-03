@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListTasks, useCreateTask, useUpdateTask, useListUsers } from "@workspace/api-client-react";
+import { useListTasks, useCreateTask, useUpdateTask, useListUsers, useDeleteTask } from "@workspace/api-client-react";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ export default function AdminTasks() {
   const { data: rawUsers } = useListUsers();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
   const { toast } = useToast();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -124,6 +126,18 @@ export default function AdminTasks() {
   };
 
   const isSaving = createTask.isPending || updateTask.isPending;
+
+  const removeTask = (task: any) => deleteTask.mutate({ id: task.id }, {
+    onSuccess: () => {
+      toast({ title: t("تم الحذف"), description: t("تم حذف المهمة") });
+      void refetch();
+    },
+    onError: (error: unknown) => toast({
+      title: t("تعذر الحذف"),
+      description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف المهمة"),
+      variant: "destructive",
+    }),
+  });
 
   const getPriorityBadge = (priority: string | null | undefined) => {
     switch (priority) {
@@ -253,6 +267,12 @@ export default function AdminTasks() {
                         <Button size="sm" variant="ghost" onClick={() => openEdit(task)} aria-label={t("تعديل المهمة")}>
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <ConfirmDeleteButton
+                          ariaLabel={t("حذف المهمة")}
+                          confirmMessage={t("هل أنت متأكد من حذف هذه المهمة؟")}
+                          disabled={deleteTask.isPending}
+                          onConfirm={() => removeTask(task)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

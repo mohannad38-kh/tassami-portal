@@ -140,6 +140,16 @@ router.delete("/workshops/:id", authMiddleware, requireRole("secretary"), async 
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = Number(raw);
   if (!Number.isSafeInteger(id) || id <= 0) { res.status(400).json({ error: "Invalid workshop id" }); return; }
+  const [registration] = await db.select({ id: workshopRegistrationsTable.id })
+    .from(workshopRegistrationsTable).where(eq(workshopRegistrationsTable.workshopId, id)).limit(1);
+  const [evaluation] = await db.select({ id: workshopEvaluationsTable.id })
+    .from(workshopEvaluationsTable).where(eq(workshopEvaluationsTable.workshopId, id)).limit(1);
+  const [certificate] = await db.select({ id: certificatesTable.id })
+    .from(certificatesTable).where(eq(certificatesTable.workshopId, id)).limit(1);
+  if (registration || evaluation || certificate) {
+    res.status(409).json({ error: "This workshop has registrations, evaluations, or certificates and cannot be deleted" });
+    return;
+  }
   const [deleted] = await db.delete(workshopsTable).where(eq(workshopsTable.id, id)).returning({ id: workshopsTable.id });
   if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
   res.sendStatus(204);

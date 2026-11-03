@@ -1,5 +1,5 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListMembers, useUpdateMember } from "@workspace/api-client-react";
+import { useListMembers, useUpdateMember, useDeleteMember } from "@workspace/api-client-react";
 import { useState } from "react";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Eye, MoreHorizontal, UserCheck } from "lucide-react";
+import { Search, Eye, MoreHorizontal, UserCheck, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +20,7 @@ export default function AdminMembers() {
   
   const { data: rawMembers, isLoading, refetch } = useListMembers();
   const updateMember = useUpdateMember();
+  const deleteMember = useDeleteMember();
 
   // حماية صارمة لضمان أن البيانات دائماً مصفوفة لتجنب أي أخطاء وقت التشغيل
   const members = Array.isArray(rawMembers) 
@@ -40,6 +41,21 @@ export default function AdminMembers() {
         description: t("تحقق من صلاحياتك وحاول مرة أخرى"), 
         variant: "destructive" 
       })
+    });
+  };
+
+  const handleDelete = (member: any) => {
+    if (!window.confirm(t("هل تريد حذف سجل العضوية؟ لن يُحذف حساب المستخدم، ولا يمكن حذف عضوية لها ساعات تطوع أو تسجيلات أو شهادات."))) return;
+    deleteMember.mutate({ id: member.id }, {
+      onSuccess: () => {
+        toast({ title: t("تم الحذف"), description: t("تم حذف سجل العضوية") });
+        void refetch();
+      },
+      onError: (error: unknown) => toast({
+        title: t("تعذر الحذف"),
+        description: error instanceof Error ? error.message : t("تحقق من السجلات المرتبطة بالعضوية"),
+        variant: "destructive",
+      }),
     });
   };
 
@@ -104,7 +120,7 @@ export default function AdminMembers() {
                       <TableCell className="text-end">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0" disabled={updateMember.isPending} aria-label={t("خيارات")}>
+                            <Button variant="ghost" className="h-8 w-8 p-0" disabled={updateMember.isPending || deleteMember.isPending} aria-label={t("خيارات")}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -124,6 +140,9 @@ export default function AdminMembers() {
                                 {t("إيقاف العضوية")}
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem disabled={deleteMember.isPending} onClick={() => handleDelete(member)} className="text-destructive cursor-pointer">
+                              <Trash2 className="h-4 w-4 ml-2 rtl:ml-0 rtl:mr-2" />{t("حذف سجل العضوية")}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

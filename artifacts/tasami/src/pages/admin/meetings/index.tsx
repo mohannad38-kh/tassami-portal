@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListMeetings, useCreateMeeting, useUpdateMeeting } from "@workspace/api-client-react";
+import { useListMeetings, useCreateMeeting, useUpdateMeeting, useDeleteMeeting } from "@workspace/api-client-react";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ export default function AdminMeetings() {
   const { data: rawMeetings, isLoading, refetch } = useListMeetings();
   const createMeeting = useCreateMeeting();
   const updateMeeting = useUpdateMeeting();
+  const deleteMeeting = useDeleteMeeting();
   const { toast } = useToast();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -89,6 +91,18 @@ export default function AdminMeetings() {
   };
 
   const isSaving = createMeeting.isPending || updateMeeting.isPending;
+
+  const removeMeeting = (meeting: any) => deleteMeeting.mutate({ id: meeting.id }, {
+    onSuccess: () => {
+      toast({ title: t("تم الحذف"), description: t("تم حذف الاجتماع") });
+      void refetch();
+    },
+    onError: (error: unknown) => toast({
+      title: t("تعذر الحذف"),
+      description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف الاجتماع"),
+      variant: "destructive",
+    }),
+  });
 
   return (
     <AdminLayout>
@@ -180,6 +194,12 @@ export default function AdminMeetings() {
                         <Button size="sm" variant="ghost" onClick={() => openEdit(meeting)} aria-label={t("تعديل الاجتماع")}>
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <ConfirmDeleteButton
+                          ariaLabel={t("حذف الاجتماع")}
+                          confirmMessage={t("هل أنت متأكد من حذف هذا الاجتماع؟")}
+                          disabled={deleteMeeting.isPending}
+                          onConfirm={() => removeMeeting(meeting)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

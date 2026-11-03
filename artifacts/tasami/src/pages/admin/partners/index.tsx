@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListPartners, useCreatePartner, useUpdatePartner } from "@workspace/api-client-react";
+import { useListPartners, useCreatePartner, useUpdatePartner, useDeletePartner } from "@workspace/api-client-react";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,6 +20,7 @@ export default function AdminPartners() {
   const { data: rawPartners, isLoading, refetch } = useListPartners();
   const createPartner = useCreatePartner(); 
   const updatePartner = useUpdatePartner();
+  const deletePartner = useDeletePartner();
   
   const [open, setOpen] = useState(false); 
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -73,6 +75,18 @@ export default function AdminPartners() {
   };
 
   const saving = createPartner.isPending || updatePartner.isPending;
+
+  const removePartner = (id: number) => deletePartner.mutate({ id }, {
+    onSuccess: () => {
+      toast({ title: t("تم الحذف"), description: t("تم حذف الشريك") });
+      void refetch();
+    },
+    onError: (error: unknown) => toast({
+      title: t("تعذر الحذف"),
+      description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف الشريك"),
+      variant: "destructive",
+    }),
+  });
 
   return (
     <AdminLayout>
@@ -165,6 +179,12 @@ export default function AdminPartners() {
                         <Button size="sm" variant="ghost" onClick={() => start(partner)} aria-label={t("تعديل الشريك")}>
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <ConfirmDeleteButton
+                          ariaLabel={t("حذف الشريك")}
+                          confirmMessage={t("هل أنت متأكد من حذف هذا الشريك؟")}
+                          disabled={deletePartner.isPending}
+                          onConfirm={() => removePartner(partner.id)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

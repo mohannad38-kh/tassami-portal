@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListEvents, useCreateEvent, useUpdateEvent } from "@workspace/api-client-react";
+import { useListEvents, useCreateEvent, useUpdateEvent, useDeleteEvent } from "@workspace/api-client-react";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,7 @@ export default function AdminEvents() {
   const { data: rawEvents, isLoading, refetch } = useListEvents();
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
+  const deleteEvent = useDeleteEvent();
   const { toast } = useToast();
   
   const [open, setOpen] = useState(false);
@@ -112,6 +114,18 @@ export default function AdminEvents() {
       updateEvent.mutate({ id: editingId, data: { ...data, status: form.status } }, options);
     }
   };
+
+  const removeEvent = (event: any) => deleteEvent.mutate({ id: event.id }, {
+    onSuccess: () => {
+      toast({ title: t("تم الحذف"), description: t("تم حذف الفعالية") });
+      void refetch();
+    },
+    onError: (error: unknown) => toast({
+      title: t("تعذر الحذف"),
+      description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف الفعالية"),
+      variant: "destructive",
+    }),
+  });
 
   const saving = createEvent.isPending || updateEvent.isPending;
 
@@ -226,6 +240,12 @@ export default function AdminEvents() {
                         <Button size="sm" variant="ghost" onClick={() => startEdit(event)} aria-label={t("تعديل الفعالية")}>
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <ConfirmDeleteButton
+                          ariaLabel={t("حذف الفعالية")}
+                          confirmMessage={t("هل أنت متأكد من حذف هذه الفعالية؟ لا يمكن حذف الفعاليات المرتبطة بتسجيلات أو ساعات تطوع أو شهادات.")}
+                          disabled={deleteEvent.isPending}
+                          onConfirm={() => removeEvent(event)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

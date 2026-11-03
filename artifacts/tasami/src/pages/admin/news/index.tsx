@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListNews, useListAnnouncements, useCreateNews, useUpdateNews, useCreateAnnouncement, useUpdateAnnouncement } from "@workspace/api-client-react";
+import { useListNews, useListAnnouncements, useCreateNews, useUpdateNews, useCreateAnnouncement, useUpdateAnnouncement, useDeleteNews, useDeleteAnnouncement } from "@workspace/api-client-react";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,6 +26,8 @@ export default function AdminNews() {
   const updateNews = useUpdateNews();
   const createAnnouncement = useCreateAnnouncement(); 
   const updateAnnouncement = useUpdateAnnouncement();
+  const deleteNews = useDeleteNews();
+  const deleteAnnouncement = useDeleteAnnouncement();
   const { toast } = useToast();
   
   const [kind, setKind] = useState<"news" | "announcement">("news");
@@ -111,6 +114,30 @@ export default function AdminNews() {
   };
 
   const saving = createNews.isPending || updateNews.isPending || createAnnouncement.isPending || updateAnnouncement.isPending;
+
+  const removeNews = (id: number) => deleteNews.mutate({ id }, {
+    onSuccess: () => {
+      toast({ title: t("تم الحذف"), description: t("تم حذف الخبر") });
+      void refetchNews();
+    },
+    onError: (error: unknown) => toast({
+      title: t("تعذر الحذف"),
+      description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف الخبر"),
+      variant: "destructive",
+    }),
+  });
+
+  const removeAnnouncement = (id: number) => deleteAnnouncement.mutate({ id }, {
+    onSuccess: () => {
+      toast({ title: t("تم الحذف"), description: t("تم حذف الإعلان") });
+      void refetchAnnouncements();
+    },
+    onError: (error: unknown) => toast({
+      title: t("تعذر الحذف"),
+      description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف الإعلان"),
+      variant: "destructive",
+    }),
+  });
 
   return (
     <AdminLayout>
@@ -208,6 +235,12 @@ export default function AdminNews() {
                             <Button size="sm" variant="ghost" onClick={() => startNewsEdit(item)} aria-label={t("تعديل الخبر")}>
                               <Edit className="h-4 w-4" />
                             </Button>
+                            <ConfirmDeleteButton
+                              ariaLabel={t("حذف الخبر")}
+                              confirmMessage={t("هل أنت متأكد من حذف هذا الخبر؟")}
+                              disabled={deleteNews.isPending}
+                              onConfirm={() => removeNews(item.id)}
+                            />
                           </TableCell>
                         </TableRow>
                       ))}
@@ -250,6 +283,12 @@ export default function AdminNews() {
                             <Button size="sm" variant="ghost" onClick={() => startAnnouncementEdit(item)} aria-label={t("تعديل الإعلان")}>
                               <Edit className="h-4 w-4" />
                             </Button>
+                            <ConfirmDeleteButton
+                              ariaLabel={t("حذف الإعلان")}
+                              confirmMessage={t("هل أنت متأكد من حذف هذا الإعلان؟")}
+                              disabled={deleteAnnouncement.isPending}
+                              onConfirm={() => removeAnnouncement(item.id)}
+                            />
                           </TableCell>
                         </TableRow>
                       ))}

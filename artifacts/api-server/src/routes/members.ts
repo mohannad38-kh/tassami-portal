@@ -1,5 +1,15 @@
 import { Router, type IRouter } from "express";
-import { db, membersTable, usersTable, departmentsTable, volunteerHoursTable } from "@workspace/db";
+import {
+  db,
+  membersTable,
+  usersTable,
+  departmentsTable,
+  volunteerHoursTable,
+  eventRegistrationsTable,
+  workshopRegistrationsTable,
+  workshopEvaluationsTable,
+  certificatesTable,
+} from "@workspace/db";
 import { eq, sum } from "drizzle-orm";
 import { authMiddleware, requireRole, effectiveRole } from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
@@ -102,6 +112,17 @@ router.delete("/members/:id", authMiddleware, requireRole("secretary"), async (r
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = /^\d+$/.test(raw) ? Number(raw) : NaN;
   if (!Number.isSafeInteger(id) || id < 1) { res.status(400).json({ error: "Invalid member ID" }); return; }
+  const [member] = await db.select({ userId: membersTable.userId }).from(membersTable).where(eq(membersTable.id, id));
+  if (!member) { res.status(404).json({ error: "Not found" }); return; }
+  const [volunteerHour] = await db.select({ id: volunteerHoursTable.id }).from(volunteerHoursTable).where(eq(volunteerHoursTable.memberId, id)).limit(1);
+  const [eventRegistration] = await db.select({ id: eventRegistrationsTable.id }).from(eventRegistrationsTable).where(eq(eventRegistrationsTable.memberId, id)).limit(1);
+  const [workshopRegistration] = await db.select({ id: workshopRegistrationsTable.id }).from(workshopRegistrationsTable).where(eq(workshopRegistrationsTable.memberId, id)).limit(1);
+  const [evaluation] = await db.select({ id: workshopEvaluationsTable.id }).from(workshopEvaluationsTable).where(eq(workshopEvaluationsTable.memberId, id)).limit(1);
+  const [certificate] = await db.select({ id: certificatesTable.id }).from(certificatesTable).where(eq(certificatesTable.recipientId, member.userId)).limit(1);
+  if (volunteerHour || eventRegistration || workshopRegistration || evaluation || certificate) {
+    res.status(409).json({ error: "This membership has activity history or certificates and cannot be deleted. You can deactivate it instead." });
+    return;
+  }
   const [deleted] = await db.delete(membersTable).where(eq(membersTable.id, id)).returning({ id: membersTable.id });
   if (!deleted) { res.status(404).json({ error: "Not found" }); return; }
   res.sendStatus(204);

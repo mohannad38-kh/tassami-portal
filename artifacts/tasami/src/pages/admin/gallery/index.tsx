@@ -68,7 +68,11 @@ export default function AdminGallery() {
         toast({ title: t("تم الحذف") }); 
         void refetch(); 
       }, 
-      onError: () => toast({ title: t("تعذر الحذف"), variant: "destructive" }) 
+      onError: (error: unknown) => toast({
+        title: t("تعذر الحذف"),
+        description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف الصورة"),
+        variant: "destructive",
+      })
     }); 
   };
 

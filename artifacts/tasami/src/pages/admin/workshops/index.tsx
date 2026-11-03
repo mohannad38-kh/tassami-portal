@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListWorkshops, useCreateWorkshop, useUpdateWorkshop, useListUsers } from "@workspace/api-client-react";
+import { useListWorkshops, useCreateWorkshop, useUpdateWorkshop, useListUsers, useDeleteWorkshop } from "@workspace/api-client-react";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +43,7 @@ export default function AdminWorkshops() {
   const { data: rawUsers } = useListUsers();
   const createWorkshop = useCreateWorkshop();
   const updateWorkshop = useUpdateWorkshop();
+  const deleteWorkshop = useDeleteWorkshop();
   const { toast } = useToast();
   
   const [open, setOpen] = useState(false);
@@ -117,6 +119,18 @@ export default function AdminWorkshops() {
       updateWorkshop.mutate({ id: editingId, data: { ...common, trainerId, status: form.status } }, options);
     }
   };
+
+  const removeWorkshop = (workshop: any) => deleteWorkshop.mutate({ id: workshop.id }, {
+    onSuccess: () => {
+      toast({ title: t("تم الحذف"), description: t("تم حذف الورشة") });
+      void refetch();
+    },
+    onError: (error: unknown) => toast({
+      title: t("تعذر الحذف"),
+      description: error instanceof Error ? error.message : t("حدث خطأ أثناء حذف الورشة"),
+      variant: "destructive",
+    }),
+  });
 
   const saving = createWorkshop.isPending || updateWorkshop.isPending;
 
@@ -239,6 +253,12 @@ export default function AdminWorkshops() {
                         <Button size="sm" variant="ghost" onClick={() => startEdit(ws)} aria-label={t("تعديل الورشة")}>
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <ConfirmDeleteButton
+                          ariaLabel={t("حذف الورشة")}
+                          confirmMessage={t("هل أنت متأكد من حذف هذه الورشة؟ لا يمكن حذف الورش المرتبطة بتسجيلات أو تقييمات أو شهادات.")}
+                          disabled={deleteWorkshop.isPending}
+                          onConfirm={() => removeWorkshop(ws)}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

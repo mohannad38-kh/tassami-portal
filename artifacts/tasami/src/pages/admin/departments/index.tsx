@@ -1,5 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListDepartments, useCreateDepartment } from "@workspace/api-client-react";
+import { useListDepartments, useCreateDepartment, useDeleteDepartment } from "@workspace/api-client-react";
+import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ export default function AdminDepartments() {
   const { t, isEnglish } = useLanguage();
   const { data: departments, isLoading, refetch } = useListDepartments();
   const createDepartment = useCreateDepartment();
+  const deleteDepartment = useDeleteDepartment();
   const { toast } = useToast();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +36,20 @@ export default function AdminDepartments() {
         }
       }
     );
+  };
+
+  const handleDelete = (department: { id: number; name: string }) => {
+    deleteDepartment.mutate({ id: department.id }, {
+      onSuccess: () => {
+        toast({ title: t("تم الحذف"), description: t("تم حذف القسم") });
+        void refetch();
+      },
+      onError: (error: unknown) => toast({
+        title: t("تعذر الحذف"),
+        description: error instanceof Error ? error.message : t("قد يكون القسم مرتبطاً بأعضاء أو طلبات انضمام"),
+        variant: "destructive",
+      }),
+    });
   };
 
   return (
@@ -109,6 +125,14 @@ export default function AdminDepartments() {
                       {dept.headName}
                     </div>
                   )}
+                </div>
+                <div className="flex justify-end border-t pt-3 mt-3">
+                  <ConfirmDeleteButton
+                    ariaLabel={t("حذف القسم")}
+                    confirmMessage={t("هل أنت متأكد من حذف هذا القسم؟ لا يمكن حذف قسم مرتبط بأعضاء أو مستخدمين أو طلبات انضمام.")}
+                    disabled={deleteDepartment.isPending}
+                    onConfirm={() => handleDelete(dept)}
+                  />
                 </div>
               </CardContent>
             </Card>

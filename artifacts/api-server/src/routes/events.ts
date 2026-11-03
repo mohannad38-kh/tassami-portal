@@ -1,50 +1,19 @@
 import { Router, type IRouter } from "express";
-import { db, eventsTable } from "@workspace/db";
+import { db, eventsTable, eventRegistrationsTable, volunteerHoursTable, certificatesTable, galleryTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { authMiddleware, requireRole } from "../lib/auth";
 import type { JwtPayload } from "../lib/auth";
 import type { Request } from "express";
+import { logger } from "../lib/logger";
 
 const router: IRouter = Router();
 
-const DEFAULT_EVENTS = [
-  {
-    title: "ملتقى الشباب المبدع",
-    description: "ملتقى يجمع المبدعين لعرض أفكارهم ومشاريعهم التطوعية.",
-    location: "سيتم الإعلان عنها لاحقاً",
-    capacity: 50,
-    status: "published",
-    eventDate: new Date(Date.now() + 86400000 * 7),
-  },
-  {
-    title: "يوم التطوع البيئي",
-    description: "مبادرة ميدانية لنشر الوعي البيئي وتنظيف المساحات العامة.",
-    location: "سيتم الإعلان عنها لاحقاً",
-    capacity: 100,
-    status: "published",
-    eventDate: new Date(Date.now() + 86400000 * 14),
-  },
-  {
-    title: "ورشة لتعلم اساسيات البرمجة والروبوتات",
-    description: "ورشة تعليمية وتطبيقية حول مفاهيم البرمجة وبناء الروبوتات.",
-    location: "سيتم الإعلان عنها لاحقاً",
-    capacity: 30,
-    status: "published",
-    eventDate: new Date(Date.now() + 86400000 * 21),
-  },
-];
-
 router.get("/events", async (_req, res): Promise<void> => {
   try {
-    let events = await db.select().from(eventsTable).orderBy(eventsTable.eventDate);
-    
-    if (events.length === 0) {
-      await db.insert(eventsTable).values(DEFAULT_EVENTS);
-      events = await db.select().from(eventsTable).orderBy(eventsTable.eventDate);
-    }
-
+    const events = await db.select().from(eventsTable).orderBy(eventsTable.eventDate);
     res.json(events);
   } catch (error) {
+    logger.error({ err: error }, "Failed to fetch events");
     res.status(500).json({ error: "Failed to fetch events" });
   }
 });
@@ -142,6 +111,35 @@ router.patch("/events/:id", authMiddleware, requireRole("secretary"), async (req
     return;
   }
   res.json(event);
+});
+
+router.delete("/events/:id", authMiddleware, requireRole("secretary"), async (req, res): Promise<void> => {
+  const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = Number(rawId);
+  if (!Number.isSafeInteger(id) || id <= 0) {
+    res.status(400).json({ error: "Invalid event id" });
+    return;
+  }
+
+  const [event] = await db.select({ id: eventsTable.id }).from(eventsTable).where(eq(eventsTable.id, id));
+  if (!event) {
+    res.status(404).json({ error: "Event not found" });
+    return;
+  }
+  const [registration] = await db.select({ id: eventRegistrationsTable.id })
+    .from(eventRegistrationsTable).where(eq(eventRegistrationsTable.eventId, id)).limit(1);
+  const [volunteerHour] = await db.select({ id: volunteerHoursTable.id })
+    .from(volunteerHoursTable).where(eq(volunteerHoursTable.eventId, id)).limit(1);
+  const [certificate] = await db.select({ id: certificatesTable.id })
+    .from(certificatesTable).where(eq(certificatesTable.eventId, id)).limit(1);
+  if (registration || volunteerHour || certificate) {
+    res.status(409).json({ error: "This event has registrations, volunteer hours, or certificates and cannot be deleted" });
+    return;
+  }
+
+  await db.update(galleryTable).set({ eventId: null }).where(eq(galleryTable.eventId, String(id)));
+  await db.delete(eventsTable).where(eq(eventsTable.id, id));
+  res.sendStatus(204);
 });
 
 export default router;
