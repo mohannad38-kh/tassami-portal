@@ -103,7 +103,7 @@ export default function Login() {
                   required
                   dir="ltr"
                   className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                  placeholder="••••••••••••"
+                  placeholder="••••••••"
                 />
               </div>
             </div>

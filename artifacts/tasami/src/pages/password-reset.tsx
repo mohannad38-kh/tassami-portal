@@ -64,7 +64,7 @@ export default function PasswordReset() {
             <CardDescription className="text-sm">
               {complete
                 ? t("يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.")
-                : t("اختر كلمة مرور لا تقل عن 12 حرفاً. رابط الاستعادة صالح لمدة ساعة.")}
+                : t("اختر كلمة مرور لا تقل عن 8 أحرف. رابط الاستعادة صالح لمدة ساعة.")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -92,13 +92,13 @@ export default function PasswordReset() {
                       id="password"
                       type="password"
                       autoComplete="new-password"
-                      minLength={12}
+                      minLength={8}
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       required
                       dir="ltr"
                       className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••••••"
+                      placeholder="••••••••"
                     />
                   </div>
                 </div>
@@ -110,13 +110,13 @@ export default function PasswordReset() {
                       id="confirm-password"
                       type="password"
                       autoComplete="new-password"
-                      minLength={12}
+                      minLength={8}
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       required
                       dir="ltr"
                       className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••••••"
+                      placeholder="••••••••"
                     />
                   </div>
                 </div>

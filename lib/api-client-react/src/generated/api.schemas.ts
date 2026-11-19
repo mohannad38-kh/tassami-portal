@@ -140,7 +140,7 @@ export interface JoinRequestInput {
   departmentId: number;
   /**
      * The applicant's password, used only after application approval.
-     * @minLength 12
+     * @minLength 8
      */
   password: string;
 }

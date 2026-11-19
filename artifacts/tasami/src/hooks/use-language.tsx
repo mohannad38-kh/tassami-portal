@@ -103,10 +103,10 @@ const translations: Record<string, string> = {
   "رقم الجوال (اختياري)": "Mobile Number (Optional)",
   "القسم الذي ترغب بالانضمام إليه": "Department you want to join",
   "اختاري القسم": "Choose a department",
-  "كلمة المرور يجب أن تكون 12 حرفاً على الأقل ولا تتجاوز 72 بايت":
-    "Password must be at least 12 characters and no more than 72 bytes",
-  "يجب أن تتكون كلمة المرور من 12 حرفاً على الأقل.":
-    "Password must be at least 12 characters.",
+  "كلمة المرور يجب أن تكون 8 أحرف على الأقل ولا تتجاوز 72 بايت":
+    "Password must be at least 8 characters and no more than 72 bytes",
+  "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.":
+    "Password must be at least 8 characters.",
   "طلبك قيد المراجعة، ستتمكن من الدخول بعد موافقة الإدارة.":
     "Your application is under review. You can log in after it is approved.",
   "تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها.":
@@ -187,8 +187,8 @@ const translations: Record<string, string> = {
   "تم إنشاء كلمة المرور": "Password Created",
   "أصبح بإمكانك تسجيل الدخول إلى بوابة المتطوعين.":
     "You can now sign in to the volunteer portal.",
-  "اختر كلمة مرور لا تقل عن 12 حرفاً للدخول إلى بوابة المتطوعين.":
-    "Choose a password with at least 12 characters to sign in to the volunteer portal.",
+  "اختر كلمة مرور لا تقل عن 8 أحرف للدخول إلى بوابة المتطوعين.":
+    "Choose a password with at least 8 characters to sign in to the volunteer portal.",
   "رابط إنشاء كلمة المرور غير صالح. اطلب رابطاً جديداً من إدارة المبادرة.":
     "This password setup link is invalid. Ask the initiative administrators for a new link.",
   "تعذر إنشاء كلمة المرور. اطلب رابطاً جديداً من إدارة المبادرة.":
@@ -237,8 +237,8 @@ const translations: Record<string, string> = {
   "تم تغيير كلمة المرور": "Password changed",
   "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.":
     "You can now sign in with your new password.",
-  "اختر كلمة مرور لا تقل عن 12 حرفاً. رابط الاستعادة صالح لمدة ساعة.":
-    "Choose a password with at least 12 characters. The recovery link is valid for one hour.",
+  "اختر كلمة مرور لا تقل عن 8 أحرف. رابط الاستعادة صالح لمدة ساعة.":
+    "Choose a password with at least 8 characters. The recovery link is valid for one hour.",
   "رابط الاستعادة غير صالح أو انتهت صلاحيته. اطلب رابطاً جديداً.":
     "This recovery link is invalid or expired. Request a new link.",
   "تعذر تغيير كلمة المرور. اطلب رابطاً جديداً.":
@@ -512,7 +512,7 @@ const translations: Record<string, string> = {
   "أنشئي كلمة مرور المسؤول لأول مرة. ستُحفظ مشفّرة على هذا الجهاز.": "Create the administrator password for the first time. It will be stored encrypted on this device.",
   "سجّلي الدخول لعرض الطلبات وإدارتها على هذا الجهاز.": "Sign in to view and manage applications on this device.",
   "جارٍ تجهيز لوحة الإدارة...": "Preparing the admin dashboard...",
-  "اختاري 12 حرفاً أو أكثر. لا تستخدمي كلمة مرور Gmail.": "Choose at least 12 characters. Do not use your Gmail password.",
+  "اختاري 8 أحرف أو أكثر. لا تستخدمي كلمة مرور Gmail.": "Choose at least 8 characters. Do not use your Gmail password.",
   "جارٍ التحقق...": "Verifying...",
   "دخول لوحة الإدارة": "Sign in to Admin",
   "لوحة الإدارة متاحة محلياً على جهازك فقط.": "The admin dashboard is available only on this device.",

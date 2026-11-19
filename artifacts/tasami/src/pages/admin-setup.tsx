@@ -96,11 +96,11 @@ export default function AdminSetup() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="admin-password">{t("كلمة مرور جديدة")}</Label>
-                <Input id="admin-password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={12} dir="ltr" className="text-left" placeholder="••••••••••••" />
+                <Input id="admin-password" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} dir="ltr" className="text-left" placeholder="••••••••" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="admin-password-confirm">{t("تأكيد كلمة المرور")}</Label>
-                <Input id="admin-password-confirm" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={12} dir="ltr" className="text-left" placeholder="••••••••••••" />
+                <Input id="admin-password-confirm" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} dir="ltr" className="text-left" placeholder="••••••••" />
               </div>
               <Button type="submit" className="w-full h-11 gap-2" disabled={isSubmitting}>
                 <Lock className="h-4 w-4" />

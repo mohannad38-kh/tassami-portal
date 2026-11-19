@@ -12,8 +12,8 @@ if (!databaseUrl || !email || !password) {
     "Set DATABASE_URL, BOOTSTRAP_ADMIN_EMAIL, and BOOTSTRAP_ADMIN_PASSWORD.",
   );
 }
-if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
-  throw new Error("The bootstrap password must be 12-72 UTF-8 bytes long.");
+if (password.length < 8 || Buffer.byteLength(password, "utf8") > 72) {
+  throw new Error("The bootstrap password must be 8-72 UTF-8 bytes long.");
 }
 
 const departments = [

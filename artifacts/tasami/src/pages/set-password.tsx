@@ -67,7 +67,7 @@ export default function SetPassword() {
             <CardDescription className="text-sm">
               {complete
                 ? t("أصبح بإمكانك تسجيل الدخول إلى بوابة المتطوعين.")
-                : t("اختر كلمة مرور لا تقل عن 12 حرفاً للدخول إلى بوابة المتطوعين.")}
+                : t("اختر كلمة مرور لا تقل عن 8 أحرف للدخول إلى بوابة المتطوعين.")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -95,13 +95,13 @@ export default function SetPassword() {
                       id="password"
                       type="password"
                       autoComplete="new-password"
-                      minLength={12}
+                      minLength={8}
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       required
                       dir="ltr"
                       className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••••••"
+                      placeholder="••••••••"
                     />
                   </div>
                 </div>
@@ -113,13 +113,13 @@ export default function SetPassword() {
                       id="confirm-password"
                       type="password"
                       autoComplete="new-password"
-                      minLength={12}
+                      minLength={8}
                       value={confirmPassword}
                       onChange={(event) => setConfirmPassword(event.target.value)}
                       required
                       dir="ltr"
                       className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••••••"
+                      placeholder="••••••••"
                     />
                   </div>
                 </div>

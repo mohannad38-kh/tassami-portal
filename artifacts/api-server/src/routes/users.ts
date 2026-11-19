@@ -68,12 +68,12 @@ router.post(
       typeof email !== "string" ||
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
       typeof password !== "string" ||
-      password.length < 12 ||
+      password.length < 8 ||
       Buffer.byteLength(password, "utf8") > 72 ||
       typeof role !== "string" ||
       !VALID_ROLES.has(role)
     ) {
-      res.status(400).json({ error: "Enter valid user details and a valid role; password must be 12–72 UTF-8 bytes" });
+      res.status(400).json({ error: "Enter valid user details and a valid role; password must be 8–72 UTF-8 bytes" });
       return;
     }
     const passwordHash = await hashPassword(password);

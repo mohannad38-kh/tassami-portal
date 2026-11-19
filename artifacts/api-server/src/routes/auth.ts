@@ -31,11 +31,11 @@ router.post("/auth/bootstrap-admin", async (req, res): Promise<void> => {
     email.trim().length > 254 ||
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
     typeof password !== "string" ||
-    password.length < 12 ||
+    password.length < 8 ||
     Buffer.byteLength(password, "utf8") > 72 ||
     typeof bootstrapToken !== "string"
   ) {
-    res.status(400).json({ error: "الرجاء إدخال تفاصيل إعداد صالحة (كلمة المرور 12 حرفاً على الأقل)" });
+    res.status(400).json({ error: "الرجاء إدخال تفاصيل إعداد صالحة (كلمة المرور 8 أحرف على الأقل)" });
     return;
   }
 
@@ -171,9 +171,9 @@ router.post("/auth/password-reset/confirm", async (req, res): Promise<void> => {
     res.status(400).json({ error: "A valid reset token and password are required" });
     return;
   }
-  if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+  if (password.length < 8 || Buffer.byteLength(password, "utf8") > 72) {
     res.status(400).json({
-      error: "Password must be at least 12 characters and no more than 72 UTF-8 bytes",
+      error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes",
     });
     return;
   }
@@ -232,9 +232,9 @@ router.post("/auth/set-password", async (req, res): Promise<void> => {
     res.status(400).json({ error: "A valid setup token and password are required" });
     return;
   }
-  if (password.length < 12 || Buffer.byteLength(password, "utf8") > 72) {
+  if (password.length < 8 || Buffer.byteLength(password, "utf8") > 72) {
     res.status(400).json({
-      error: "Password must be at least 12 characters and no more than 72 UTF-8 bytes",
+      error: "Password must be at least 8 characters and no more than 72 UTF-8 bytes",
     });
     return;
   }

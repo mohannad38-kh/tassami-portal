@@ -117,7 +117,7 @@ export default function AdminUsers() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="admin-password">{t("كلمة المرور الأولية")}</Label>
-                <Input id="admin-password" type="password" minLength={6} value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required placeholder="••••••••••••" />
+                <Input id="admin-password" type="password" minLength={8} value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required placeholder="••••••••" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-role">{t("الصلاحية")}</Label>

@@ -60,11 +60,11 @@ export default function Join() {
       return;
     }
     if (
-      formData.password.length < 12 ||
+      formData.password.length < 8 ||
       new TextEncoder().encode(formData.password).length > 72
     ) {
       toast({
-        title: t("كلمة المرور يجب أن تكون 12 حرفاً على الأقل ولا تتجاوز 72 بايت"),
+        title: t("كلمة المرور يجب أن تكون 8 أحرف على الأقل ولا تتجاوز 72 بايت"),
         variant: "destructive",
       });
       return;
@@ -202,7 +202,7 @@ export default function Join() {
                       id="password"
                       type="password"
                       required
-                      minLength={12}
+                      minLength={8}
                       autoComplete="new-password"
                       value={formData.password}
                       onChange={(event) =>
@@ -210,11 +210,11 @@ export default function Join() {
                       }
                       dir="ltr"
                       className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••••••"
+                      placeholder="••••••••"
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {t("يجب أن تتكون كلمة المرور من 12 حرفاً على الأقل")}
+                    {t("يجب أن تتكون كلمة المرور من 8 أحرف على الأقل")}
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -225,7 +225,7 @@ export default function Join() {
                       id="confirmPassword"
                       type="password"
                       required
-                      minLength={12}
+                      minLength={8}
                       autoComplete="new-password"
                       value={formData.confirmPassword}
                       onChange={(event) =>
@@ -233,7 +233,7 @@ export default function Join() {
                       }
                       dir="ltr"
                       className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••••••"
+                      placeholder="••••••••"
                     />
                   </div>
                 </div>

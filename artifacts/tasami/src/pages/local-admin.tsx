@@ -284,12 +284,12 @@ export default function LocalAdmin() {
                   type="password"
                   autoComplete={needsSetup ? "new-password" : "current-password"}
                   required
-                  minLength={needsSetup ? 12 : undefined}
+                  minLength={needsSetup ? 8 : undefined}
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   dir="ltr"
                   className="text-left"
-                  placeholder="••••••••••••"
+                  placeholder="••••••••"
                 />
               </div>
               {needsSetup && (
@@ -300,15 +300,15 @@ export default function LocalAdmin() {
                     type="password"
                     autoComplete="new-password"
                     required
-                    minLength={12}
+                    minLength={8}
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     dir="ltr"
                     className="text-left"
-                    placeholder="••••••••••••"
+                    placeholder="••••••••"
                   />
                   <p className="text-xs text-muted-foreground">
-                    {t("اختاري 12 حرفاً أو أكثر. لا تستخدمي كلمة مرور Gmail.")}
+                    {t("اختاري 8 أحرف أو أكثر. لا تستخدمي كلمة مرور Gmail.")}
                   </p>
                 </div>
               )}

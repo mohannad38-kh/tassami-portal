@@ -476,7 +476,7 @@ export const ListJoinRequestsResponse = zod.array(ListJoinRequestsResponseItem)
 /**
  * @summary Submit join request
  */
-export const submitJoinRequestBodyPasswordMin = 12;
+export const submitJoinRequestBodyPasswordMin = 8;
 
 
 

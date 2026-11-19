@@ -22,8 +22,8 @@ async function seed() {
 
   // Create users
   const seedAdminPassword = process.env.SEED_ADMIN_PASSWORD;
-  if (!seedAdminPassword || seedAdminPassword.length < 12) {
-    throw new Error("SEED_ADMIN_PASSWORD must be set to at least 12 characters.");
+  if (!seedAdminPassword || seedAdminPassword.length < 8) {
+    throw new Error("SEED_ADMIN_PASSWORD must be set to at least 8 characters.");
   }
   const passwordHash = await bcryptjs.hash(seedAdminPassword, 10);
   const usersData = [

@@ -298,8 +298,8 @@ export function localSqlitePlugin(workspaceRoot: string): Plugin {
               sendJson(response, 409, { error: "The admin account has already been set up" });
               return;
             }
-            if (password.length < 12) {
-              sendJson(response, 400, { error: "Choose a password with at least 12 characters" });
+            if (password.length < 8) {
+              sendJson(response, 400, { error: "Choose a password with at least 8 characters" });
               return;
             }
             const passwordSalt = randomBytes(16);
@@ -333,11 +333,11 @@ export function localSqlitePlugin(workspaceRoot: string): Plugin {
             if (
               !name ||
               !EMAIL_PATTERN.test(email) ||
-              password.length < 12 ||
+              password.length < 8 ||
               Buffer.byteLength(password, "utf8") > 72
             ) {
               sendJson(response, 400, {
-                error: "Enter a name, valid email, and password with 12 characters minimum",
+                error: "Enter a name, valid email, and password with 8 characters minimum",
               });
               return;
             }

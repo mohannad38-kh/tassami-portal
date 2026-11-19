@@ -144,11 +144,11 @@ router.post("/join-requests", async (req, res): Promise<void> => {
     !Number.isSafeInteger(departmentId) ||
     departmentId < 1 ||
     typeof password !== "string" ||
-    password.length < 12 ||
+    password.length < 8 ||
     Buffer.byteLength(password, "utf8") > 72
   ) {
     res.status(400).json({
-      error: "Enter a valid name, email, department, and password (12 characters minimum, 72 UTF-8 bytes maximum)",
+      error: "Enter a valid name, email, department, and password (8 characters minimum, 72 UTF-8 bytes maximum)",
     });
     return;
   }
