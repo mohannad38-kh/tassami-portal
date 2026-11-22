@@ -1,4 +1,11 @@
-import { createContext, useContext, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type Language = "ar" | "en";
 
@@ -24,14 +31,28 @@ const translations: Record<string, string> = {
   "إدارة الموقع": "Site Admin",
   "إدارة الطلبات": "Request Management",
   "مسؤول طلبات الانضمام": "Join Request Manager",
-  "القائمة": "Menu",
+  القائمة: "Menu",
   "فتح القائمة": "Open menu",
   "تسجيل الدخول": "Log In",
   "انضم إلينا": "Join Us",
+  "ابدأ بنموذج التسجيل المسبق قبل إنشاء حسابك في الموقع.":
+    "Start with the pre-registration form before creating your website account.",
+  "أكمل طلب حساب الموقع بعد إرسال نموذج التسجيل المسبق.":
+    "Complete your website account request after submitting the pre-registration form.",
+  "الخطوة الأولى: نموذج التسجيل المسبق": "Step 1: Pre-registration form",
+  "عبّئ النموذج الخارجي أولاً، ثم ارجع إلى هذه الصفحة للمتابعة بإنشاء حساب الموقع.":
+    "Complete the external form first, then return here to continue creating your website account.",
+  "فتح نموذج التسجيل المسبق": "Open the pre-registration form",
+  "بعد الإرسال، أكد أدناه للانتقال للخطوة الثانية.":
+    "After submitting it, confirm below to continue to step 2.",
+  "أرسلت النموذج، متابعة": "I submitted the form, continue",
+  "التأكيد إقرار منك، ولا يمكن للموقع التحقق تلقائياً من إرسال نموذج Google.":
+    "This confirmation is self-reported; the website cannot automatically verify that the Google Form was submitted.",
+  "الخطوة الثانية: طلب حساب الموقع": "Step 2: Website account request",
   "تسجيل خروج": "Log Out",
   "لوحة التحكم": "Dashboard",
   "ملفي الشخصي": "My Profile",
-  "شهاداتي": "My Certificates",
+  شهاداتي: "My Certificates",
   "ساعات التطوع": "Volunteer Hours",
   الإدارة: "Administration",
   الأعضاء: "Members",
@@ -90,10 +111,14 @@ const translations: Record<string, string> = {
   الإخلاص: "Dedication",
   التكافل: "Solidarity",
   "الأثر المستدام": "Sustainable Impact",
-  "العمل بصدق وتفانٍ لخدمة المجتمع.": "Serving the community with honesty and dedication.",
-  "السبق إلى تقديم البرامج والمبادرات النافعة.": "Taking the lead in delivering useful programs and initiatives.",
-  "تعزيز التعاون ومساندة فئات المجتمع.": "Promoting cooperation and supporting the community.",
-  "بناء مبادرات تترك بصمة إيجابية واضحة.": "Building initiatives that leave a clear, positive impact.",
+  "العمل بصدق وتفانٍ لخدمة المجتمع.":
+    "Serving the community with honesty and dedication.",
+  "السبق إلى تقديم البرامج والمبادرات النافعة.":
+    "Taking the lead in delivering useful programs and initiatives.",
+  "تعزيز التعاون ومساندة فئات المجتمع.":
+    "Promoting cooperation and supporting the community.",
+  "بناء مبادرات تترك بصمة إيجابية واضحة.":
+    "Building initiatives that leave a clear, positive impact.",
   "التعريف بالمبادرة": "About the Initiative",
   "الأهداف الاستراتيجية": "Strategic Goals",
   "ما نسعى إليه": "What We Strive For",
@@ -111,7 +136,8 @@ const translations: Record<string, string> = {
     "Your application is under review. You can log in after it is approved.",
   "تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها.":
     "Your application was received. After approval, sign in with your email and chosen password.",
-  "يوجد حساب أو طلب سابق بهذا البريد": "An account or application already exists for this email",
+  "يوجد حساب أو طلب سابق بهذا البريد":
+    "An account or application already exists for this email",
   "إذا كان طلبك قيد المراجعة، انتظر قرار الإدارة ولا ترسل طلباً جديداً.":
     "If your application is under review, wait for the administrator's decision instead of submitting another.",
   "أنشئ كلمة مرورك الآن؛ سيبقى الحساب بانتظار الموافقة قبل أن تتمكن من الدخول.":
@@ -122,9 +148,11 @@ const translations: Record<string, string> = {
   "تم تفعيل الحساب؛ أخبر المتطوع أن يسجل الدخول بالبريد وكلمة المرور التي اختارها.":
     "The account is active. Ask the volunteer to sign in with the email and password they chose.",
   "جارٍ تحميل الأقسام...": "Loading departments...",
-  "تعذر تحميل الأقسام، حاولي تحديث الصفحة.": "Could not load departments. Try refreshing the page.",
+  "تعذر تحميل الأقسام، حاولي تحديث الصفحة.":
+    "Could not load departments. Try refreshing the page.",
   "القسم المختار:": "Selected department:",
-  "لماذا ترغب بالانضمام إلينا؟ (اختياري)": "Why would you like to join us? (Optional)",
+  "لماذا ترغب بالانضمام إلينا؟ (اختياري)":
+    "Why would you like to join us? (Optional)",
   "إرسال طلب الانضمام": "Submit Application",
   "جاري الإرسال...": "Submitting...",
   "رقم الهاتف غير صحيح": "Invalid Phone Number",
@@ -148,7 +176,7 @@ const translations: Record<string, string> = {
   "مؤسس ورئيس المبادرة": "Founder & President",
   "مؤسس ونائب رئيس المبادرة": "Founder & Vice President",
   "أمين السر": "Secretary",
-  "إنجازاتنا": "Our Achievements",
+  إنجازاتنا: "Our Achievements",
   "الشركاء الذين نفخر بهم": "Partners We Are Proud Of",
   "لا توجد بيانات متاحة حالياً": "No information is currently available",
   "معلومات التواصل": "Contact Information",
@@ -163,9 +191,10 @@ const translations: Record<string, string> = {
   الموضوع: "Subject",
   الرسالة: "Message",
   "إرسال الرسالة": "Send Message",
-  "جميع الحقوق محفوظة لمبادرة تسامي ©": "All rights reserved to the Tasami Initiative ©",
+  "جميع الحقوق محفوظة لمبادرة تسامي ©":
+    "All rights reserved to the Tasami Initiative ©",
   "إدارة طلبات تسامي": "Tasami Requests Administration",
-  "طلباتي": "My Requests",
+  طلباتي: "My Requests",
   "بانتظار المراجعة": "Pending Review",
   مقبولة: "Approved",
   مرفوضة: "Rejected",
@@ -173,8 +202,8 @@ const translations: Record<string, string> = {
   مقبول: "Approved",
   مرفوض: "Rejected",
   "قيد المراجعة": "Under Review",
-  "تحديث": "Refresh",
-  "خروج": "Log Out",
+  تحديث: "Refresh",
+  خروج: "Log Out",
   "إجمالي الطلبات": "Total Requests",
   "طلبات مقبولة": "Approved Applications",
   "جارٍ تحميل الطلبات...": "Loading applications...",
@@ -182,7 +211,7 @@ const translations: Record<string, string> = {
   "إعادة الإرسال": "Resend",
   "إعادة إرسال الرابط": "Resend Link",
   "قبول وإرسال": "Approve & Send",
-  "رفض": "Reject",
+  رفض: "Reject",
   "إنشاء كلمة مرور حسابك": "Set Your Account Password",
   "تم إنشاء كلمة المرور": "Password Created",
   "أصبح بإمكانك تسجيل الدخول إلى بوابة المتطوعين.":
@@ -196,13 +225,15 @@ const translations: Record<string, string> = {
   "كلمتا المرور غير متطابقتين": "The passwords do not match.",
   "جاري حفظ كلمة المرور...": "Saving password...",
   "حفظ كلمة المرور": "Save Password",
-  "تم قبول الطلب، لكن لم يُرسل البريد": "Application approved, but email was not sent",
-  "تم قبول الطلب وإرسال رسالة الانتساب": "Application approved and membership email sent",
+  "تم قبول الطلب، لكن لم يُرسل البريد":
+    "Application approved, but email was not sent",
+  "تم قبول الطلب وإرسال رسالة الانتساب":
+    "Application approved and membership email sent",
   "تم رفض الطلب": "Application rejected",
   "تاريخ الطلب": "Application Date",
-  "التواصل": "Contact",
-  "الحالة": "Status",
-  "الإجراء": "Action",
+  التواصل: "Contact",
+  الحالة: "Status",
+  الإجراء: "Action",
   "أدخل البريد الإلكتروني وكلمة المرور للوصول لحسابك":
     "Enter your email and password to access your account",
   "نسيت كلمة المرور؟": "Forgot password?",
@@ -254,7 +285,8 @@ const translations: Record<string, string> = {
   "كلمة مرور المدير المحلية": "Local Administrator Password",
   "تأكيد كلمة المرور": "Confirm Password",
   "العودة إلى الموقع": "Back to Website",
-  "طلبات نموذج الموقع تظهر هنا للمراجعة": "Website applications appear here for review",
+  "طلبات نموذج الموقع تظهر هنا للمراجعة":
+    "Website applications appear here for review",
   "إنشاء حساب مدير نظام": "Create System Administrator Account",
   "إضافة مستخدم": "Add User",
   "مديرو النظام المطلوب إضافتهم": "System Administrators to Add",
@@ -265,18 +297,20 @@ const translations: Record<string, string> = {
     "Use a different password for each account and share it securely.",
   "إنشاء الحساب": "Create Account",
   "جاري الإنشاء...": "Creating...",
-  "إلغاء": "Cancel",
+  إلغاء: "Cancel",
   "تم إنشاء حساب مدير النظام": "System administrator account created",
   "تعذر إنشاء الحساب": "Could not create account",
   "لا يوجد مستخدمين مسجلين": "No registered users",
-  "إدارة حسابات مستخدمي النظام والصلاحيات": "Manage system user accounts and permissions",
-  "الصلاحية": "Role",
+  "إدارة حسابات مستخدمي النظام والصلاحيات":
+    "Manage system user accounts and permissions",
+  الصلاحية: "Role",
   "تاريخ التسجيل": "Registration Date",
   نشط: "Active",
   "غير نشط": "Inactive",
-  "الرؤية": "Vision",
+  الرؤية: "Vision",
   "عرض المزيد": "Learn More",
-  "لا يوجد وصف متاح لهذا القسم حالياً.": "No description is currently available.",
+  "لا يوجد وصف متاح لهذا القسم حالياً.":
+    "No description is currently available.",
   "عضو مسجل": "Registered Member",
   "جميع الحقوق محفوظة": "All rights reserved",
   "لماذا ترغب بالانضمام إلينا؟": "Why would you like to join us?",
@@ -290,56 +324,76 @@ const translations: Record<string, string> = {
     "The Tasami Initiative is a student initiative under the Deanship of Student Affairs at Jadara University and is documented on the national Nahno volunteering platform. It empowers students and directs their energy toward constructive volunteering and community service.",
   "نؤمن بأن العطاء لا يعرف حدوداً، وأن التسامي الحقيقي يبدأ حين نمد يد العون للآخرين. لذلك نعمل على توفير برامج تطوعية وورش عمل ميدانية تعزز المهارات الطلابية وقيم التكافل والمساندة.":
     "We believe that giving knows no bounds and that true growth begins when we help others. We provide volunteer programs and hands-on workshops that strengthen students' skills and promote solidarity and support.",
-  "تمكين الطلبة وصقل كفاءاتهم وقدراتهم.": "Empower students and develop their skills and abilities.",
-  "توجيه الطاقات الطلابية نحو العمل التطوعي البنّاء.": "Direct students' energy toward constructive volunteering.",
-  "مساندة فئات المجتمع الأولى بالرعاية وتعزيز التكافل.": "Support those most in need and strengthen solidarity.",
-  "تحقيق أثر مجتمعي حقيقي وترك بصمة إيجابية واضحة.": "Create meaningful community impact and leave a positive mark.",
-  "مؤسسو مبادرة تسامي وأعضاء إدارتها.": "Founders of the Tasami Initiative and its leadership team.",
-  "انضم إلى نخبة المتطوعين في مبادرة تسامي وكن جزءاً من التغيير الإيجابي.": "Join Tasami's dedicated volunteers and be part of positive change.",
+  "تمكين الطلبة وصقل كفاءاتهم وقدراتهم.":
+    "Empower students and develop their skills and abilities.",
+  "توجيه الطاقات الطلابية نحو العمل التطوعي البنّاء.":
+    "Direct students' energy toward constructive volunteering.",
+  "مساندة فئات المجتمع الأولى بالرعاية وتعزيز التكافل.":
+    "Support those most in need and strengthen solidarity.",
+  "تحقيق أثر مجتمعي حقيقي وترك بصمة إيجابية واضحة.":
+    "Create meaningful community impact and leave a positive mark.",
+  "مؤسسو مبادرة تسامي وأعضاء إدارتها.":
+    "Founders of the Tasami Initiative and its leadership team.",
+  "انضم إلى نخبة المتطوعين في مبادرة تسامي وكن جزءاً من التغيير الإيجابي.":
+    "Join Tasami's dedicated volunteers and be part of positive change.",
   "أدخل اسمك الكامل": "Enter your full name",
-  "رقم أردني: 07xxxxxxxx أو +962 7x xxx xxxx": "Jordanian number: 07xxxxxxxx or +962 7x xxx xxxx",
-  "حدثنا عن مهاراتك واهتماماتك التطوعية...": "Tell us about your skills and volunteer interests...",
+  "رقم أردني: 07xxxxxxxx أو +962 7x xxx xxxx":
+    "Jordanian number: 07xxxxxxxx or +962 7x xxx xxxx",
+  "حدثنا عن مهاراتك واهتماماتك التطوعية...":
+    "Tell us about your skills and volunteer interests...",
   "تم حفظ طلبك بنجاح": "Your application was saved",
-  "تم حفظ الطلب في قاعدة البيانات المحلية على هذا الجهاز.": "Your application was saved in the local database on this device.",
+  "تم حفظ الطلب في قاعدة البيانات المحلية على هذا الجهاز.":
+    "Your application was saved in the local database on this device.",
   "تعذر حفظ الطلب": "Could not save your application",
-  "تأكدي من تشغيل الموقع محلياً ثم حاولي مرة أخرى.": "Make sure the local site is running, then try again.",
+  "تأكدي من تشغيل الموقع محلياً ثم حاولي مرة أخرى.":
+    "Make sure the local site is running, then try again.",
   "تم إرسال رسالتك بنجاح": "Your message was sent",
-  "شكراً لتواصلك معنا، سنقوم بالرد عليك في أقرب وقت ممكن.": "Thank you for contacting us. We will reply as soon as possible.",
-  "يسعدنا استقبال استفساراتكم واقتراحاتكم من خلال النموذج التالي": "We welcome your questions and suggestions using the form below.",
-  "التطوعية": "Volunteer",
-  "قادمة": "Upcoming",
-  "مستمرة": "Ongoing",
-  "مكتملة": "Completed",
-  "ملغاة": "Cancelled",
-  "شارك معنا في صناعة الأثر عبر فعالياتنا المتنوعة.": "Join us in making an impact through our diverse events.",
+  "شكراً لتواصلك معنا، سنقوم بالرد عليك في أقرب وقت ممكن.":
+    "Thank you for contacting us. We will reply as soon as possible.",
+  "يسعدنا استقبال استفساراتكم واقتراحاتكم من خلال النموذج التالي":
+    "We welcome your questions and suggestions using the form below.",
+  التطوعية: "Volunteer",
+  قادمة: "Upcoming",
+  مستمرة: "Ongoing",
+  مكتملة: "Completed",
+  ملغاة: "Cancelled",
+  "شارك معنا في صناعة الأثر عبر فعالياتنا المتنوعة.":
+    "Join us in making an impact through our diverse events.",
   "لا توجد فعاليات حالياً": "There are no events at the moment",
   "ترقبوا فعالياتنا القادمة قريباً.": "Look out for our upcoming events soon.",
-  "مسجل": "registered",
+  مسجل: "registered",
   "متاحة للتسجيل": "Open for registration",
   "الورش والدورات التدريبية": "Workshops & Training Courses",
-  "طور مهاراتك من خلال برامجنا التدريبية المتخصصة.": "Develop your skills through our specialized training programs.",
+  "طور مهاراتك من خلال برامجنا التدريبية المتخصصة.":
+    "Develop your skills through our specialized training programs.",
   "لا توجد ورش حالياً": "There are no workshops at the moment",
-  "ترقبوا برامجنا التدريبية القادمة.": "Look out for our upcoming training programs.",
+  "ترقبوا برامجنا التدريبية القادمة.":
+    "Look out for our upcoming training programs.",
   "المدرب:": "Trainer:",
-  "متدرب": "participants",
+  متدرب: "participants",
   "لا توجد أخبار حالياً": "There is no news at the moment",
   "صورة الخبر": "News image",
   "لا توجد صور حالياً": "There are no images at the moment",
   "صورة من الفعاليات": "Event image",
-  "نعتز بشراكاتنا الاستراتيجية مع مختلف الجهات التي تساهم في دعم رسالتنا وتحقيق أهداف المبادرة.": "We value our strategic partnerships with organizations that support our mission and help achieve the initiative's goals.",
+  "نعتز بشراكاتنا الاستراتيجية مع مختلف الجهات التي تساهم في دعم رسالتنا وتحقيق أهداف المبادرة.":
+    "We value our strategic partnerships with organizations that support our mission and help achieve the initiative's goals.",
   "لم يتم إضافة شركاء بعد": "No partners have been added yet",
   "العودة للأخبار": "Back to News",
   "تعذر تحميل الخبر": "Could not load the news item",
-  "قد يكون الخبر غير موجود أو تم حذفه.": "The news item may not exist or may have been deleted.",
+  "قد يكون الخبر غير موجود أو تم حذفه.":
+    "The news item may not exist or may have been deleted.",
   "بقلم:": "By:",
   "التحقق من الشهادات": "Certificate Verification",
-  "أدخل رمز التحقق الموجود على الشهادة للتأكد من صحتها": "Enter the verification code on the certificate to confirm its validity.",
+  "أدخل رمز التحقق الموجود على الشهادة للتأكد من صحتها":
+    "Enter the verification code on the certificate to confirm its validity.",
   "رمز التحقق": "Verification Code",
-  "أدخل رمز التحقق (مثل: CERT-XXXXXX)": "Enter the verification code (e.g. CERT-XXXXXX)",
-  "تحقق": "Verify",
+  "أدخل رمز التحقق (مثل: CERT-XXXXXX)":
+    "Enter the verification code (e.g. CERT-XXXXXX)",
+  تحقق: "Verify",
   "جاري التحقق من صحة الشهادة...": "Verifying certificate...",
   "الشهادة موثقة وصحيحة": "Certificate is valid",
-  "تم إصدار هذه الشهادة من مبادرة تسامي التطوعية": "This certificate was issued by the Tasami Volunteer Initiative.",
+  "تم إصدار هذه الشهادة من مبادرة تسامي التطوعية":
+    "This certificate was issued by the Tasami Volunteer Initiative.",
   "اسم المستفيد:": "Recipient:",
   "نوع الشهادة:": "Certificate Type:",
   "شهادة مشاركة في فعالية": "Event Participation Certificate",
@@ -347,13 +401,16 @@ const translations: Record<string, string> = {
   "البرنامج:": "Program:",
   "تاريخ الإصدار:": "Issue Date:",
   "شهادة غير صحيحة": "Invalid Certificate",
-  "عذراً، رمز التحقق الذي أدخلته غير موجود في سجلاتنا. يرجى التأكد من كتابة الرمز بشكل صحيح والمحاولة مرة أخرى.": "Sorry, the verification code was not found in our records. Check the code and try again.",
+  "عذراً، رمز التحقق الذي أدخلته غير موجود في سجلاتنا. يرجى التأكد من كتابة الرمز بشكل صحيح والمحاولة مرة أخرى.":
+    "Sorry, the verification code was not found in our records. Check the code and try again.",
   "أهلاً بك،": "Welcome,",
-  "تابع إنجازاتك ومهامك التطوعية من هنا.": "Track your volunteer achievements and tasks here.",
+  "تابع إنجازاتك ومهامك التطوعية من هنا.":
+    "Track your volunteer achievements and tasks here.",
   "إجمالي ساعات التطوع": "Total Volunteer Hours",
   "الفعاليات المشارك بها": "Events Participated In",
   "المهام قيد التنفيذ": "Tasks In Progress",
-  "أبرز الفعاليات المتاحة للتسجيل قريباً": "Upcoming events open for registration",
+  "أبرز الفعاليات المتاحة للتسجيل قريباً":
+    "Upcoming events open for registration",
   "لا توجد فعاليات قادمة حالياً.": "There are no upcoming events right now.",
   "تاريخ:": "Date:",
   "المهام المطلوبة": "Assigned Tasks",
@@ -362,125 +419,137 @@ const translations: Record<string, string> = {
   "تاريخ التسليم:": "Due date:",
   "غير محدد": "Not specified",
   "البيانات الشخصية": "Personal Information",
-  "الاسم": "Name",
+  الاسم: "Name",
   "رقم الجوال": "Mobile Number",
-  "القسم": "Department",
+  القسم: "Department",
   "عضوية نشطة": "Active Membership",
   "إجمالي الساعات": "Total Hours",
-  "ساعة": "hours",
-  "فعالية": "events",
+  ساعة: "hours",
+  فعالية: "events",
   "سجل الساعات التطوعية": "Volunteer Hours Log",
-  "لا يوجد سجل ساعات تطوعية حتى الآن.": "There are no volunteer hours recorded yet.",
-  "التاريخ": "Date",
+  "لا يوجد سجل ساعات تطوعية حتى الآن.":
+    "There are no volunteer hours recorded yet.",
+  التاريخ: "Date",
   "الفعالية / النشاط": "Event / Activity",
-  "الوصف": "Description",
-  "الساعات": "Hours",
+  الوصف: "Description",
+  الساعات: "Hours",
   "لا توجد شهادات بعد": "No certificates yet",
-  "ستظهر شهادات مشاركتك في الفعاليات والورش هنا.": "Your event and workshop certificates will appear here.",
+  "ستظهر شهادات مشاركتك في الفعاليات والورش هنا.":
+    "Your event and workshop certificates will appear here.",
   "مشاركة فعالية": "Event Participation",
   "حضور ورشة": "Workshop Attendance",
-  "عرض": "View",
-  "تحميل": "Download",
+  عرض: "View",
+  تحميل: "Download",
   "إجمالي الأعضاء": "Total Members",
   "طلبات معلقة": "Pending Requests",
   "إجمالي الفعاليات": "Total Events",
   "إجمالي الورش": "Total Workshops",
   "مهام نشطة": "Active Tasks",
   "نظرة عامة": "Overview",
-  "ملخص لآخر الإحصائيات والأرقام في المبادرة.": "A summary of the initiative's latest statistics.",
+  "ملخص لآخر الإحصائيات والأرقام في المبادرة.":
+    "A summary of the initiative's latest statistics.",
   "أحدث النشاطات": "Recent Activity",
   "لا يوجد نشاطات مسجلة حديثاً.": "There is no recent activity.",
-  "تحقق من إعدادات Gmail على الخادم، ثم أعد إرسال رسالة القبول.": "Check the server's Gmail settings, then retry the approval email.",
-  "أُرسلت رسالة القبول ورابط نموذج الانتساب إلى": "The approval email and membership form link were sent to",
+  "تحقق من إعدادات Gmail على الخادم، ثم أعد إرسال رسالة القبول.":
+    "Check the server's Gmail settings, then retry the approval email.",
+  "أُرسلت رسالة القبول ورابط نموذج الانتساب إلى":
+    "The approval email and membership form link were sent to",
   "تم تحديث حالة طلب الانضمام بنجاح.": "The application status was updated.",
-  "قبول": "Approve",
+  قبول: "Approve",
   "رمز التحقق:": "Verification Code:",
-  "تم قبول الطلب، لكن تعذّر إرسال الرسالة": "Application approved, but the email could not be sent",
-  "راجعي إعدادات بريد Gmail، ثم حاولي إعادة الإرسال.": "Check the Gmail settings, then try sending again.",
+  "تم قبول الطلب، لكن تعذّر إرسال الرسالة":
+    "Application approved, but the email could not be sent",
+  "راجعي إعدادات بريد Gmail، ثم حاولي إعادة الإرسال.":
+    "Check the Gmail settings, then try sending again.",
   "أُرسلت رسالة إلى": "An email was sent to",
   "تم تحديث حالة طلب الانضمام.": "The application status was updated.",
-  "سجل بجميع الشهادات الصادرة للأعضاء": "A record of all certificates issued to members",
+  "سجل بجميع الشهادات الصادرة للأعضاء":
+    "A record of all certificates issued to members",
   "لا توجد شهادات صادرة حتى الآن": "No certificates have been issued yet",
   "تاريخ الإصدار": "Issue Date",
-  "المستفيد": "Recipient",
+  المستفيد: "Recipient",
   "نوع الشهادة": "Certificate Type",
-  "البرنامج": "Program",
+  البرنامج: "Program",
   "تم بنجاح": "Success",
   "تم إنشاء القسم الجديد.": "The new department was created.",
   "إضافة قسم": "Add Department",
   "إضافة قسم جديد": "Add a New Department",
   "اسم القسم": "Department Name",
   "جاري الحفظ...": "Saving...",
-  "حفظ": "Save",
+  حفظ: "Save",
   "لا يوجد وصف": "No description",
   "إضافة فعالية": "Add Event",
   "لا توجد فعاليات مسجلة": "No events have been added",
   "عنوان الفعالية": "Event Title",
-  "المسجلين": "Registered",
-  "إجراءات": "Actions",
+  المسجلين: "Registered",
+  إجراءات: "Actions",
   "إدارة الورش والدورات": "Manage Workshops & Courses",
   "إضافة ورشة": "Add Workshop",
   "لا توجد ورش مسجلة": "No workshops have been added",
   "عنوان الورشة": "Workshop Title",
-  "المدرب": "Trainer",
+  المدرب: "Trainer",
   "لا توجد ساعات تطوعية مسجلة": "No volunteer hours have been recorded",
-  "العضو": "Member",
-  "الفعالية": "Event",
-  "سجل الساعات التطوعية لجميع الأعضاء": "Volunteer hours recorded for all members",
+  العضو: "Member",
+  الفعالية: "Event",
+  "سجل الساعات التطوعية لجميع الأعضاء":
+    "Volunteer hours recorded for all members",
   "إضافة اجتماع": "Add Meeting",
   "لا توجد اجتماعات مسجلة": "No meetings have been added",
   "عنوان الاجتماع": "Meeting Title",
-  "المكان": "Location",
+  المكان: "Location",
   "إضافة مهمة": "Add Task",
   "لا توجد مهام مسجلة": "No tasks have been added",
-  "المهمة": "Task",
+  المهمة: "Task",
   "المسند إليه": "Assigned To",
   "تاريخ التسليم": "Due Date",
-  "الأولوية": "Priority",
+  الأولوية: "Priority",
   "نسبة الإنجاز": "Progress",
   "غير مسندة": "Unassigned",
-  "عالية": "High",
-  "متوسطة": "Medium",
-  "منخفضة": "Low",
-  "عادية": "Normal",
+  عالية: "High",
+  متوسطة: "Medium",
+  منخفضة: "Low",
+  عادية: "Normal",
   "إضافة خبر / إعلان": "Add News / Announcement",
   "الأخبار المنشورة": "Published News",
   "الإعلانات الداخلية": "Internal Announcements",
   "لا توجد أخبار منشورة": "No published news",
   "تاريخ النشر": "Publication Date",
-  "الكاتب": "Author",
+  الكاتب: "Author",
   "لا توجد إعلانات داخلية": "No internal announcements",
   "تاريخ الإنشاء": "Created Date",
   "الفئة المستهدفة": "Target Audience",
-  "الجميع": "Everyone",
+  الجميع: "Everyone",
   "إضافة شريك": "Add Partner",
   "لا يوجد شركاء مسجلين": "No partners have been added",
-  "النوع": "Type",
-  "الموقع": "Website",
-  "شريك": "Partner",
+  النوع: "Type",
+  الموقع: "Website",
+  شريك: "Partner",
   "زيارة الموقع": "Visit Website",
   "إضافة صورة": "Add Image",
   "لا توجد صور في المعرض": "There are no images in the gallery",
-  "صورة": "Image",
-  "عرض وإدارة قائمة المتطوعين في المبادرة": "View and manage the initiative's volunteers",
+  صورة: "Image",
+  "عرض وإدارة قائمة المتطوعين في المبادرة":
+    "View and manage the initiative's volunteers",
   "بحث بالاسم أو رقم العضوية...": "Search by name or membership number...",
   "رقم العضوية": "Membership Number",
-  "معلق": "Pending",
-  "التفاصيل": "Details",
+  معلق: "Pending",
+  التفاصيل: "Details",
   "تفعيل العضوية": "Activate Membership",
   "إيقاف العضوية": "Deactivate Membership",
   "لا يوجد أعضاء مطابقين لبحثك": "No members match your search",
   "التقارير والإحصائيات": "Reports & Statistics",
   "الأعضاء حسب الأقسام": "Members by Department",
-  "العدد": "Count",
+  العدد: "Count",
   "الفعاليات حسب الأشهر": "Events by Month",
   "أكثر المتطوعين تفاعلاً": "Most Active Volunteers",
   "الساعات التطوعية": "Volunteer Hours",
   "لا تتوفر بيانات للتقارير حالياً": "No report data is available right now",
-  "أصبح قادراً على تسجيل الدخول وإدارة الموقع.": "can now sign in and manage the website.",
-  "تحقق من صلاحية مدير النظام وأن البريد غير مسجل مسبقاً.": "Check your administrator permissions and ensure the email is not already registered.",
-  "زائر": "Visitor",
-  "إضافة": "Add",
+  "أصبح قادراً على تسجيل الدخول وإدارة الموقع.":
+    "can now sign in and manage the website.",
+  "تحقق من صلاحية مدير النظام وأن البريد غير مسجل مسبقاً.":
+    "Check your administrator permissions and ensure the email is not already registered.",
+  زائر: "Visitor",
+  إضافة: "Add",
   "التفاصيل العضو": "Member Details",
   "العودة للأعضاء": "Back to Members",
   "تعذر تحميل بيانات العضو": "Could not load member information",
@@ -492,31 +561,38 @@ const translations: Record<string, string> = {
   "بطاقة العضوية": "Membership Card",
   "عضو مبادرة تسامي": "Tasami Initiative Member",
   "٥ مايو": "May 5",
-  "مايو": "May",
-  "يونيو": "June",
-  "ورشة لتعلم اساسيات البرمجة والروبوتات": "A workshop on programming and robotics basics",
+  مايو: "May",
+  يونيو: "June",
+  "ورشة لتعلم اساسيات البرمجة والروبوتات":
+    "A workshop on programming and robotics basics",
   "يوم التطوع البيئي": "Environmental Volunteering Day",
   "ملتقى الشباب المبدع": "Creative Youth Forum",
-  "صباحاً": "AM",
-  "مساءً": "PM",
+  صباحاً: "AM",
+  مساءً: "PM",
   "قاعة الندوات": "Seminar Hall",
   "الحديقة المركزية": "Central Park",
   "مركز الابتكار": "Innovation Center",
   "الموقع الإلكتروني": "Website",
   "رسالة الانتساب": "Membership Information",
-  "مبادرة": "Initiative",
-  "عنوان": "Title",
-  "تم قبول الطلب وإرسال رسالة القبول": "Application approved and approval email sent",
+  مبادرة: "Initiative",
+  عنوان: "Title",
+  "تم قبول الطلب وإرسال رسالة القبول":
+    "Application approved and approval email sent",
   "تعذر تحديث الطلب": "Could not update the application",
   "حاولي مرة أخرى.": "Please try again.",
-  "أنشئي كلمة مرور المسؤول لأول مرة. ستُحفظ مشفّرة على هذا الجهاز.": "Create the administrator password for the first time. It will be stored encrypted on this device.",
-  "سجّلي الدخول لعرض الطلبات وإدارتها على هذا الجهاز.": "Sign in to view and manage applications on this device.",
+  "أنشئي كلمة مرور المسؤول لأول مرة. ستُحفظ مشفّرة على هذا الجهاز.":
+    "Create the administrator password for the first time. It will be stored encrypted on this device.",
+  "سجّلي الدخول لعرض الطلبات وإدارتها على هذا الجهاز.":
+    "Sign in to view and manage applications on this device.",
   "جارٍ تجهيز لوحة الإدارة...": "Preparing the admin dashboard...",
-  "اختاري 8 أحرف أو أكثر. لا تستخدمي كلمة مرور Gmail.": "Choose at least 8 characters. Do not use your Gmail password.",
+  "اختاري 8 أحرف أو أكثر. لا تستخدمي كلمة مرور Gmail.":
+    "Choose at least 8 characters. Do not use your Gmail password.",
   "جارٍ التحقق...": "Verifying...",
   "دخول لوحة الإدارة": "Sign in to Admin",
-  "لوحة الإدارة متاحة محلياً على جهازك فقط.": "The admin dashboard is available only on this device.",
-  "راجعي الطلب ثم اقبليه أو ارفضي؛ عند القبول يحاول الموقع إرسال بريد إلكتروني.": "Review the application and approve or reject it. The site will try to send an email after approval.",
+  "لوحة الإدارة متاحة محلياً على جهازك فقط.":
+    "The admin dashboard is available only on this device.",
+  "راجعي الطلب ثم اقبليه أو ارفضي؛ عند القبول يحاول الموقع إرسال بريد إلكتروني.":
+    "Review the application and approve or reject it. The site will try to send an email after approval.",
   "أُرسلت رسالة القبول": "Approval email sent",
   "لم تُرسل رسالة القبول بعد": "The approval email has not been sent yet",
 
@@ -543,14 +619,19 @@ const statusTranslations: Record<string, { ar: string; en: string }> = {
 // Texts written in English in the code (e.g. the 404 page) that must show in Arabic when the site is Arabic.
 const englishToArabic: Record<string, string> = {
   "404 Page Not Found": "الصفحة غير موجودة (404)",
-  "Did you forget to add the page to the router?": "هل نسيت إضافة الصفحة إلى المسارات؟",
+  "Did you forget to add the page to the router?":
+    "هل نسيت إضافة الصفحة إلى المسارات؟",
 };
 
-const hasOwn = (obj: object, key: string) => Object.prototype.hasOwnProperty.call(obj, key);
+const hasOwn = (obj: object, key: string) =>
+  Object.prototype.hasOwnProperty.call(obj, key);
 const ARABIC_LETTERS = /[\u0600-\u06FF]/;
 const warnedMissing = new Set<string>();
 
-function translate(language: Language, text: string | null | undefined): string {
+function translate(
+  language: Language,
+  text: string | null | undefined,
+): string {
   if (text == null) return "";
   const key = text.trim();
   if (!key) return text;
@@ -563,7 +644,11 @@ function translate(language: Language, text: string | null | undefined): string 
 
   if (hasOwn(translations, key)) return translations[key];
 
-  if (import.meta.env.DEV && ARABIC_LETTERS.test(key) && !warnedMissing.has(key)) {
+  if (
+    import.meta.env.DEV &&
+    ARABIC_LETTERS.test(key) &&
+    !warnedMissing.has(key)
+  ) {
     warnedMissing.add(key);
     console.warn(`[i18n] Missing English translation: "${key}"`);
   }
@@ -574,7 +659,9 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 function getInitialLanguage(): Language {
   try {
-    return window.localStorage.getItem("tasami-language") === "en" ? "en" : "ar";
+    return window.localStorage.getItem("tasami-language") === "en"
+      ? "en"
+      : "ar";
   } catch {
     return "ar";
   }
@@ -607,7 +694,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [language]);
 
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
 }
 
 export function useLanguage(): LanguageContextValue {

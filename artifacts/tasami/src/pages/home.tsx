@@ -52,7 +52,9 @@ export default function Home() {
 
   useEffect(() => {
     let active = true;
-    const statsUrl = "/api/public/stats";
+    const statsUrl = import.meta.env.DEV
+      ? "/local-api/public/stats"
+      : "/api/public/stats";
 
     const loadStats = async () => {
       try {

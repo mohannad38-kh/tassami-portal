@@ -52,6 +52,8 @@ Applicants choose a password when submitting a join request. The site stores onl
 
 Configure `RESEND_API_KEY` and `RESEND_FROM_EMAIL` in the Render service's environment settings to send approval and password-recovery emails. The sender must be verified with Resend. The HTTP API works on Render's free web-service plan. Gmail SMTP is retained as a fallback for compatible paid hosts, but Render's free web services block outbound SMTP.
 
+The public Tasami chat assistant uses a built-in local FAQ. It does not call an AI provider or send visitors' questions to an external service. Answers are limited to the information included in the FAQ.
+
 To grant a specific existing account access only to review and approve join requests, add its email to the comma-separated `JOIN_REQUEST_MANAGER_EMAILS` environment variable. This does not grant access to other administration features.
 
 To grant a trusted existing account full site administration access, add its email to the comma-separated `SUPER_ADMIN_EMAILS` environment variable. This grants the highest application role; only use it for accounts that require full administrative access.

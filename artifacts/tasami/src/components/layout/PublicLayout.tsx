@@ -1,16 +1,94 @@
-import { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
 import logoUrl from "@assets/image_1782739252068.png";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Menu, Instagram } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
-import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { PublicAssistant } from "@/components/layout/PublicAssistant";
 
 export function PublicLayout({ children }: { children: ReactNode }) {
   const { isAuthenticated, user, logout } = useAuth();
   const { direction, isEnglish, t, toggleLanguage } = useLanguage();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const main = document.querySelector("main");
+    if (!main) return;
+
+    const targets = Array.from(
+      main.querySelectorAll<HTMLElement>(
+        "section, article, li, [role='listitem'], [class~='bg-card'], [class*='border-dashed']",
+      ),
+    );
+    let previousScrollY = window.scrollY;
+    let scrollDirection = 1;
+
+    const updateScrollDirection = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY !== previousScrollY) {
+        scrollDirection = currentScrollY > previousScrollY ? 1 : -1;
+        previousScrollY = currentScrollY;
+      }
+    };
+
+    if (!("IntersectionObserver" in window)) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const target = entry.target as HTMLElement;
+          target.style.setProperty(
+            "--scroll-offset",
+            `${scrollDirection * 42}px`,
+          );
+          target.classList.toggle("scroll-motion-visible", entry.isIntersecting);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
+    );
+
+    targets.forEach((target, index) => {
+      const rect = target.getBoundingClientRect();
+      const isListItem =
+        target.tagName === "LI" || target.getAttribute("role") === "listitem";
+      const listIndex =
+        isListItem && target.parentElement
+          ? Array.from(target.parentElement.children).indexOf(target)
+          : index % 5;
+      target.classList.add("scroll-motion-target");
+      target.style.setProperty(
+        "--scroll-delay",
+        `${Math.min(listIndex, 5) * 85}ms`,
+      );
+      target.style.setProperty("--scroll-offset", `${scrollDirection * 42}px`);
+      if (rect.top < window.innerHeight * 0.94 && rect.bottom > 0) {
+        target.classList.add("scroll-motion-visible");
+      }
+      observer.observe(target);
+    });
+
+    window.addEventListener("scroll", updateScrollDirection, { passive: true });
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", updateScrollDirection);
+      targets.forEach((target) => {
+        target.classList.remove("scroll-motion-target", "scroll-motion-visible");
+        target.style.removeProperty("--scroll-delay");
+        target.style.removeProperty("--scroll-offset");
+      });
+    };
+  }, [location]);
 
   const navItems = [
     { href: "/", label: t("الرئيسية") },
@@ -27,9 +105,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   ];
 
   const handleDashboardRedirect = () => {
-    const isAdmin = ["super_admin", "president", "vice_president", "secretary", "dept_head", "join_manager"].includes(
-      user?.role || ""
-    );
+    const isAdmin = [
+      "super_admin",
+      "president",
+      "vice_president",
+      "secretary",
+      "dept_head",
+      "join_manager",
+    ].includes(user?.role || "");
     setLocation(isAdmin ? "/admin" : "/portal");
   };
 
@@ -60,19 +143,28 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent side={isEnglish ? "left" : "right"} className="flex w-[min(20rem,85vw)] flex-col overflow-y-auto">
+      <SheetContent
+        side={isEnglish ? "left" : "right"}
+        className="flex w-[min(20rem,85vw)] flex-col overflow-y-auto"
+      >
         <SheetTitle className="mb-3 pe-8 text-start">{t("القائمة")}</SheetTitle>
         <nav className="flex flex-col gap-1">
           {navItems.map((item) => (
             <SheetClose asChild key={item.href}>
-              <Link href={item.href} className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary">
+              <Link
+                href={item.href}
+                className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary"
+              >
                 {item.label}
               </Link>
             </SheetClose>
           ))}
           {import.meta.env.DEV && (
             <SheetClose asChild>
-              <Link href="/local-admin" className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary">
+              <Link
+                href="/local-admin"
+                className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary"
+              >
                 {t("إدارة الموقع")}
               </Link>
             </SheetClose>
@@ -80,12 +172,18 @@ export function PublicLayout({ children }: { children: ReactNode }) {
           {!isAuthenticated ? (
             <>
               <SheetClose asChild>
-                <Link href="/login" className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary">
+                <Link
+                  href="/login"
+                  className="rounded-md px-3 py-2.5 text-sm font-medium hover:bg-muted hover:text-primary"
+                >
                   {t("تسجيل الدخول")}
                 </Link>
               </SheetClose>
               <SheetClose asChild>
-                <Link href="/join" className="rounded-md bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground">
+                <Link
+                  href="/join"
+                  className="rounded-md bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground"
+                >
                   {t("انضم إلينا")}
                 </Link>
               </SheetClose>
@@ -118,20 +216,38 @@ export function PublicLayout({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col font-sans" dir={direction}>
+    <div
+      className="min-h-screen bg-background flex flex-col font-sans"
+      dir={direction}
+    >
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex max-w-screen-2xl flex-col px-4 md:px-8">
           <div className="flex h-16 w-full items-center justify-between gap-3">
             <div className="flex min-w-0 shrink-0 items-center gap-2">
-              {direction === "rtl" && <div className="xl:hidden">{mobileMenu}</div>}
+              {direction === "rtl" && (
+                <div className="xl:hidden">{mobileMenu}</div>
+              )}
               <Link href="/" className="flex min-w-0 shrink-0 items-center">
-                <img src={logoUrl} alt="Tasami" className="h-11 max-w-[150px] object-contain" />
+                <img
+                  src={logoUrl}
+                  alt="Tasami"
+                  className="h-11 max-w-[150px] object-contain"
+                />
               </Link>
-              {direction === "ltr" && <div className="xl:hidden">{mobileMenu}</div>}
+              {direction === "ltr" && (
+                <div className="xl:hidden">{mobileMenu}</div>
+              )}
             </div>
 
             <div className="hidden items-center gap-2 xl:flex">
-              <Button variant="outline" size="sm" onClick={toggleLanguage} aria-label={isEnglish ? "Switch to Arabic" : "Switch to English"}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleLanguage}
+                aria-label={
+                  isEnglish ? "Switch to Arabic" : "Switch to English"
+                }
+              >
                 {isEnglish ? "العربية" : "English"}
               </Button>
               {import.meta.env.DEV && (
@@ -143,7 +259,14 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-2 xl:hidden">
-              <Button variant="outline" size="sm" onClick={toggleLanguage} aria-label={isEnglish ? "Switch to Arabic" : "Switch to English"}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleLanguage}
+                aria-label={
+                  isEnglish ? "Switch to Arabic" : "Switch to English"
+                }
+              >
                 {isEnglish ? "العربية" : "English"}
               </Button>
             </div>
@@ -151,7 +274,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
           <nav className="hidden w-full flex-wrap items-center justify-center gap-x-5 gap-y-1 border-t border-border/60 py-2.5 text-sm font-medium xl:flex">
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="whitespace-nowrap py-1 text-foreground transition-colors hover:text-primary">
+              <Link
+                key={item.href}
+                href={item.href}
+                className="whitespace-nowrap py-1 text-foreground transition-colors hover:text-primary"
+              >
                 {item.label}
               </Link>
             ))}
@@ -173,12 +300,42 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-4 text-lg">{isEnglish ? "Quick Links" : "روابط سريعة"}</h3>
+              <h3 className="font-semibold mb-4 text-lg">
+                {isEnglish ? "Quick Links" : "روابط سريعة"}
+              </h3>
               <ul className="space-y-2 text-sm">
-                <li><Link href="/about" className="text-muted-foreground hover:text-primary">{t("من نحن")}</Link></li>
-                <li><Link href="/board" className="text-muted-foreground hover:text-primary">{t("مجلس الإدارة")}</Link></li>
-                <li><Link href="/gallery" className="text-muted-foreground hover:text-primary">{t("معرض الصور")}</Link></li>
-                <li><Link href="/partners" className="text-muted-foreground hover:text-primary">{t("شركاء النجاح")}</Link></li>
+                <li>
+                  <Link
+                    href="/about"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    {t("من نحن")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/board"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    {t("مجلس الإدارة")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/gallery"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    {t("معرض الصور")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/partners"
+                    className="text-muted-foreground hover:text-primary"
+                  >
+                    {t("شركاء النجاح")}
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -186,7 +343,11 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>{isEnglish ? "Email" : "البريد"}: tasamiteamx@gmail.com</li>
                 <li>
-                  <a href="https://wa.me/962781386264" dir="ltr" className="inline-flex items-center gap-2 hover:text-primary">
+                  <a
+                    href="https://wa.me/962781386264"
+                    dir="ltr"
+                    className="inline-flex items-center gap-2 hover:text-primary"
+                  >
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />
                     0781386264
                   </a>
@@ -202,15 +363,21 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                     Instagram: tasami.jo
                   </a>
                 </li>
-                <li>Facebook: {isEnglish ? "Tasami Initiative" : "مبادرة تسامي"}</li>
+                <li>
+                  Facebook: {isEnglish ? "Tasami Initiative" : "مبادرة تسامي"}
+                </li>
               </ul>
             </div>
           </div>
           <div className="mt-12 border-t pt-8 text-center text-sm text-muted-foreground">
-            <p>{t("جميع الحقوق محفوظة لمبادرة تسامي ©")} {new Date().getFullYear()}</p>
+            <p>
+              {t("جميع الحقوق محفوظة لمبادرة تسامي ©")}{" "}
+              {new Date().getFullYear()}
+            </p>
           </div>
         </div>
       </footer>
+      <PublicAssistant />
     </div>
   );
 }

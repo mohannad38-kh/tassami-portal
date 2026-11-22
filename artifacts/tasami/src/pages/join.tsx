@@ -6,10 +6,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { useLanguage } from "@/hooks/use-language";
 import { useDepartments } from "@/hooks/use-departments";
-import { UserPlus, Lock, Mail, Phone, Building, UserCheck } from "lucide-react";
+import {
+  UserPlus,
+  Lock,
+  Mail,
+  Phone,
+  Building,
+  UserCheck,
+  ExternalLink,
+  ClipboardCheck,
+} from "lucide-react";
+
+const JOIN_FORM_URL = "https://forms.gle/aykLb9rbAdK5mgYD9";
 
 function normalizeJordanMobile(value: string): string | null {
   const digits = value
@@ -33,21 +50,25 @@ export default function Join() {
     confirmPassword: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasCompletedPreRegistration, setHasCompletedPreRegistration] =
+    useState(false);
   const submitRequest = useSubmitJoinRequest();
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { data: rawDepartments, isLoading: isLoadingDepartments } = useDepartments();
+  const { data: rawDepartments, isLoading: isLoadingDepartments } =
+    useDepartments();
 
-  const departments = Array.isArray(rawDepartments) 
-    ? rawDepartments 
-    : (rawDepartments as any)?.data && Array.isArray((rawDepartments as any).data) 
-      ? (rawDepartments as any).data 
+  const departments = Array.isArray(rawDepartments)
+    ? rawDepartments
+    : (rawDepartments as any)?.data &&
+        Array.isArray((rawDepartments as any).data)
+      ? (rawDepartments as any).data
       : [
           { id: 1, name: "قسم الورشات" },
           { id: 2, name: "القسم الأكاديمي" },
           { id: 3, name: "القسم الإعلامي" },
           { id: 4, name: "قسم تكنولوجيا المعلومات" },
-          { id: 5, name: "قسم التصميم" }
+          { id: 5, name: "قسم التصميم" },
         ];
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -75,7 +96,9 @@ export default function Join() {
       if (!normalizedPhone) {
         toast({
           title: t("رقم الهاتف غير صحيح"),
-          description: t("أدخلي رقم أردني يبدأ بـ 07 أو +962، مثل 079 123 4567."),
+          description: t(
+            "أدخلي رقم أردني يبدأ بـ 07 أو +962، مثل 079 123 4567.",
+          ),
           variant: "destructive",
         });
         return;
@@ -95,7 +118,9 @@ export default function Join() {
           onSuccess: () => {
             toast({
               title: t("تم إرسال طلبك بنجاح"),
-              description: t("تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها."),
+              description: t(
+                "تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها.",
+              ),
             });
             setFormData({
               name: "",
@@ -112,9 +137,13 @@ export default function Join() {
               error instanceof Error &&
               error.message.includes("ACCOUNT_EXISTS_OR_PENDING");
             toast({
-              title: alreadyRegistered ? t("يوجد حساب أو طلب سابق بهذا البريد") : t("حدث خطأ"),
+              title: alreadyRegistered
+                ? t("يوجد حساب أو طلب سابق بهذا البريد")
+                : t("حدث خطأ"),
               description: alreadyRegistered
-                ? t("إذا كان طلبك قيد المراجعة، انتظر قرار الإدارة ولا ترسل طلباً جديداً.")
+                ? t(
+                    "إذا كان طلبك قيد المراجعة، انتظر قرار الإدارة ولا ترسل طلباً جديداً.",
+                  )
                 : t("لم نتمكن من إرسال طلبك. يرجى المحاولة لاحقاً."),
               variant: "destructive",
             });
@@ -137,7 +166,9 @@ export default function Join() {
 
       toast({
         title: t("تم حفظ طلبك بنجاح"),
-        description: t("تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها."),
+        description: t(
+          "تم استلام طلبك. بعد الموافقة، سجّل الدخول بالبريد وكلمة المرور التي اخترتها.",
+        ),
       });
       setFormData({
         name: "",
@@ -168,160 +199,246 @@ export default function Join() {
             <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mx-auto mb-3 text-primary">
               <UserPlus className="h-8 w-8" />
             </div>
-            <CardTitle className="text-3xl font-bold text-primary mb-2">{t("نموذج الانضمام")}</CardTitle>
+            <CardTitle className="text-3xl font-bold text-primary mb-2">
+              {t("نموذج الانضمام")}
+            </CardTitle>
             <CardDescription className="text-base">
-              {t("انضم إلى نخبة المتطوعين في مبادرة تسامي وكن جزءاً من التغيير الإيجابي.")}
-              <span className="mt-2 block text-xs text-muted-foreground">
-                {t("أنشئ كلمة مرورك الآن؛ سيبقى الحساب بانتظار الموافقة قبل أن تتمكن من الدخول.")}
-              </span>
+              {hasCompletedPreRegistration
+                ? t("أكمل طلب حساب الموقع بعد إرسال نموذج التسجيل المسبق.")
+                : t("ابدأ بنموذج التسجيل المسبق قبل إنشاء حسابك في الموقع.")}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="name">{t("الاسم الثلاثي")}</Label>
-                <div className="relative">
-                  <UserCheck className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    id="name" 
-                    required 
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder={t("أدخل اسمك الكامل...")}
-                    className="px-10 rtl:pr-10 rtl:pl-3"
-                  />
+            {!hasCompletedPreRegistration ? (
+              <div className="space-y-5 rounded-xl border border-primary/15 bg-muted/30 p-5 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <ClipboardCheck className="h-6 w-6" />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="password">{t("كلمة المرور")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      minLength={8}
-                      autoComplete="new-password"
-                      value={formData.password}
-                      onChange={(event) =>
-                        setFormData({ ...formData, password: event.target.value })
-                      }
-                      dir="ltr"
-                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("يجب أن تتكون كلمة المرور من 8 أحرف على الأقل")}
+                  <h2 className="font-bold text-primary">
+                    {t("الخطوة الأولى: نموذج التسجيل المسبق")}
+                  </h2>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {t(
+                      "عبّئ النموذج الخارجي أولاً، ثم ارجع إلى هذه الصفحة للمتابعة بإنشاء حساب الموقع.",
+                    )}
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">{t("تأكيد كلمة المرور")}</Label>
-                  <div className="relative">
-                    <Lock className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      required
-                      minLength={8}
-                      autoComplete="new-password"
-                      value={formData.confirmPassword}
-                      onChange={(event) =>
-                        setFormData({ ...formData, confirmPassword: event.target.value })
+                <Button asChild className="w-full gap-2">
+                  <a href={JOIN_FORM_URL} target="_blank" rel="noreferrer">
+                    {t("فتح نموذج التسجيل المسبق")}
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {t("بعد الإرسال، أكد أدناه للانتقال للخطوة الثانية.")}
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setHasCompletedPreRegistration(true)}
+                >
+                  {t("أرسلت النموذج، متابعة")}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  {t(
+                    "التأكيد إقرار منك، ولا يمكن للموقع التحقق تلقائياً من إرسال نموذج Google.",
+                  )}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-6 rounded-lg border border-secondary/50 bg-secondary/10 p-4 text-sm">
+                  <p className="font-semibold text-primary">
+                    {t("الخطوة الثانية: طلب حساب الموقع")}
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    {t(
+                      "أنشئ كلمة مرورك الآن؛ سيبقى الحساب بانتظار الموافقة قبل أن تتمكن من الدخول.",
+                    )}
+                  </p>
+                </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">{t("الاسم الثلاثي")}</Label>
+                    <div className="relative">
+                      <UserCheck className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="name"
+                        required
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        placeholder={t("أدخل اسمك الكامل...")}
+                        className="px-10 rtl:pr-10 rtl:pl-3"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="password">{t("كلمة المرور")}</Label>
+                      <div className="relative">
+                        <Lock className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="password"
+                          type="password"
+                          required
+                          minLength={8}
+                          autoComplete="new-password"
+                          value={formData.password}
+                          onChange={(event) =>
+                            setFormData({
+                              ...formData,
+                              password: event.target.value,
+                            })
+                          }
+                          dir="ltr"
+                          className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t("يجب أن تتكون كلمة المرور من 8 أحرف على الأقل")}
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="confirmPassword">
+                        {t("تأكيد كلمة المرور")}
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          required
+                          minLength={8}
+                          autoComplete="new-password"
+                          value={formData.confirmPassword}
+                          onChange={(event) =>
+                            setFormData({
+                              ...formData,
+                              confirmPassword: event.target.value,
+                            })
+                          }
+                          dir="ltr"
+                          className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                          placeholder="••••••••"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="department">
+                      {t("القسم الذي ترغب بالانضمام إليه")}
+                    </Label>
+                    <div className="relative">
+                      <Building className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
+                      <select
+                        id="department"
+                        required
+                        value={formData.departmentId}
+                        onChange={(event) =>
+                          setFormData({
+                            ...formData,
+                            departmentId: event.target.value,
+                          })
+                        }
+                        disabled={isLoadingDepartments}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 px-10 rtl:pr-10 rtl:pl-3"
+                      >
+                        <option value="">
+                          {isLoadingDepartments
+                            ? t("جارٍ تحميل الأقسام...")
+                            : t("اختر القسم")}
+                        </option>
+                        {departments.map((department: any) => (
+                          <option key={department.id} value={department.id}>
+                            {t(department.name)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t("البريد الإلكتروني")}</Label>
+                      <div className="relative">
+                        <Mail className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="email"
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData({ ...formData, email: e.target.value })
+                          }
+                          placeholder="name@example.com"
+                          dir="ltr"
+                          className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">{t("رقم الجوال (اختياري)")}</Label>
+                      <div className="relative">
+                        <Phone className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="phone"
+                          type="tel"
+                          inputMode="tel"
+                          value={formData.phone}
+                          onChange={(e) =>
+                            setFormData({ ...formData, phone: e.target.value })
+                          }
+                          placeholder="0790000000"
+                          dir="ltr"
+                          className="text-left px-10 rtl:pr-10 rtl:pl-3"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t("رقم أردني: 07xxxxxxxx أو +962 7x xxx xxxx")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="message">
+                      {t("لماذا ترغب بالانضمام إلينا؟ (اختياري)")}
+                    </Label>
+                    <Textarea
+                      id="message"
+                      rows={4}
+                      value={formData.message}
+                      onChange={(e) =>
+                        setFormData({ ...formData, message: e.target.value })
                       }
-                      dir="ltr"
-                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                      placeholder="••••••••"
+                      placeholder={t("حدثنا عن مهاراتك واهتماماتك التطوعية...")}
                     />
                   </div>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="department">{t("القسم الذي ترغب بالانضمام إليه")}</Label>
-                <div className="relative">
-                  <Building className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground pointer-events-none" />
-                  <select
-                    id="department"
-                    required
-                    value={formData.departmentId}
-                    onChange={(event) => setFormData({ ...formData, departmentId: event.target.value })}
-                    disabled={isLoadingDepartments}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 px-10 rtl:pr-10 rtl:pl-3"
+                  <Button
+                    type="submit"
+                    className="w-full text-lg h-12 gap-2"
+                    disabled={
+                      isSubmitting ||
+                      submitRequest.isPending ||
+                      isLoadingDepartments
+                    }
                   >
-                    <option value="">
-                      {isLoadingDepartments ? t("جارٍ تحميل الأقسام...") : t("اختر القسم")}
-                    </option>
-                    {departments.map((department: any) => (
-                      <option key={department.id} value={department.id}>
-                        {t(department.name)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email">{t("البريد الإلكتروني")}</Label>
-                  <div className="relative">
-                    <Mail className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="email" 
-                      type="email" 
-                      required 
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="name@example.com"
-                      dir="ltr"
-                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="phone">{t("رقم الجوال (اختياري)")}</Label>
-                  <div className="relative">
-                    <Phone className="absolute right-3 rtl:right-auto rtl:left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      id="phone" 
-                      type="tel"
-                      inputMode="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="0790000000"
-                      dir="ltr"
-                      className="text-left px-10 rtl:pr-10 rtl:pl-3"
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {t("رقم أردني: 07xxxxxxxx أو +962 7x xxx xxxx")}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="message">{t("لماذا ترغب بالانضمام إلينا؟ (اختياري)")}</Label>
-                <Textarea 
-                  id="message" 
-                  rows={4}
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder={t("حدثنا عن مهاراتك واهتماماتك التطوعية...")}
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full text-lg h-12 gap-2" 
-                disabled={isSubmitting || submitRequest.isPending || isLoadingDepartments}
-              >
-                <UserPlus className="h-5 w-5" />
-                {isSubmitting || submitRequest.isPending ? t("جاري الإرسال...") : t("إرسال طلب الانضمام")}
-              </Button>
-            </form>
+                    <UserPlus className="h-5 w-5" />
+                    {isSubmitting || submitRequest.isPending
+                      ? t("جاري الإرسال...")
+                      : t("إرسال طلب الانضمام")}
+                  </Button>
+                </form>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
